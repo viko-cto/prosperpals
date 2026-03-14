@@ -1,0 +1,340 @@
+/* ============================================
+   ACCESSIBILITY STYLES FOR PROSPERPALS
+   ============================================ */
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================
+   HIGH CONTRAST MODE
+   ============================================ */
+.high-contrast {
+  /* Increase all text contrast */
+  --theme-text: #000000;
+  --theme-text-secondary: #1a1a1a;
+  
+  /* Remove transparency effects */
+  --theme-card: #ffffff;
+  --theme-bg: #f5f5f5;
+  
+  /* Thicker borders */
+  --border-width: 2px;
+}
+
+.high-contrast.dark {
+  --theme-text: #ffffff;
+  --theme-text-secondary: #e5e5e5;
+  --theme-card: #1a1a1a;
+  --theme-bg: #000000;
+}
+
+/* Thicker borders on interactive elements */
+.high-contrast button,
+.high-contrast a,
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  border-width: 2px !important;
+  border-color: currentColor !important;
+}
+
+/* Remove glassmorphism in high contrast */
+.high-contrast [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+}
+
+/* Solid backgrounds */
+.high-contrast [class*="bg-white/"],
+.high-contrast [class*="bg-black/"] {
+  opacity: 1 !important;
+}
+
+/* ============================================
+   REDUCE MOTION
+   ============================================ */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Disable specific animations */
+.reduce-motion [class*="animate-"],
+.reduce-motion [class*="motion-"] {
+  animation: none !important;
+}
+
+/* ============================================
+   FOCUS VISIBLE (Enhanced Focus Rings)
+   ============================================ */
+.focus-visible *:focus-visible {
+  outline: 2px solid #fbbf24 !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+/* Goldie-themed focus */
+.focus-visible [data-companion="goldie"]:focus-visible {
+  outline-color: #fbbf24 !important;
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.2) !important;
+}
+
+/* Fin-themed focus */
+.focus-visible [data-companion="fin"]:focus-visible {
+  outline-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Skip to content link */
+.focus-visible a[href="#main-content"]:focus {
+  outline: 3px solid #fbbf24 !important;
+  outline-offset: 4px !important;
+}
+
+/* ============================================
+   COLOR BLIND MODES
+   ============================================ */
+
+/* Deuteranopia (Red-Green) - Most common */
+.deuteranopia {
+  /* Add patterns to differentiate colors */
+  --pattern-success: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px);
+  --pattern-error: repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px);
+  --pattern-warning: repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 20px);
+}
+
+/* Protanopia (Red-Green) - Less common */
+.protanopia {
+  --pattern-success: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,255,255,0.15) 8px, rgba(255,255,255,0.15) 16px);
+  --pattern-error: repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(255,255,255,0.15) 8px, rgba(255,255,255,0.15) 16px);
+  --pattern-warning: repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(255,255,255,0.15) 8px, rgba(255,255,255,0.15) 16px);
+}
+
+/* Tritanopia (Blue-Yellow) */
+.tritanopia {
+  --pattern-success: radial-gradient(circle, transparent 30%, rgba(255,255,255,0.1) 30%, rgba(255,255,255,0.1) 40%, transparent 40%);
+  --pattern-error: repeating-linear-gradient(-45deg, transparent, transparent 12px, rgba(255,255,255,0.1) 12px, rgba(255,255,255,0.1) 24px);
+  --pattern-warning: repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(255,255,255,0.1) 12px, rgba(255,255,255,0.1) 24px);
+}
+
+/* Apply patterns to status indicators */
+.deuteranopia [data-status="success"],
+.protanopia [data-status="success"],
+.tritanopia [data-status="success"] {
+  background-image: var(--pattern-success) !important;
+}
+
+.deuteranopia [data-status="error"],
+.protanopia [data-status="error"],
+.tritanopia [data-status="error"] {
+  background-image: var(--pattern-error) !important;
+}
+
+.deuteranopia [data-status="warning"],
+.protanopia [data-status="warning"],
+.tritanopia [data-status="warning"] {
+  background-image: var(--pattern-warning) !important;
+}
+
+/* Add icons alongside colors in charts */
+.deuteranopia [data-chart-category],
+.protanopia [data-chart-category],
+.tritanopia [data-chart-category] {
+  position: relative;
+}
+
+.deuteranopia [data-chart-category]::before,
+.protanopia [data-chart-category]::before,
+.tritanopia [data-chart-category]::before {
+  content: attr(data-icon);
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+}
+
+/* ============================================
+   FONT SIZE ADJUSTMENTS
+   ============================================ */
+.font-large {
+  --font-size: 18px;
+}
+
+.font-xlarge {
+  --font-size: 20px;
+}
+
+/* Scale line heights proportionally */
+.font-large,
+.font-xlarge {
+  line-height: 1.6;
+}
+
+/* Adjust spacing for larger text */
+.font-large button,
+.font-large input,
+.font-xlarge button,
+.font-xlarge input {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* ============================================
+   WCAG AAA CONTRAST RATIOS
+   ============================================ */
+
+/* Ensure minimum 7:1 contrast for text */
+.high-contrast {
+  /* Large text (18pt+): 4.5:1 minimum */
+  /* Normal text (under 18pt): 7:1 minimum */
+}
+
+.high-contrast.dark {
+  /* White on dark backgrounds */
+  color: #ffffff;
+}
+
+.high-contrast:not(.dark) {
+  /* Black on light backgrounds */
+  color: #000000;
+}
+
+/* ============================================
+   KEYBOARD NAVIGATION HELPERS
+   ============================================ */
+
+/* Show outline on all focusable elements during keyboard nav */
+body:not(.user-is-tabbing) *:focus {
+  outline: none;
+}
+
+body.user-is-tabbing *:focus {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
+
+/* Detect if user is tabbing */
+@media (prefers-reduced-motion: no-preference) {
+  body.user-is-tabbing *:focus {
+    animation: focus-pulse 2s infinite;
+  }
+}
+
+@keyframes focus-pulse {
+  0%, 100% {
+    outline-color: #fbbf24;
+  }
+  50% {
+    outline-color: #f59e0b;
+  }
+}
+
+/* ============================================
+   ARIA LIVE REGIONS
+   ============================================ */
+
+/* Visually hide but keep for screen readers */
+[role="status"],
+[role="alert"],
+[aria-live] {
+  position: relative;
+}
+
+/* Announce important updates */
+[role="alert"] {
+  /* Screen readers will announce immediately */
+}
+
+[aria-live="polite"] {
+  /* Screen readers will announce when idle */
+}
+
+/* ============================================
+   HEADING HIERARCHY
+   ============================================ */
+
+/* Ensure proper heading levels */
+h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* ============================================
+   TOUCH TARGETS (minimum 44x44px)
+   ============================================ */
+
+/* Ensure all interactive elements are large enough */
+button,
+a,
+input[type="checkbox"],
+input[type="radio"] {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Exception for inline text links */
+a:not([class*="btn"]) {
+  min-width: auto;
+  min-height: auto;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Visually hidden but accessible to screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Accessible color combinations */
+.a11y-text-light {
+  color: #ffffff;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+.a11y-text-dark {
+  color: #000000;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+}

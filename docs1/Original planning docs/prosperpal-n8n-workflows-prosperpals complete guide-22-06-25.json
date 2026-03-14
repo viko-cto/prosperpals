@@ -1,0 +1,318 @@
+{
+  "welcomeUserWorkflow": {
+    "name": "ProsperPal - Welcome New User",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "new-user",
+          "responseMode": "onReceived",
+          "responseData": "success"
+        },
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "position": [250, 300]
+      },
+      {
+        "parameters": {
+          "operation": "create",
+          "table": "profiles",
+          "fields": {
+            "id": "={{ $json.user_id }}",
+            "username": "={{ $json.email.split('@')[0] }}",
+            "full_name": "={{ $json.full_name }}",
+            "onboarding_completed": false
+          }
+        },
+        "name": "Create Profile",
+        "type": "n8n-nodes-base.supabase",
+        "position": [450, 300]
+      },
+      {
+        "parameters": {
+          "operation": "create",
+          "table": "user_stats",
+          "fields": {
+            "user_id": "={{ $json.user_id }}",
+            "prosper_coins": 100,
+            "total_points": 100,
+            "current_streak": 0,
+            "longest_streak": 0,
+            "level": 1,
+            "xp": 0
+          }
+        },
+        "name": "Initialize Stats",
+        "type": "n8n-nodes-base.supabase",
+        "position": [650, 300]
+      },
+      {
+        "parameters": {
+          "operation": "create",
+          "table": "user_achievements",
+          "fields": {
+            "user_id": "={{ $json.user_id }}",
+            "achievement_id": "welcome-achievement-id",
+            "earned_at": "={{ new Date().toISOString() }}"
+          }
+        },
+        "name": "Award Welcome Badge",
+        "type": "n8n-nodes-base.supabase",
+        "position": [850, 300]
+      },
+      {
+        "parameters": {
+          "fromEmail": "hello@prosperpal.app",
+          "toEmail": "={{ $node['Webhook'].json.email }}",
+          "subject": "Welcome to ProsperPal! 🎉",
+          "html": "<h1>Welcome {{ $node['Webhook'].json.full_name }}!</h1><p>You've earned 100 ProsperCoins to start your journey!</p>"
+        },
+        "name": "Send Welcome Email",
+        "type": "n8n-nodes-base.emailSend",
+        "position": [1050, 300]
+      }
+    ]
+  },
+  "dailyLoginBonus": {
+    "name": "ProsperPal - Daily Login Bonus",
+    "nodes": [
+      {
+        "parameters": {
+          "triggerTimes": {
+            "item": [{
+              "hour": 0,
+              "minute": 0
+            }]
+          }
+        },
+        "name": "Daily Trigger",
+        "type": "n8n-nodes-base.cron",
+        "position": [250, 300]
+      },
+      {
+        "parameters": {
+          "operation": "select",
+          "table": "profiles",
+          "fields": ["id", "username", "last_login"],
+          "filters": {
+            "last_login": {
+              "gte": "={{ new Date(Date.now() - 86400000).toISOString() }}"
+            }
+          }
+        },
+        "name": "Get Active Users",
+        "type": "n8n-nodes-base.supabase",
+        "position": [450, 300]
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "table": "user_stats",
+          "filters": {
+            "user_id": "={{ $json.id }}"
+          },
+          "fields": {
+            "prosper_coins": "={{ $json.prosper_coins + 10 }}",
+            "total_points": "={{ $json.total_points + 10 }}",
+            "current_streak": "={{ $json.current_streak + 1 }}"
+          }
+        },
+        "name": "Award Daily Coins",
+        "type": "n8n-nodes-base.supabase",
+        "position": [650, 300]
+      }
+    ]
+  },
+  "transactionCategorizer": {
+    "name": "ProsperPal - Smart Transaction Categorizer",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "new-transaction",
+          "responseMode": "onReceived"
+        },
+        "name": "Transaction Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "position": [250, 300]
+      },
+      {
+        "parameters": {
+          "model": "gpt-3.5-turbo",
+          "messages": {
+            "values": [
+              {
+                "role": "system",
+                "content": "Categorize this transaction into one of these categories: Food & Dining, Shopping, Transportation, Bills & Utilities, Entertainment, Healthcare, Education, Other. Respond with only the category name."
+              },
+              {
+                "role": "user",
+                "content": "={{ $json.description }}"
+              }
+            ]
+          }
+        },
+        "name": "AI Categorize",
+        "type": "n8n-nodes-base.openAi",
+        "position": [450, 300]
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "table": "transactions",
+          "filters": {
+            "id": "={{ $node['Transaction Webhook'].json.transaction_id }}"
+          },
+          "fields": {
+            "category": "={{ $json.choices[0].message.content }}"
+          }
+        },
+        "name": "Update Transaction",
+        "type": "n8n-nodes-base.supabase",
+        "position": [650, 300]
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "table": "user_stats",
+          "filters": {
+            "user_id": "={{ $node['Transaction Webhook'].json.user_id }}"
+          },
+          "fields": {
+            "prosper_coins": "={{ $json.prosper_coins + 5 }}",
+            "total_points": "={{ $json.total_points + 5 }}"
+          }
+        },
+        "name": "Award Points",
+        "type": "n8n-nodes-base.supabase",
+        "position": [850, 300]
+      }
+    ]
+  },
+  "achievementChecker": {
+    "name": "ProsperPal - Achievement Progress Checker",
+    "nodes": [
+      {
+        "parameters": {
+          "events": ["INSERT", "UPDATE"],
+          "table": "user_stats",
+          "filters": {}
+        },
+        "name": "Stats Update Trigger",
+        "type": "n8n-nodes-base.supabaseRealtimeTrigger",
+        "position": [250, 300]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "rules": [
+              {
+                "field": "total_points",
+                "operation": "gte",
+                "value": 1000
+              }
+            ]
+          }
+        },
+        "name": "Check Bronze Level",
+        "type": "n8n-nodes-base.if",
+        "position": [450, 200]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "rules": [
+              {
+                "field": "total_points",
+                "operation": "gte",
+                "value": 5000
+              }
+            ]
+          }
+        },
+        "name": "Check Silver Level",
+        "type": "n8n-nodes-base.if",
+        "position": [450, 400]
+      },
+      {
+        "parameters": {
+          "operation": "create",
+          "table": "user_achievements",
+          "fields": {
+            "user_id": "={{ $json.user_id }}",
+            "achievement_id": "level-up-bronze",
+            "earned_at": "={{ new Date().toISOString() }}"
+          }
+        },
+        "name": "Award Bronze Badge",
+        "type": "n8n-nodes-base.supabase",
+        "position": [650, 200]
+      }
+    ]
+  },
+  "goalProgressNotifier": {
+    "name": "ProsperPal - Goal Progress Notifications",
+    "nodes": [
+      {
+        "parameters": {
+          "events": ["INSERT"],
+          "table": "transactions",
+          "filters": {
+            "category": "Savings"
+          }
+        },
+        "name": "Savings Transaction",
+        "type": "n8n-nodes-base.supabaseRealtimeTrigger",
+        "position": [250, 300]
+      },
+      {
+        "parameters": {
+          "operation": "select",
+          "table": "financial_goals",
+          "filters": {
+            "user_id": "={{ $json.user_id }}",
+            "is_active": true
+          }
+        },
+        "name": "Get User Goals",
+        "type": "n8n-nodes-base.supabase",
+        "position": [450, 300]
+      },
+      {
+        "parameters": {
+          "jsCode": "const goals = $input.all();\nconst transaction = $node['Savings Transaction'].json;\n\nreturn goals.map(goal => {\n  const newAmount = goal.json.current_amount + transaction.amount;\n  const progress = (newAmount / goal.json.target_amount) * 100;\n  \n  return {\n    goal_id: goal.json.id,\n    new_amount: newAmount,\n    progress: progress,\n    milestone: progress >= 25 && progress < 50 ? '25%' : \n               progress >= 50 && progress < 75 ? '50%' :\n               progress >= 75 && progress < 100 ? '75%' :\n               progress >= 100 ? '100%' : null\n  };\n});"
+        },
+        "name": "Calculate Progress",
+        "type": "n8n-nodes-base.code",
+        "position": [650, 300]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "rules": [
+              {
+                "field": "milestone",
+                "operation": "isNotEmpty"
+              }
+            ]
+          }
+        },
+        "name": "Check Milestone",
+        "type": "n8n-nodes-base.if",
+        "position": [850, 300]
+      },
+      {
+        "parameters": {
+          "message": "🎉 Congratulations! You've reached {{ $json.milestone }} of your {{ $node['Get User Goals'].json.goal_name }} goal!",
+          "additionalFields": {
+            "priority": "high",
+            "ttl": 86400
+          }
+        },
+        "name": "Send Push Notification",
+        "type": "n8n-nodes-base.pushNotifications",
+        "position": [1050, 300]
+      }
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "node",
+      "args": [
+        "/Users/vadimfedulov/prosperpal-prototype/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js",
+        "/Users/vadimfedulov/prosperpal-prototype",
+        "/Users/vadimfedulov/Desktop",
+        "/Users/vadimfedulov/Downloads"
+      ]
+    },
+    "github": {
+      "command": "node",
+      "args": [
+        "/Users/vadimfedulov/prosperpal-prototype/node_modules/@modelcontextprotocol/server-github/dist/index.js"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+      }
+    },
+    "memory": {
+      "command": "node",
+      "args": [
+        "/Users/vadimfedulov/prosperpal-prototype/node_modules/@modelcontextprotocol/server-memory/dist/index.js"
+      ]
+    },
+    "puppeteer": {
+      "command": "node",
+      "args": [
+        "/Users/vadimfedulov/prosperpal-prototype/node_modules/@modelcontextprotocol/server-puppeteer/dist/index.js"
+      ]
+    },
+    "postgres": {
+      "command": "node",
+      "args": [
+        "/Users/vadimfedulov/prosperpal-prototype/node_modules/@modelcontextprotocol/server-postgres/dist/index.js",
+        "postgresql://postgres.mbmorvaywsdiwnzcsmgu:Copendapplabs2025@aws-0-eu-north-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    },
+    "brave-search": {
+      "command": "node",
+      "args": [
+        "/Users/vadimfedulov/prosperpal-prototype/node_modules/@modelcontextprotocol/server-brave-search/dist/index.js"
+      ],
+      "env": {
+        "BRAVE_API_KEY": "BSAierdAahY2n7WR1cgw9tE8jRIczqY"
+      }
+    },
+    "claude-code": {
+      "command": "claude",
+      "args": [
+        "mcp",
+        "serve"
+      ],
+      "env": {}
+    },
+    "supabase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase",
+        "--read-only",
+        "--project-ref=https://bnwzyuhumupwdouxegaz.supabase.co"
+      ],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJud3p5dWh1bXVwd2RvdXhlZ2F6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwMTQyMDEsImV4cCI6MjA3NDU5MDIwMX0.oiUZ6UIE3eXhfRBVuM9ig66YJcj9sL3FyArCWyP0YqQ"
+      }
+    }
+  }
+}
