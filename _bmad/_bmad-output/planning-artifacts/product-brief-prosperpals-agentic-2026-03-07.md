@@ -449,3 +449,152 @@ Every feature, design decision, and engineering sprint should be evaluated again
 **Design principle:** Every failure mode should result in a conversational explanation from Goldie or Fin, never a technical error. Users should feel like the companion is being honest with them, not that the app is broken.
 
 **Offline-first design requirement (from Active Recall Testing):** Mobile-first means signal-independent for core features. The app targets Gen Z users on the go — subway, campus, café with weak Wi-Fi. Core UX must never show a "no connection" error screen. Requirements: (1) Daily Spending Power displays from locally cached data (last sync). (2) Expense logging works offline — entries queue locally and sync on reconnect with conflict resolution. (3) Portfolio viewing shows last-known state with staleness indicator ("Prices as of 2 hours ago"). (4) Goldie conversations queue locally for send-on-reconnect; pre-cached responses handle common interactions offline. (5) Only features that inherently require live data (real-time market prices, leaderboard updates, new Fin lessons) may show connectivity-dependent states — and even these show cached last-known state, never a blank screen.
+
+---
+
+## Success Metrics & KPIs
+
+*Step 4 — Completed via Pre-mortem, Shark Tank Pitch, and Comparative Analysis elicitations*
+
+### North Star Metric
+
+**Weekly Active Core Loop Completions (WACLC):** The number of unique users who complete at least one full Log → Earn → Invest → Learn cycle per week. This is the single metric that validates the product category. If users log expenses but never invest, or invest but never log, the core loop is broken and ProsperPals is just another budgeting app.
+
+- **Launch target (Month 1):** 40% of registered users complete ≥1 full loop/week
+- **Product-market fit signal (Month 3):** 25% of registered users complete ≥3 full loops/week
+- **Scale readiness (Month 6):** 20% of all registered users are weekly active loop completers
+
+### Persona-Specific KPIs
+
+#### Sofia (Budget-First Archetype)
+
+| Metric | Day 7 | Day 30 | Day 90 | Why It Matters |
+|--------|--------|--------|--------|----------------|
+| Onboarding completion (80-sec core loop) | 70% | — | — | If <70% complete the first loop, the 80-second promise is broken |
+| Daily logging frequency | 3+ entries/week | 4+ days/week active | 4+ days/week active | Logging is the engine — no logs, no coins, no loop |
+| ProsperCoin earning velocity | 200+ coins earned | 1,500+ cumulative | 5,000+ cumulative | Coins fund the simulator — earning velocity predicts investment engagement |
+| Simulator engagement (from earned coins) | 1+ investment made | 3+ investments/week | Portfolio diversified across 3+ sectors | Sofia must cross the bridge from budgeting to investing |
+| Daily Spending Power check frequency | 3+ views/week | 5+ views/week (habitual) | Daily (automatic behavior) | The passive hook — if she stops checking DSP, she stops opening the app |
+| Insight interrupt engagement | — | 1+ "aha moment" insight received | 3+ insights acted on (changed behavior) | The "I spend more on eating out than rent" moment must happen by Month 1 |
+| Streak maintenance | 3-day streak | 14-day streak | 30-day streak (with ≤2 freezes) | Streaks are the retention backbone — measures habit formation |
+| Sharing/viral action | — | 1+ achievement shared externally | Referred 1+ user (Thomas conversion path) | Sofia's sharing IS Thomas's acquisition funnel |
+
+**Sofia at-risk signals:** <3 expenses logged in week 1 · Earned coins but never opened simulator · Hasn't opened app in 48+ hours · Streak broken and no return within 72 hours
+
+**Sofia success definition (Month 3):** Can answer "How much do you spend on food per month?" without checking. Has a virtual portfolio she checks weekly. Has shared at least one learning milestone externally.
+
+#### Marcus (Invest-First Archetype)
+
+| Metric | Day 7 | Day 30 | Day 90 | Why It Matters |
+|--------|--------|--------|--------|----------------|
+| Onboarding completion | 80% (higher than Sofia — Marcus is more tech-savvy) | — | — | Marcus expects fast, polished onboarding |
+| Simulator session frequency | 3+ sessions/week | 5+ sessions/week | Daily portfolio check | The simulator is Marcus's primary engagement driver |
+| Fin curriculum progression | Completed 2+ lessons | Completed "Stock Market Basics" track | 2+ tracks completed, intermediate level | Fin must adapt to Marcus's sophistication — too basic = churn |
+| Expense logging (cross-pollination) | 1+ expense logged (from Goldie prompt) | 3+ days/week logging | Regular logger (budget awareness achieved) | Marcus enters for investing but must discover budgeting value |
+| Subscription audit completion | 1 audit completed (bank statement upload) | — | — | Marcus's Sprint 1 "aha moment" — found forgotten charges |
+| Opportunity cost engagement | — | Viewed 3+ opportunity cost projections | Used projection to cancel a real subscription | Fin's "if you'd invested that..." must drive real behavior change |
+| ProsperCoin investment diversity | 3+ different assets held | Sector-diversified portfolio | Outperforming random picks (learning signal) | Shows genuine learning, not just clicking |
+
+**Marcus at-risk signals:** Checked portfolio once, never earned more coins · Fin's first explanation got "I know this" with no follow-up · Opened app 1 time after onboarding · No expense logged by day 5
+
+**Marcus success definition (Month 3):** Can explain 3+ investment concepts (P/E, diversification, compound interest) from experience. Has cancelled at least 1 unnecessary subscription. Logs expenses regularly to fuel his simulator portfolio.
+
+#### Thomas (Education-Buyer / Monetization Persona)
+
+| Metric | Day 7 | Day 30 | Day 90 | Why It Matters |
+|--------|--------|--------|--------|----------------|
+| Family plan conversion | — | 30% of Thomas-archetype users subscribed | 50% retained at full price | Thomas is the primary revenue driver — his conversion IS the business model |
+| Weekly dashboard engagement | 1+ visit/week | 1+ visit/week (sustained) | 1+ visit/week with interaction | Thomas must engage weekly, not monthly — otherwise it's an email, not a product |
+| Family challenge participation | — | 1+ challenge created or accepted | Regular participant (2+/month) | Challenges transform Thomas from spectator to active user |
+| "Challenge the Parent" quiz completion | 1+ quiz taken | 3+ quizzes completed | Competing with Sofia regularly | The quiz is Thomas's personal engagement hook |
+| Learning milestone reactions | 1+ reaction to Sofia's achievement | Regular reactions (weekly) | Initiating conversations about finances | Proxy for "is ProsperPals enabling family financial conversations?" |
+| Co-present session frequency | — | 1+ session where Thomas and Sofia are both active | Regular co-present sessions | The dinner table moment — Thomas's retention depends on shared experiences |
+
+**Thomas at-risk signals:** Opened app once but family dashboard was empty (Sofia hasn't shared) · Never returned after seeing demo preview · Subscribed but never engaged with family features after week 1
+
+**Thomas success definition (Month 3):** Sofia explained a financial concept she learned from ProsperPals to Thomas. Thomas has an active subscription he considers worth the money. Has participated in at least 1 family challenge.
+
+### Launch OKRs (Denmark MVP — First 90 Days)
+
+**Objective 1: Validate the Core Loop**
+- KR1: 500+ registered users in Denmark (organic + targeted marketing)
+- KR2: 40% day-7 retention across all archetypes
+- KR3: 25% of week-1 users complete ≥3 full core loops (Log→Earn→Invest→Learn)
+- KR4: Median time-to-first-investment < 3 minutes from signup
+
+**Objective 2: Prove the Dual Companion Model**
+- KR1: >80% of users who reach Goldie-to-Fin handoff continue into the simulator
+- KR2: <10% report confusion about "who they're talking to" in post-session surveys
+- KR3: Fin sophistication level auto-adjusts for >60% of users by day 14 (beginner→intermediate)
+- KR4: Users who experience the handoff retain at higher rates than those who don't
+
+**Objective 3: Validate Revenue Model**
+- KR1: 30%+ of Thomas-archetype users convert to family plan within 30 days
+- KR2: Family plan monthly churn < 8%
+- KR3: 10%+ of Sofia/Marcus users hit the premium gate (advanced Fin tracks) by week 3
+- KR4: 5%+ of Sofia/Marcus convert to direct premium by day 60
+
+**Objective 4: Prove Denmark-Specific Hypotheses**
+- KR1: All 3 archetypes appear in real usage (no single archetype >70%)
+- KR2: Sprint 1 users (manual entry) retain at 20%+ by day 30 (product has value without auto-import)
+- KR3: Users check portfolio performance 3+x/week (investment education hook works)
+- KR4: Receipt scanning accuracy >85% for Danish receipts (Netto, Føtex, Rema 1000)
+
+### Revenue Metrics
+
+| Metric | Month 1 | Month 3 | Month 6 | Month 12 |
+|--------|---------|---------|---------|----------|
+| Registered users | 500 | 2,000 | 5,000 | 15,000 |
+| WAU (Weekly Active Users) | 200 (40%) | 600 (30%) | 1,500 (30%) | 4,500 (30%) |
+| Family plan subscribers | 10 | 60 | 200 | 800 |
+| Direct premium subscribers | 5 | 40 | 150 | 600 |
+| MRR (Monthly Recurring Revenue) | €150 | €1,200 | €4,250 | €17,000 |
+| Blended ARPU (paying users) | €10 | €12 | €12.14 | €12.14 |
+
+*Revenue assumptions: Family plan €15/month, Direct premium €10/month. Conservative conversion rates. No B2B2C or ProsperCoin marketplace revenue in Year 1.*
+
+### Anti-Metrics (What We Explicitly Do NOT Optimize For)
+
+These metrics, if optimized, would corrupt the product's mission:
+
+1. **Total transactions logged** — Optimizing for volume incentivizes spam entries and undermines data quality. Optimize for *accuracy and consistency* instead.
+2. **Daily Active Users (undifferentiated)** — Different personas have different healthy cadences. Thomas visiting weekly is success; forcing daily engagement is manipulation. Optimize for *persona-appropriate engagement frequency*.
+3. **Time in app** — Long sessions may indicate confusion, not engagement. Optimize for *value delivered per session* (insight received, lesson learned, investment made).
+4. **ProsperCoin total supply** — Inflating coin supply to make users "feel rich" destroys the economy. Optimize for *coin velocity* (earned → invested → learned from).
+5. **Notification open rate** — High open rates achieved through anxiety-inducing or misleading notifications violate the financial wellness mission. Optimize for *notification-to-action rate* on genuinely helpful nudges.
+
+### Measurement Infrastructure (MVP Requirements)
+
+- **Event tracking:** Every core loop step (log, earn, invest, learn) tracked as discrete events with timestamps
+- **Archetype tagging:** Onboarding segmentation answer persists as user attribute for all analytics
+- **Cohort analysis:** Weekly cohorts from launch, segmented by archetype and acquisition channel
+- **Funnel visualization:** Onboarding → First expense → First coin → First investment → Day 7 return → Day 30 active
+- **A/B testing framework:** Needed by Sprint 2 for gamification intensity, Fin sophistication levels, and onboarding flow variants
+- **Qualitative feedback loop:** In-app "How's it going?" prompt at day 3 and day 14 (NPS + open text). Post-churn survey for users who don't return after day 7.
+
+### Pre-mortem: How These Metrics Could Lie
+
+*Applied to stress-test the metrics framework:*
+
+1. **High onboarding completion but low day-7 retention** → The 80-second loop is entertaining but not useful. Users complete it as a novelty, never return. **Response:** Track "reason for return" on day-2 visit — was it push notification, portfolio check, or organic?
+
+2. **High simulator engagement but low expense logging** → Marcus-types love the game but never connect it to real finances. ProsperPals becomes a stock simulator, not a financial wellness tool. **Response:** WACLC (full loop metric) catches this — simulator-only engagement doesn't count as a loop completion.
+
+3. **Thomas converts but Sofia churns** → Thomas pays because of the *promise*, not Sofia's actual engagement. Revenue looks good short-term but Thomas cancels when he realizes Sofia stopped using it. **Response:** Track "Sofia activity at time of Thomas conversion" — if Sofia is inactive when Thomas subscribes, flag for churn risk.
+
+4. **Receipt scanning accuracy high in testing, low in production** → Training data was clean; real Danish receipts are crumpled, partial, in weird lighting. **Response:** Track real-world OCR confidence scores, not just accuracy on test sets. Auto-fallback to conversational entry when confidence < 70%.
+
+5. **Streak metrics look great but mask "zombie users"** — Users log minimum entries to maintain streak but never engage with insights or simulator. **Response:** Distinguish "streak-maintaining" from "actively learning" users. Core loop completion is the real metric, not streak length.
+
+### Comparative Benchmarks
+
+| Metric | Industry Average (Fintech) | Duolingo (Gamified Ed) | ProsperPals Target | Rationale |
+|--------|---------------------------|------------------------|-------------------|-----------|
+| Day-1 retention | 25-30% | 45% | 50% | 80-sec onboarding + immediate portfolio = strong hook |
+| Day-7 retention | 12-15% | 30% | 35% | Core loop + streaks + portfolio check = daily return reasons |
+| Day-30 retention | 6-8% | 15% | 20% | Insight interrupts + Fin curriculum = sustained value |
+| Free-to-paid conversion | 2-5% | 7% | 8% (combined family + premium) | Family plan is novel monetization lever |
+| Monthly churn (paid) | 5-8% | 4% | 6% | Conservative — novel product, expect some early experimentation churn |
+| NPS | 30-40 | 60+ | 45+ | Target: above fintech average, below Duolingo (they've had years to optimize) |
+
+*Duolingo benchmarks used because ProsperPals is closer to gamified education than traditional fintech in engagement model.*
