@@ -598,3 +598,262 @@ These metrics, if optimized, would corrupt the product's mission:
 | NPS | 30-40 | 60+ | 45+ | Target: above fintech average, below Duolingo (they've had years to optimize) |
 
 *Duolingo benchmarks used because ProsperPals is closer to gamified education than traditional fintech in engagement model.*
+
+---
+
+## Risks & Mitigations
+
+*Step 5 — Elicitation methods applied: Pre-mortem (failure scenario planning), Red Team (adversarial attack on assumptions), First Principles (decompose risks to root causes)*
+
+### Risk Classification Framework
+
+Each risk rated on:
+- **Likelihood:** LOW (< 20%) | MEDIUM (20-50%) | HIGH (> 50%)
+- **Impact:** LOW (delays 1 sprint) | MEDIUM (delays launch or degrades UX) | HIGH (threatens viability) | CRITICAL (existential)
+- **Residual risk:** Risk level *after* mitigations applied
+
+---
+
+### 1. Regulatory Risks
+
+#### R1: MiFID II Classification Creep
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | MEDIUM |
+| **Impact** | CRITICAL |
+| **Owner** | Vadim (CEO) + Legal Counsel |
+| **Description** | ProsperPals positions as "financial wellness education" to avoid MiFID II advisory licensing. Risk: if Goldie/Fin's outputs are interpreted as personalized financial advice (e.g., "you should invest in X" or "sell Y"), regulators could classify ProsperPals as an investment advisory service, requiring costly licensing (€50K-100K+ in Denmark via Finanstilsynet). |
+| **Root cause (First Principles)** | The line between "education" and "advice" is legally fuzzy. Showing real tickers + real data + user-specific context makes it *feel* like advice even if it isn't. |
+| **Mitigation** | (1) All AI outputs include educational disclaimers — never personalized recommendations. (2) Fin says "here are 3 assets to learn about" not "you should buy this." (3) Legal review of all AI prompt templates pre-launch. (4) Simulator clearly labeled as "virtual — not real money." (5) No language suggesting expected returns ("you could earn X" → "historically, this asset returned X"). (6) Pre-launch review by Danish fintech lawyer (budget: DKK 15-25K). |
+| **Residual risk** | LOW — education framing is well-established (Investopedia, Duolingo-for-finance), but requires vigilance as product evolves. |
+| **Trigger for escalation** | Any Finanstilsynet inquiry or regulatory complaint. Any AI output that a reasonable person could interpret as "buy this." |
+
+#### R2: GDPR Compliance (Financial Data Processing)
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | HIGH (compliance is mandatory, not optional) |
+| **Impact** | HIGH |
+| **Owner** | Vadim (CEO) + DPO (hire or outsource) |
+| **Description** | ProsperPals processes sensitive financial data (spending habits, income, bank connections). GDPR requires lawful basis, data minimization, right to deletion, breach notification (72h), and DPIAs for high-risk processing. Family features add complexity: parent viewing adult child's learning data requires explicit consent frameworks. |
+| **Root cause** | Financial behavior data is inherently sensitive. Combined with AI profiling (spending categorization, pattern detection), this likely qualifies as "high-risk processing" under GDPR Art. 35. |
+| **Mitigation** | (1) Privacy-by-design architecture: encrypt PII at rest (AES-256), minimize data retention. (2) DPIA (Data Protection Impact Assessment) before launch. (3) Granular consent management: per-feature, per-data-category, revocable. (4) Family sharing is opt-in, symmetrical for adults 18+, never exposes financial amounts. (5) Right-to-deletion flow: one-click account + data removal. (6) Cookie/tracking consent (ePrivacy). (7) Appoint DPO or outsource (DKK 5-15K/year for small-scale). |
+| **Residual risk** | MEDIUM — compliance is achievable but requires ongoing attention. One breach = trust destroyed for a financial app. |
+
+#### R3: PSD2/PSD3 Open Banking Transition
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | MEDIUM |
+| **Impact** | MEDIUM |
+| **Owner** | Tech Lead |
+| **Description** | Sprint 3-4 relies on PSD2 open banking for automated transaction import. PSD2→PSD3 transition is underway (PSD2 ended March 2, 2026; PSD3/PSR entering force Q1-Q2 2026 with 21-month transition). API standards may shift. Nordigen (free EU banking API) could change pricing or availability. |
+| **Mitigation** | (1) Transaction import abstraction layer from day 1 — decouple from any single provider. (2) Nordigen as primary (free, 2,300+ EU banks), with Plaid EU or TrueLayer as fallback. (3) Monitor PSD3/PSR regulatory timeline. (4) Sprint 1-2 work without any bank API (manual + receipt + MobilePay). |
+| **Residual risk** | LOW — abstraction layer insulates from provider changes. |
+
+#### R4: EU AI Act Classification
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | LOW-MEDIUM |
+| **Impact** | HIGH |
+| **Owner** | Vadim + Legal |
+| **Description** | EU AI Act full application: August 2, 2026. AI systems in financial services may be classified as "high-risk," requiring conformity assessments, transparency obligations, and human oversight mechanisms. ProsperPals' AI companions making financial behavior suggestions could trigger this. |
+| **Mitigation** | (1) Position as "educational AI assistant" not "financial AI decision system." (2) No automated decisions affecting user's real finances. (3) Transparency: users can see why Goldie/Fin made a suggestion. (4) Human oversight: all AI outputs are suggestions, never automated actions. (5) Monitor EAIB (European AI Board) guidance on financial AI classification. |
+| **Residual risk** | LOW — education/entertainment AI unlikely to be classified high-risk, but regulatory landscape is evolving. |
+
+---
+
+### 2. Technical Risks
+
+#### R5: AI Companion Quality & Hallucination
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | HIGH |
+| **Impact** | HIGH |
+| **Owner** | Tech Lead |
+| **Description** | Goldie/Fin are LLM-powered. LLMs hallucinate. A wrong financial insight ("you spent 500 kr on food" when the real number is 50 kr) or incorrect investment data destroys trust instantly — especially for a product positioning itself as a financial tool. First wrong insight = all future insights questioned. |
+| **Root cause (First Principles)** | LLMs generate probabilistically, not deterministically. Financial data requires exactness. Tension is fundamental. |
+| **Mitigation** | (1) Separate "data pipeline" (deterministic: sums, categories, market prices) from "presentation layer" (LLM: tone, explanation, conversation). Never let the LLM calculate — it formats pre-calculated results. (2) Confidence scoring on all AI-generated insights. (3) Hedging language on uncertain aggregations ("I think you spent about..."). (4) Source data always shown alongside insights. (5) One-tap "This doesn't look right" correction flow. (6) Track insight accuracy as quality KPI (target: >95% accuracy on financial data). (7) 3-tier AI routing: critical financial data via deterministic code, explanations via capable model (Gemini/GPT), simple responses via fast model (Haiku/Grok). |
+| **Residual risk** | MEDIUM — architecture separating data from presentation reduces risk substantially but doesn't eliminate tone/framing errors. |
+
+#### R6: Market Data Reliability
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | MEDIUM |
+| **Impact** | MEDIUM |
+| **Owner** | Tech Lead |
+| **Description** | Investment simulator requires real-time (or near-real-time) stock/crypto market data. API providers have outages, rate limits, pricing changes. If Marcus sees prices that don't match his brokerage app, credibility collapses. |
+| **Mitigation** | (1) Primary + secondary market data providers with automatic failover. (2) Freshness timestamps on all prices ("Prices as of 14:30 CET"). (3) Fin acknowledges delays conversationally ("Markets are a bit slow today — these prices are from 2 hours ago"). (4) Cache last-known prices for offline/degraded mode. (5) Free tier: 15-min delayed data (standard). Premium: near-real-time. |
+| **Residual risk** | LOW — standard problem with established solutions. |
+
+#### R7: Receipt OCR Accuracy (Danish Receipts)
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | HIGH |
+| **Impact** | MEDIUM |
+| **Owner** | Tech Lead |
+| **Description** | Danish receipts have specific formats, merchant names (Netto, Føtex, Rema 1000), and DKK formatting. Off-the-shelf OCR may perform poorly. If scanning is unreliable, users revert to manual entry — and the "scan a receipt" magic moment fails. |
+| **Mitigation** | (1) Build Danish receipt training dataset pre-launch (target: top 20 Danish retailers). (2) Always show scanned result for confirmation — never auto-commit. (3) Graceful fallback: if OCR confidence < 70%, Goldie asks conversationally ("I couldn't read this clearly — what store and amount?"). (4) Track OCR accuracy KPI (target: >85% at launch, >92% by month 3). (5) User corrections improve the model over time. |
+| **Residual risk** | MEDIUM — will improve with usage data but launch accuracy may frustrate early adopters. |
+
+#### R8: Scalability & Infrastructure Costs
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | LOW (at MVP scale) |
+| **Impact** | MEDIUM |
+| **Owner** | Tech Lead |
+| **Description** | AI companion conversations require LLM API calls per user interaction. At scale (15K+ users), costs could exceed revenue if not managed. Vercel + Supabase have generous free tiers but costs grow with usage. |
+| **Mitigation** | (1) 3-tier AI routing: simple queries → fast/cheap model, complex → capable model, financial data → deterministic code. (2) Caching for common Fin explanations. (3) Conversation context window management (don't send full history every call). (4) Monitor cost-per-user-per-month from day 1. (5) At 500 users (Month 1), projected AI cost: €50-100/month — well within budget. |
+| **Residual risk** | LOW at MVP scale. Revisit at 10K+ users. |
+
+---
+
+### 3. Market Risks
+
+#### R9: Competitor Response (Cleo EU Expansion)
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | MEDIUM |
+| **Impact** | HIGH |
+| **Owner** | Vadim (Strategy) |
+| **Description** | Cleo (3.0 launched with agentic reasoning + memory + voice) is US-only but could expand to EU. With $400M+ funding and 7M users, an EU launch would immediately pressure ProsperPals in its home market. |
+| **Root cause (Red Team)** | Cleo has brand recognition, AI maturity, and capital that ProsperPals cannot match. If they launch in Denmark, they own "AI budgeting" mindshare overnight. |
+| **Mitigation** | (1) **Speed:** Launch before Cleo enters EU. First-mover advantage in Denmark/Nordics matters for cultural fit. (2) **Moat:** Investment simulator + ProsperCoin loop = features Cleo doesn't have. Even if Cleo enters EU, they'd need to build a new product category. (3) **Localization depth:** Danish kroner, MobilePay, receipt scanning for Danish merchants, Janteloven-aware sharing — cultural depth Cleo would need years to match. (4) **Community:** Build loyal Danish user base before competition arrives. Community retention > feature competition. |
+| **Residual risk** | MEDIUM — Cleo EU expansion is a when-not-if. ProsperPals must establish before they arrive. |
+
+#### R10: "Investment Simulator" Category Doesn't Resonate
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | MEDIUM |
+| **Impact** | HIGH |
+| **Owner** | Nikolas (Design) + Vadim (Strategy) |
+| **Description** | The Earn-to-Learn loop is a new category. New categories have no search volume, no comparison shoppers, no established demand. Users may want "a budgeting app" and find the simulator confusing or unnecessary. Or they may want "an investing app" and find the budgeting annoying. |
+| **Root cause (First Principles)** | Category creation requires educating the market. Existing mental models are "budgeting app" OR "investing app" — never both. Users may not understand why they're connected. |
+| **Mitigation** | (1) Onboarding segmentation lets users enter through their existing mental model (budget-first or invest-first). (2) Cross-pollination is gradual, not forced — Goldie doesn't push investing on day 1 for budget-first users. (3) Marketing can lead with the familiar ("budgeting app that actually works") and reveal the innovation ("...that also teaches you investing"). (4) Pre-MVP user interviews will test whether the combined value prop resonates or confuses. (5) Fallback: if simulator engagement is <20% after month 1, consider positioning as "budgeting app with bonus features" rather than "new category." |
+| **Residual risk** | MEDIUM — pre-MVP interviews are critical to de-risk this before investing in development. |
+
+#### R11: Gen Z Acquisition Cost
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | HIGH |
+| **Impact** | MEDIUM |
+| **Owner** | Vadim (Marketing) |
+| **Description** | Gen Z is ad-saturated. CAC for fintech apps ranges €15-40 in EU. ProsperPals has zero marketing budget at MVP. Organic growth requires viral mechanics that may take months to produce results. |
+| **Mitigation** | (1) Viral loop by design: shareable portfolio cards, learning milestones, streak screenshots with deep links. (2) TikTok/Instagram content strategy (low-cost, high-reach). (3) University ambassador program (target Aarhus University, CBS, DTU). (4) Product Hunt launch. (5) Community channels: Reddit r/dkfinance, Danish personal finance forums. (6) Target 500 users in month 1 — achievable through personal network + targeted outreach without paid ads. |
+| **Residual risk** | MEDIUM — 500 users is achievable organically, but scaling to 15K requires either viral traction or paid acquisition budget. |
+
+---
+
+### 4. Operational Risks
+
+#### R12: Small Team Capacity
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | HIGH |
+| **Impact** | HIGH |
+| **Owner** | Vadim (CEO) |
+| **Description** | CopenDapp Labs is a family team: Vadim (CEO, full-time day job at Radiometer), Nikolas (18, Head of Design), Lukas (Head of Game Dev). No full-time engineers. Building a production-quality AI financial app with this team while Vadim maintains stealth mode is extremely ambitious. |
+| **Root cause (Red Team)** | The product vision is large (2 AI companions, investment simulator, gamification, receipt scanning, multiple import methods, family features). The team is small. Something will be cut or delayed — the question is what. |
+| **Mitigation** | (1) Ruthless MVP scoping: Sprint 1 = Goldie + manual entry + ProsperCoins + basic simulator. No receipt scanning, no MobilePay, no family features in v0.1. (2) AI-assisted development (Cursor, Claude Code, V0) to multiply team output. (3) Managed services (Vercel, Supabase, pre-built AI SDKs) to minimize ops burden. (4) Clear role boundaries: Nikolas owns UX/design, Vadim owns architecture/AI, Lukas contributes where game mechanics intersect. (5) Beyond Beta mentorship (if accepted) provides external guidance. (6) Post-funding: first hire = senior full-stack engineer. |
+| **Residual risk** | HIGH — this is the single biggest execution risk. Mitigated by scope discipline and AI tooling but remains real. |
+
+#### R13: Founder Conflict of Interest (Stealth Mode)
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | LOW |
+| **Impact** | HIGH |
+| **Owner** | Vadim |
+| **Description** | Vadim works at Radiometer (clinical trials / medical devices). SponCite is in stealth. ProsperPals is public. Risk: employer discovers CopenDapp Labs and perceives conflict of interest, even though ProsperPals is in an unrelated domain (fintech ≠ medtech). |
+| **Mitigation** | (1) ProsperPals has zero overlap with Radiometer's business. (2) All CopenDapp work done outside work hours. (3) CopenDapp Labs ApS is a separate legal entity. (4) SponCite remains in stealth — not publicly associated with Vadim until departure. (5) Legal: Danish employment law allows side businesses unless competing or using employer resources. |
+| **Residual risk** | LOW — ProsperPals is clearly non-competing. |
+
+#### R14: Burnout / Motivation Loss
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | MEDIUM |
+| **Impact** | HIGH |
+| **Owner** | Vadim (self-awareness) |
+| **Description** | Building a startup nights-and-weekends with a full-time job and family is exhausting. Nikolas (18) and Lukas may lose motivation if progress feels too slow or the product never reaches real users. |
+| **Mitigation** | (1) Ship early, ship small — getting to real users ASAP provides motivation fuel. (2) Celebrate milestones visibly (family Slack, team calls). (3) Weekly 30-min family standup — maintain rhythm without burnout. (4) Vadim: protect weekends. One day off per week, non-negotiable. (5) Set a "minimum viable commitment" — what does each person commit to weekly? Even 5 hours/week from each person = 15 hours/week team capacity. |
+| **Residual risk** | MEDIUM — ongoing risk that requires active management. |
+
+---
+
+### 5. Product Risks
+
+#### R15: Dual Companion Model Confuses Users
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | MEDIUM |
+| **Impact** | MEDIUM |
+| **Owner** | Nikolas (Design) |
+| **Description** | The Goldie/Fin distinction is a design hypothesis. Users may not form separate mental models. They may ask Goldie investment questions or ask Fin budget questions. The handoff moment may feel jarring rather than natural. |
+| **Mitigation** | (1) Architecture: single AI service with persona overlays (fallback to single adaptive companion is a config change, not rewrite). (2) Kill criteria defined: >20% role confusion, users refer to both as "the AI," no engagement difference between handoff/non-handoff users. If 2 of 3 triggers fire in first 1,000 users → activate single-companion fallback. (3) Pre-launch usability testing with 5+ users focused specifically on the handoff moment. (4) Target: >80% continue into simulator after handoff, <10% confusion in surveys. |
+| **Residual risk** | LOW — fallback is pre-architected. The risk is wasted design effort, not product failure. |
+
+#### R16: ProsperCoins Feel Meaningless
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | MEDIUM |
+| **Impact** | HIGH |
+| **Owner** | Nikolas (Design) + Vadim (Product) |
+| **Description** | After the novelty of earning coins wears off (week 2-3), users may stop caring. If ProsperCoins don't feel valuable, the entire core loop collapses — there's no reason to log expenses beyond obligation, and the product reverts to being "another budgeting app." |
+| **Root cause (First Principles)** | Virtual currencies only retain value if they unlock meaningful experiences. Without real purchasing power or social status, they're just numbers. |
+| **Mitigation** | (1) Real-money equivalents from day 1: "If this were real money, you'd have earned 2,400 kr." (2) Simulator feature unlocks at coin thresholds (sector analysis at 500, advanced charts at 1,000, what-if at 2,000). (3) Leaderboard position — social status is a powerful motivator. (4) Weekly rotating leagues (Duolingo model) keep competition fresh. (5) Streak freeze tokens purchasable with coins — retention insurance. (6) Premium feature access via coins (time-limited trials of premium Fin analysis). (7) Post-MVP: partner reward redemption (Tier 2 ProsperCoin value path). |
+| **Residual risk** | MEDIUM — requires continuous balancing. Monitor "coins earned but never invested" as early warning signal. |
+
+#### R17: Manual Entry Kills Sprint 1 Retention
+| Attribute | Value |
+|-----------|-------|
+| **Likelihood** | HIGH |
+| **Impact** | HIGH |
+| **Owner** | Vadim (Product) |
+| **Description** | Sprint 1 ships without MobilePay or PSD2 auto-import. 80%+ of Danish Gen Z transactions are digital. Asking users to manually re-enter what their bank already knows is asking them to do homework. This is exactly why YNAB fails. |
+| **Root cause (Red Team)** | Sprint 1's honest value prop is *not* "track all your spending." It's "tell Goldie about the spending your bank doesn't see (cash, shared expenses, context) and earn coins to practice investing." But most users won't understand this distinction at signup. |
+| **Mitigation** | (1) Position manual entry as "completing the picture, not creating it." (2) Bank statement PDF upload for one-time subscription audit (Marcus's day-1 hook). (3) Receipt scanning to make physical purchase logging feel magical. (4) Sprint 1 retention target intentionally lower (20% day-30 vs 30% post-MobilePay). (5) Track "transactions per user per day" — if <2 by day 7, escalate MobilePay to P0. (6) MobilePay integration in Sprint 2 (weeks 2-3 of development). |
+| **Residual risk** | HIGH — this is accepted risk. Sprint 1 is validation, not scale. If core loop works with manual entry, it'll be transformative with auto-import. |
+
+---
+
+### Risk Heat Map Summary
+
+| Risk | Likelihood | Impact | Residual | Priority |
+|------|-----------|--------|----------|----------|
+| R12: Small team capacity | HIGH | HIGH | HIGH | 🔴 P0 |
+| R17: Manual entry kills retention | HIGH | HIGH | HIGH | 🔴 P0 |
+| R5: AI hallucination | HIGH | HIGH | MEDIUM | 🟠 P1 |
+| R16: ProsperCoins meaningless | MEDIUM | HIGH | MEDIUM | 🟠 P1 |
+| R10: Category doesn't resonate | MEDIUM | HIGH | MEDIUM | 🟠 P1 |
+| R9: Cleo EU expansion | MEDIUM | HIGH | MEDIUM | 🟠 P1 |
+| R1: MiFID II classification | MEDIUM | CRITICAL | LOW | 🟠 P1 |
+| R2: GDPR compliance | HIGH | HIGH | MEDIUM | 🟠 P1 |
+| R11: Gen Z acquisition cost | HIGH | MEDIUM | MEDIUM | 🟡 P2 |
+| R14: Burnout / motivation | MEDIUM | HIGH | MEDIUM | 🟡 P2 |
+| R7: Receipt OCR accuracy | HIGH | MEDIUM | MEDIUM | 🟡 P2 |
+| R4: EU AI Act | LOW-MEDIUM | HIGH | LOW | 🟢 P3 |
+| R3: PSD2/PSD3 transition | MEDIUM | MEDIUM | LOW | 🟢 P3 |
+| R6: Market data reliability | MEDIUM | MEDIUM | LOW | 🟢 P3 |
+| R8: Scalability costs | LOW | MEDIUM | LOW | 🟢 P3 |
+| R15: Dual companion confusion | MEDIUM | MEDIUM | LOW | 🟢 P3 |
+| R13: Founder conflict | LOW | HIGH | LOW | 🟢 P3 |
+
+### Red Team Challenge: "Why Will This Fail?"
+
+*Three most likely failure scenarios, in order:*
+
+1. **"It's YNAB with extra steps."** Sprint 1 manual entry creates the same homework feeling that killed YNAB for Nikolas. Users complete the 80-second onboarding, earn some coins, make one investment pick, and never return because logging expenses is boring. The simulator doesn't generate enough pull to overcome the push of manual data entry. **Survival condition:** MobilePay integration must ship within 4 weeks of launch, and Sprint 1 retention must exceed 15% at day-30 to validate that the core loop has value independent of auto-import.
+
+2. **"Cool demo, empty app."** The product is impressive in a demo but real daily use reveals that Goldie's insights require weeks of data to become useful. Day 2-7 is a dead zone where users have logged 3 expenses, Goldie can't say anything meaningful yet, and the simulator portfolio hasn't moved enough to be interesting. **Survival condition:** Design "cold start" insights that work with minimal data (compare single expense to national averages, project daily spending power from income alone, Fin teaches investment basics regardless of coin balance).
+
+3. **"No one pays."** Free tier is too generous (full core loop), Thomas monetization hypothesis is unproven (no existing product validates parents paying for children's finance education), and Sofia/Marcus see no reason to upgrade because the free Fin curriculum covers enough. Revenue never materializes. **Survival condition:** Pre-MVP interviews must validate Thomas willingness-to-pay (>30%). Premium gate must be encountered naturally by week 2-3. If <5% of users hit the premium boundary by week 3, the free/premium split is wrong.
+
+### First Principles: What Must Be True for ProsperPals to Succeed?
+
+*Decomposing success into irreducible requirements:*
+
+1. **Users must open the app daily** → Requires a daily "pull" (Daily Spending Power number, portfolio check) that delivers value in <10 seconds
+2. **Logging expenses must not feel like work** → Requires conversational entry (voice/chat) to feel like texting a friend, not filing a report
+3. **ProsperCoins must feel worth earning** → Requires meaningful unlocks at achievable thresholds, not just accumulation
+4. **The simulator must feel real** → Requires real tickers, real prices, real-money equivalents — not a toy
+5. **Someone must pay** → Requires either Thomas (family plan) or Sofia/Marcus (premium) to see enough value to justify €10-15/month
+6. **The team must ship** → Requires ruthless scope discipline, AI-assisted development, and sustainable work pace
+
+*If any one of these is false, the product fails. Prioritize validation in this order.*
