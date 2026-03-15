@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [1, 2]
+stepsCompleted: [1, 2, 3, 4, 5, 6]
 inputDocuments:
   - 'market-prosperpals-ai-financial-wellness-research-2026-03-07.md'
   - 'domain-ai-powered-gamified-financial-wellness-research-2026-03-07.md'
@@ -857,3 +857,183 @@ Each risk rated on:
 6. **The team must ship** → Requires ruthless scope discipline, AI-assisted development, and sustainable work pace
 
 *If any one of these is false, the product fails. Prioritize validation in this order.*
+
+---
+
+## Final Validation — Internal Consistency Check
+
+*Step 6 — Elicitation methods applied: Self-Consistency Validation (cross-section contradiction scan), Critique & Refine (gap analysis), Architecture Decision Records (assumption verification)*
+
+### Validation Methodology
+
+Systematic cross-referencing of all product brief sections to verify:
+1. No contradictions between vision, target users, success metrics, and risks
+2. The 3 aha moments are supported by defined features and measurable by defined metrics
+3. MVP scope is internally coherent — nothing referenced as "MVP" depends on "Post-MVP" features
+4. Regulatory positioning is consistent across all sections
+5. Revenue model assumptions align with user journey and metrics targets
+
+---
+
+### 1. Cross-Section Consistency Matrix
+
+| Check | Sections Compared | Result | Notes |
+|-------|-------------------|--------|-------|
+| Core loop definition | Vision ↔ Target Users ↔ Metrics | ✅ CONSISTENT | "Log → Earn → Invest → Learn → Repeat" is identically described in all three sections. WACLC metric directly measures loop completion. |
+| Persona engagement cadences | Target Users ↔ Metrics | ✅ CONSISTENT | Sofia (4+ days/week), Marcus (3+ sessions/week), Thomas (1+ visit/month) defined in both sections. Anti-metric correctly warns against undifferentiated DAU. |
+| 80-second onboarding | Vision ↔ User Journey ↔ Metrics | ✅ CONSISTENT | 6-step flow defined in Vision, mapped in User Journey, measured by "onboarding completion rate" in Metrics. First-pick design constraints align with Day 1 retention target (50%). |
+| Free vs Premium boundary | Vision ↔ Metrics ↔ Risks | ✅ CONSISTENT | Boundary table in Vision matches revenue projections in Metrics. Risk R16 (ProsperCoins meaningless) correctly identifies that premium gate must be encountered by week 2-3. |
+| Financial wellness positioning | Vision ↔ Risks ↔ Target Users | ✅ CONSISTENT | "Education, not advice" stated in Vision, codified in R1 (MiFID II) mitigations, and reflected in Fin's behavior constraints throughout Target Users. No section contradicts this. |
+| Dual companion model | Vision ↔ Target Users ↔ Risks | ✅ CONSISTENT | Single-service architecture with persona overlays defined in Vision, kill criteria defined in Target Users (>20% role confusion), risk R15 correctly rates residual as LOW due to pre-architected fallback. |
+| Denmark-first strategy | Vision ↔ Target Users ↔ Risks | ✅ CONSISTENT | Localization debt inventory in Target Users matches R3 (PSD2/PSD3) and R7 (Danish OCR) risk mitigations. Denmark validation criteria explicitly test EU transferability. |
+| Sprint 1 honest positioning | Vision ↔ Target Users ↔ Risks | ✅ CONSISTENT | Manual entry acknowledged as limitation in all sections. R17 correctly rates this as 🔴 P0. Sprint 1 retention targets (20% day-30) intentionally lower than post-MobilePay (30%). PDF upload bridge consistent across Vision and Target Users. |
+| Thomas monetization | Vision ↔ Target Users ↔ Metrics ↔ Risks | ✅ CONSISTENT | Family plan as primary revenue defined in Vision, Thomas session design in Target Users, family plan conversion tracked in Metrics (target: 15 → 100 → 350 → 1,400 subscribers over 4 quarters), Red Team scenario #3 correctly flags unvalidated hypothesis. Kill criterion (<30% WTP in interviews) present in both Target Users and Risks. |
+| Gamification modes | Vision ↔ Target Users ↔ Risks | ✅ CONSISTENT | Full/Lite/Off modes defined in Vision, mapped to personas (Sofia=Full, Marcus=Lite, Thomas=Off) in Target Users, R15 addresses confusion risk. "Off" mode clarification correctly notes AI companions are retained. |
+
+### 2. Aha Moment Support Verification
+
+Each aha moment must be: (a) enabled by a defined feature, (b) measurable by a defined metric, and (c) achievable within the stated timeline.
+
+#### Aha #1: Sofia's Spending Discovery (Month 1)
+> "I spend more on eating out than on my phone, rent, and Netflix combined."
+
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| Feature exists | ✅ | Goldie's insight interrupts, spending categorization, category comparison |
+| Requires sufficient data | ⚠️ CONDITIONAL | Needs ~2-3 weeks of consistent logging to have meaningful category comparisons. Sprint 1 (manual entry) makes this harder — may take 4+ weeks without auto-import |
+| Metric tracks it | ✅ | "First actionable insight delivered" tracked per user. Insight interrupt engagement rate in Metrics. |
+| Timeline realistic | ⚠️ CONDITIONAL | Month 1 with auto-import (Sprint 2+); may be Month 2 with manual-only (Sprint 1). Acceptable — Sprint 2 ships within 4 weeks of launch. |
+
+**Resolution:** Add explicit note that Aha #1 timeline is "Month 1 with MobilePay, Month 1-2 with manual entry." Cold-start insights (compare to national averages) bridge the gap but are less personal.
+
+#### Aha #2: Marcus's Compound Growth Epiphany (Month 1)
+> "If I'd invested that cancelled subscription money for 10 years, I'd have 72,000 kr."
+
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| Feature exists | ✅ | Fin's opportunity cost layer, compound growth projections, subscription audit gamification |
+| Requires sufficient data | ✅ | Works from day 1 — subscription audit via PDF upload gives immediate data for compound projections |
+| Metric tracks it | ✅ | Simulator engagement metrics, opportunity cost layer toggle rate, subscription audit completion |
+| Timeline realistic | ✅ | Can occur in first session if Marcus uploads a bank statement. |
+
+**No issues.** This is the strongest aha moment — achievable immediately and independently of auto-import.
+
+#### Aha #3: Thomas's Educational Proof (Month 2-3)
+> "My daughter just explained P/E ratios to me. She learned it from an app."
+
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| Feature exists | ✅ | Fin's learning tracks with visible progress, family dashboard showing learning milestones, "Challenge the Parent" quiz |
+| Requires Sofia's sustained engagement | ⚠️ DEPENDENCY | Thomas's aha depends entirely on Sofia's retention through Month 2-3. If Sofia churns at Month 1, this never happens. |
+| Metric tracks it | ✅ | Fin curriculum completion rates, family dashboard engagement, "Challenge the Parent" participation |
+| Timeline realistic | ⚠️ CONDITIONAL | Requires Sofia to complete beginner + intermediate Fin tracks (estimated 4-8 weeks of regular use). Realistic if Sofia retains. |
+
+**Resolution:** The dependency chain (Sofia retention → Thomas aha → Thomas payment) is explicitly documented in Target Users section. No contradiction — but this is the riskiest aha moment. Pre-MVP interviews with Thomas-archetype parents are critical.
+
+### 3. MVP Scope Coherence Audit
+
+Checking that nothing marked "MVP" depends on features marked "Post-MVP":
+
+| MVP Feature | Dependencies | All MVP? | Notes |
+|-------------|-------------|----------|-------|
+| Goldie conversations | LLM API, conversation UI | ✅ | |
+| Manual expense entry | Chat interface, category engine | ✅ | |
+| Receipt scanning | OCR service, confirmation UI | ✅ | |
+| ProsperCoins (database) | Earning rules, balance tracking | ✅ | |
+| Investment simulator | Market data API, virtual portfolio | ✅ | |
+| Fin's beginner curriculum | Content creation, lesson framework | ✅ | |
+| Daily Spending Power | Income + recurring expense tracking | ✅ | |
+| Streaks & streak freezes | Activity tracking, coin economy | ✅ | |
+| Onboarding segmentation | 3-option question, preference storage | ✅ | |
+| Weekly rotating leagues | ~30 user pools, scoring system | ⚠️ REVIEW | Requires 30+ users per league. At launch (target: 500 month 1), feasible. But week 1 with <30 total users = empty leagues. |
+| Bank statement PDF upload | PDF parsing, subscription detection | ✅ | |
+| Family dashboard | Learning progress API, family linking | ✅ | Defined as MVP for Thomas monetization |
+| Gamification modes (Full/Lite/Off) | Mode toggle, mode-specific UI rendering | ✅ | |
+
+**Issue found:** Weekly rotating leagues require minimum user density. 
+
+**Resolution:** Leagues activate at 100+ registered users (approximately week 2-3 at projected growth). Before that, show individual progress metrics only. This is a soft-launch consideration, not an architecture issue.
+
+### 4. Regulatory Positioning Consistency
+
+| Claim | Where Stated | Consistent? | Potential Issue |
+|-------|-------------|-------------|-----------------|
+| "Financial wellness education, NOT financial advice" | Executive Summary, Core Vision, Key Differentiators, Risks R1 | ✅ | |
+| "Fin never recommends specific stocks" | Core Vision, R1 mitigations | ⚠️ TENSION | Fin shows "3 real assets to buy" in the 80-second onboarding. While framed as "learn about" not "buy this," presenting a curated shortlist of named tickers with "why this is interesting right now" hooks borders on recommendation. |
+| ProsperCoins are database points (no securities) | Executive Summary, ProsperCoin Value Path | ✅ | |
+| NFTs are soulbound (no trading) | Executive Summary, MVP regulatory approach | ✅ | |
+| EU AI Act: educational positioning | R4 mitigations | ✅ | |
+
+**Issue found:** Tension between "never recommends" and "shows 3 assets with interest hooks."
+
+**Resolution:** Fin's first-pick presentation must use language like "Here are 3 assets many beginners learn about first" — framing as *curriculum choices*, not *investment picks*. The "why this is interesting right now" hook must be educational ("This company is in the news because...") not promotional ("This stock is up 40% — don't miss out"). Legal review of Fin's onboarding prompts is already in R1 mitigations. Flag this specific interaction for the pre-launch legal review.
+
+### 5. Revenue Model Stress Test
+
+| Assumption | Evidence | Confidence | Risk if Wrong |
+|------------|----------|------------|---------------|
+| Family plan at €15/month | Novel — no validated precedent | LOW | Entire primary revenue stream collapses. Fallback: direct premium at €10/month (proven model). |
+| 15 family subscribers in Q1 | Requires Thomas discovery + Sofia retention + WTP | LOW-MEDIUM | Revenue start delayed. Not fatal — MVP costs are minimal (Vercel/Supabase free tiers). |
+| 8% combined free-to-paid conversion | Above fintech average (2-5%), at Duolingo level (7%) | MEDIUM | If 4% (fintech average), revenue projections halve. Still viable at reduced scale. |
+| €50-100/month AI costs at 500 users | Based on 3-tier routing + caching | MEDIUM-HIGH | If 2x higher (€200/month), still manageable. Concern starts at 5,000+ users. |
+| Zero paid marketing in Year 1 | Viral loop + organic channels | LOW-MEDIUM | If organic fails, need €5-10K marketing budget by month 3. Source: personal investment or grant. |
+
+**Overall revenue confidence: LOW-MEDIUM.** This is acceptable for a pre-seed product — the goal is validation, not profitability. The product can operate on Vercel/Supabase free tiers with minimal AI costs (<€200/month) for the first 6 months. Revenue model validation happens in parallel with product validation.
+
+### 6. Assumption Register (Unvalidated Hypotheses)
+
+These are the key assumptions that the product brief treats as true but have not been empirically validated. Each must be tested during pre-MVP interviews or Sprint 1 launch:
+
+| # | Assumption | How to Test | When | Kill Criterion |
+|---|-----------|-------------|------|----------------|
+| A1 | Budget-first and invest-first are distinct archetypes | Pre-MVP interviews: do they converge on same behaviors by week 2? | Pre-MVP | If >80% converge, simplify to 2-option onboarding |
+| A2 | Parents will pay for children's financial education | Interview 5-8 Thomas-archetype parents on WTP | Pre-MVP | <30% WTP at €10-15/month → pivot revenue model |
+| A3 | The Goldie→Fin handoff feels natural | Usability testing with 5+ users | Pre-launch | <80% continue into simulator OR >10% confusion → activate single-companion fallback |
+| A4 | ProsperCoins motivate expense logging beyond week 2 | Sprint 1 usage data: coin earning rate vs logging frequency at day 14+ | Sprint 1 | If correlation between coins earned and logging frequency drops below 0.3 by week 3 |
+| A5 | Investment simulator creates daily return habit | Sprint 1 data: portfolio check frequency | Sprint 1 | <3 portfolio checks/week average by week 2 → simulator isn't a pull mechanism |
+| A6 | Manual entry is tolerable for Sprint 1 | Sprint 1 retention: day-30 > 15% | Sprint 1 | Day-30 retention <10% → core loop doesn't work even with motivated early adopters |
+| A7 | 80-second onboarding creates "aha" moment | Sprint 1 data: onboarding completion rate + day-1 return | Sprint 1 | <60% onboarding completion OR <35% day-1 return → onboarding is broken |
+| A8 | Danish Gen Z will share financial learning achievements | Sprint 1 data: share action rate on milestones | Sprint 1 | <5% share rate → viral loop is broken, need paid acquisition strategy |
+
+### 7. Document Quality Scorecard
+
+| Dimension | Score | Rationale |
+|-----------|-------|-----------|
+| **Clarity of vision** | 9/10 | Exceptionally clear core loop, positioning, and differentiators. One-liner is strong. |
+| **User understanding** | 9/10 | Deep persona work with behavioral archetypes, not just demographics. Failure modes and friction points thoroughly analyzed. |
+| **Metrics rigor** | 8/10 | WACLC is a strong North Star. Persona-specific KPIs, anti-metrics, and pre-mortem on metric failure are excellent. Revenue projections could use sensitivity analysis. |
+| **Risk coverage** | 9/10 | 17 risks across 5 categories with heat map. Red Team scenarios are realistic. First Principles decomposition adds depth. R12 (small team) and R17 (manual entry) correctly flagged as 🔴 P0. |
+| **Internal consistency** | 8/10 | One tension found (Fin's asset presentation vs "never recommends") — resolved with language guidelines. League activation threshold needed — resolved with soft-launch gating. |
+| **Actionability** | 8/10 | Clear sprint order, explicit kill criteria, pre-MVP interview requirements defined. Could use a consolidated "next actions" section. |
+| **Regulatory soundness** | 8/10 | Strong positioning with specific mitigations. Pre-launch legal review budgeted. EU AI Act proactively addressed. |
+| **Overall** | **8.4/10** | Production-quality product brief ready for PRD phase. Key pre-requisite: pre-MVP user interviews (5-8 per archetype) before PRD finalization. |
+
+### 8. Consolidated Next Actions (Bridge to PRD)
+
+Before moving to PRD generation, these actions should be completed or scheduled:
+
+| Priority | Action | Owner | Timeline |
+|----------|--------|-------|----------|
+| 🔴 P0 | Schedule pre-MVP user interviews (5-8 Sofia, 5-8 Marcus, 5-8 Thomas archetype) | Vadim + Nikolas | Before PRD finalization |
+| 🔴 P0 | Define Sprint 1 exact scope — draw the line on what ships in v0.1 | Vadim | PRD Phase |
+| 🟠 P1 | Legal review: Fin's onboarding asset presentation language | Vadim | Pre-launch |
+| 🟠 P1 | Identify Danish fintech lawyer for pre-launch regulatory review | Vadim | Within 4 weeks |
+| 🟡 P2 | Research Nordigen API specifics for Sprint 3-4 planning | Tech Lead | During architecture phase |
+| 🟡 P2 | Build initial Danish receipt training dataset (top 20 retailers) | Nikolas | During development |
+
+### Validation Verdict
+
+**✅ PRODUCT BRIEF: VALIDATED — Ready for PRD Phase**
+
+The product brief is internally consistent, comprehensive, and honest about its assumptions and risks. The two P0 risks (small team capacity, manual entry retention) are acknowledged without false optimism. The revenue model is correctly flagged as low-confidence with viable fallbacks defined.
+
+**Key strength:** The brief doesn't just describe what to build — it describes how to know if it's working (metrics), how it could fail (risks + red team), and what must be true for success (first principles). This gives the PRD phase a solid foundation to build on.
+
+**Key caveat:** The product brief treats pre-MVP user interviews as required before PRD finalization. The PRD should be generated as a draft, then refined after interview findings. Do not treat the PRD as final without user validation of assumptions A1-A3.
+
+---
+
+*Product Brief completed: 2026-03-15*
+*Steps: 1 (Research) ✅ → 2 (Vision) ✅ → 3 (Target Users) ✅ → 4 (Success Metrics) ✅ → 5 (Risks) ✅ → 6 (Final Validation) ✅*
+*Elicitation methods applied across all steps: 22+ distinct methods*
+*Ready for: PRD Phase*
