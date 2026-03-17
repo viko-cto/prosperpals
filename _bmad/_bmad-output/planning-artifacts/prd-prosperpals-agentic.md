@@ -1,6 +1,7 @@
 ---
 stepsCompleted:
   - 1-prd-foundation
+  - 2-prd-feature-detail
 inputDocuments:
   - _bmad/_bmad-output/planning-artifacts/product-brief-prosperpals-agentic-2026-03-07.md
   - /home/node/clawd/research/prosperpals/bmad-session-notes-product-brief.md
@@ -8,12 +9,12 @@ inputDocuments:
   - /home/node/clawd/research/prosperpals/2026-03-17.md
 workflowType: 'prd'
 phase: 'prd'
-step: 1
-stepName: 'foundation'
+step: 2
+stepName: 'feature-detail'
 elicitationMethods:
-  - first-principles
-  - pre-mortem
-  - cross-functional-war-room
+  - comparative-analysis-matrix
+  - red-team-vs-blue-team
+  - critique-and-refine
 status: 'draft-in-progress'
 ---
 
@@ -23,7 +24,7 @@ status: 'draft-in-progress'
 **Owner:** Nikolas / CopenDapp Labs  
 **Prepared by:** Viko  
 **Date:** 2026-03-17  
-**Status:** Draft — Step 1 foundation complete
+**Status:** Draft — Steps 1-2 complete
 
 ## Executive Summary
 
@@ -291,3 +292,252 @@ This foundation draft was deliberately narrowed and strengthened through three e
 - **First Principles:** cut feature sprawl back to the smallest loop that creates financial clarity and investing motivation.
 - **Pre-mortem:** hardened around likely launch failures: onboarding friction, sync dependency, companion confusion, empty family states, and meaningless gamification.
 - **Cross-Functional War Room:** reconciled product, design, compliance, and growth needs into one set of guardrails so later architecture and epic-writing do not drift into contradiction.
+
+## Step 2 Elicitation Outcomes
+
+### Comparative Analysis Matrix
+
+| Design Question | Common Market Pattern | ProsperPals Decision |
+|---|---|---|
+| How do users get value in the first session? | Force account-linking or hide value behind a paywall/trial wall | Deliver value with manual logging, receipt scan, or starter ProsperCoins before any bank connection is required |
+| How should AI feel? | One generic chatbot or a gimmicky, snarky assistant | Use Goldie for daily money confidence and Fin for investing/forecasting, with one shared context and explicit handoffs |
+| What should gamification reward? | Time in app, raw transaction count, or spending volume | Reward awareness quality, reflection, consistency, and learning progress |
+| How should investing be introduced? | Drop users into complex tickers, watchlists, and trading mechanics | Start with three recognizable assets, simple long-only simulation, and plain-language explanations |
+| What makes family premium worth paying for? | Shared household ledger or surveillance-style visibility | Shared learning progress, milestone visibility, and co-present challenges while keeping private finances private by default |
+| What drives retention? | Nagging reminders and category housekeeping | Pair a passive hook (Daily Spending Power + portfolio movement) with an active hook (ProsperCoins + streaks + learning) |
+
+### Red Team vs Blue Team
+
+| Red Team Concern | Blue Team Response |
+|---|---|
+| Users will spam tiny or duplicate logs to farm ProsperCoins | Add quality scoring, duplicate detection, validation states, and daily/weekly earn caps; rewards are tied to awareness behaviors, not spend amount |
+| Two companions will confuse users | Goldie is always the default, Fin appears only through explicit handoff or direct investment intent, and the active companion is always visible |
+| Off mode turns ProsperPals into a generic dashboard | Off mode removes cosmetic competition only; it keeps Goldie, Fin, simulator learning, and core insights |
+| Family premium becomes covert financial surveillance | Family view shares milestones, recaps, and challenge outcomes; transaction detail and safe-to-spend remain private unless explicitly shared |
+| The simulator could be interpreted as financial advice | Keep it virtual-only, label data freshness and source, avoid suitability language, and explain outcomes as education rather than recommendations |
+| Manual-entry MVP will feel like homework | Support conversational capture, receipt scanning, zero-spend acknowledgement, and one-time PDF/CSV audit bridges before MobilePay/PSD2 automation arrives |
+
+### Critique & Refine Decisions
+
+- Fin should not interrupt basic budgeting. He appears when the user asks to invest, runs a scenario, or opens a learning/investing surface.
+- ProsperCoins must unlock capability and motivation, not just vanity. Core coin sinks in MVP are simulator trades, streak protection, and selected advanced learning actions.
+- Thomas conversion should begin with shareable learning artifacts and a family preview, not cold invite spam.
+- Market outcomes must always be translated into human meaning: what changed, why it matters, and what the user can learn from it.
+
+## Detailed Feature Specifications
+
+### Feature Area 1 — Goldie: Daily Financial Wellness Companion
+
+**Purpose:** Give users a calm, shame-free daily operating layer for money. Goldie should answer: *What happened, what matters, and what is safe to do next?*
+
+#### MVP behavior
+- Goldie is the default entry point for every new user.
+- Goldie supports conversational expense capture, receipt capture, and lightweight manual structure.
+- Goldie produces a forward-looking Daily Spending Power view with a mood label and explanation.
+- Goldie detects recurring obligations and spend drift when data quality allows.
+- Goldie anchors the emotional tone of the product: encouraging, direct, never scolding.
+
+#### Core flows
+1. **Fast log:** user types or says “Spent 50 kr on lunch,” Goldie parses, confirms only if needed, awards ProsperCoins, and updates Daily Spending Power.
+2. **Receipt flow:** user uploads a photo, Goldie extracts merchant, amount, date, and likely category with confidence labels.
+3. **Morning check-in:** user sees Daily Spending Power, mood label, upcoming bills, and one suggested next action.
+4. **Recovery mode:** if the user overspends, Goldie reframes into recovery options for the next days rather than guilt language.
+5. **Sprint 1 audit bridge:** Goldie can guide a one-time statement/PDF/CSV upload to identify subscriptions and recurring leakage before auto-import is live.
+
+#### Detailed requirements
+- **FR-033** Users can log money events through natural language text, voice-to-text input, structured quick actions, or receipt photo.
+- **FR-034** Goldie shall extract amount, merchant, date, tentative category, and confidence score from receipt and free-text inputs when possible.
+- **FR-035** Goldie shall ask the minimum necessary follow-up question only when confidence is low or the missing field would materially change the insight shown.
+- **FR-036** Goldie shall present a Daily Spending Power number plus a plain-language mood label (for example: tight, comfortable, flush) and explain the inputs used.
+- **FR-037** Users with irregular income can switch Goldie from fixed-pay-cycle planning to rolling-average planning without losing history.
+- **FR-038** Goldie shall identify likely recurring obligations and forgotten subscriptions from entered, scanned, uploaded, or connected transaction data when evidence is sufficient.
+- **FR-039** Users can mark a day as a zero-spend day and keep streak continuity when they actively acknowledge it.
+- **FR-040** Goldie shall support a one-time PDF/CSV-style spending audit in Sprint 1 to surface recurring charges and category patterns before bank automation exists.
+- **FR-041** Goldie shall offer recovery guidance after overspend events and must avoid shame-based or moralizing wording.
+
+#### Explicitly out of scope for MVP
+- Autonomous bill payment or account transfers
+- Credit-product or loan recommendations
+- Full bookkeeping/accounting workflows
+
+### Feature Area 2 — Fin: Investment Education and Scenario Companion
+
+**Purpose:** Turn curiosity about investing into structured learning without crossing into regulated advice. Fin should answer: *What happened in my virtual portfolio, why did it happen, and what can I learn?*
+
+#### MVP behavior
+- Fin appears only after explicit handoff from Goldie or direct user navigation into investing/learning.
+- Fin offers a clean first-pick experience with recognizable assets and one-line hooks.
+- Fin calibrates explanation depth over time.
+- Fin translates simulated market movement into educational meaning and real-life trade-off framing.
+
+#### Handoff protocol
+1. Goldie introduces Fin by name and states the reason for the handoff.
+2. Fin opens with one sentence of context referencing the user’s just-completed action.
+3. The UI clearly indicates which companion is active.
+4. The user can return to Goldie at any point without losing conversational context.
+
+#### Detailed requirements
+- **FR-042** Goldie shall explicitly introduce Fin before the first investing or scenario-planning interaction and provide the user a clear reason for the handoff.
+- **FR-043** Fin’s first-pick screen shall show three recognizable assets with a one-line explanation of why each is currently interesting, without implying a recommendation.
+- **FR-044** The MVP simulator shall support long-only, virtual-only, fractional purchases funded solely by ProsperCoins.
+- **FR-045** Fin shall adapt explanation depth across at least beginner, intermediate, and advanced levels based on user behavior and explicit feedback.
+- **FR-046** Fin shall translate portfolio moves into understandable daily-life equivalents or opportunity-cost framing when helpful.
+- **FR-047** Users can ask Fin “what if” questions about saving, redirecting spend, or changing virtual allocations and receive scenario estimates labeled as educational.
+- **FR-048** Fin shall not present suitability language, certainty claims, or individualized real-world investment recommendations.
+- **FR-049** Fin shall tie learning modules and explanations to actual user behavior, recent portfolio changes, or recently logged spending patterns where relevant.
+
+#### Explicitly out of scope for MVP
+- Real-money trading or brokerage execution
+- Margin, leverage, options, shorting, or copy trading
+- Portfolio performance claims framed as likely real-world outcomes
+
+### Feature Area 3 — ProsperCoins Economy
+
+**Purpose:** Reward attention, consistency, and learning in a way that makes the core loop habit-forming without incentivizing harmful behavior.
+
+#### Economy design principles
+- Users earn coins for **awareness quality**, not for spending more money.
+- Coins are a motivational and educational utility, not a cash-equivalent asset.
+- The economy must feel meaningful by unlocking actions and progress, not just a score label.
+
+#### MVP earn and spend model
+
+| Action Type | Reward Logic | Guardrail |
+|---|---|---|
+| Complete first onboarding loop | one-time starter award | granted once per account |
+| Log a new valid spend/income event | small-to-medium reward based on completeness and novelty | duplicates or spam entries reduced or blocked |
+| Validate a receipt parse | reward for confirming a useful correction | only if the review meaningfully improves data quality |
+| Zero-spend acknowledgement | once-per-day reward | requires explicit confirmation, not passive inactivity |
+| Weekly reflection / learning completion | medium reward | capped to prevent loop abuse |
+| Family challenge / quiz participation | reward for genuine participation | private data never required |
+
+Coins can be spent on:
+- virtual simulator purchases
+- streak protection / recovery mechanics
+- selected advanced learning labs or challenge entries
+
+#### Detailed requirements
+- **FR-050** ProsperCoins shall be awarded according to rules based on awareness actions, reflection, validation, and learning rather than raw monetary spend volume.
+- **FR-051** Every ProsperCoin award shall show the user why it was earned in plain language.
+- **FR-052** The system shall apply daily and weekly anti-abuse controls, including duplicate detection, velocity checks, and once-only rewards where appropriate.
+- **FR-053** Low-confidence or obviously duplicate entries shall not receive full ProsperCoin rewards until the user validates them.
+- **FR-054** Users can spend ProsperCoins on virtual trades, streak protection, and approved educational/gameplay sinks in MVP.
+- **FR-055** ProsperCoins in MVP shall not be withdrawable, transferable, or redeemable for cash.
+- **FR-056** The underlying ledger shall support future non-cash reward catalog expansion without invalidating existing balances or event history.
+
+### Feature Area 4 — Investment Simulator
+
+**Purpose:** Give users a credible, low-friction sandbox for learning how markets move, how choices compound, and why investing behavior matters.
+
+#### MVP behavior
+- The simulator uses real market data with clearly labeled freshness.
+- Users start with a curated, recognizable asset set rather than a broad searchable market universe.
+- The product emphasizes learning and reflection over high-frequency trading.
+
+#### Simulator rules
+- Curated asset list at launch: recognizable equities, broad-market exposure, and major crypto assets only.
+- Simple order model: buy/sell virtual units with ProsperCoins; no advanced order types in MVP.
+- Daily movement explanation from Fin is more important than chart depth.
+- Free-tier usage is intentionally constrained to support deliberate learning.
+
+#### Detailed requirements
+- **FR-057** The simulator shall present a curated launch universe of recognizable assets and expand only when the educational case is clear.
+- **FR-058** Every portfolio screen shall show the timestamp and source freshness of market data used for educational simulation.
+- **FR-059** Users can review portfolio value, position-level change, and simple gain/loss history in ProsperCoin terms and plain-language summaries.
+- **FR-060** Free-tier users shall have a limited number of simulator trades per day to preserve deliberate learning; premium can expand limits later without changing core rules.
+- **FR-061** The MVP shall not include leverage, margin, options, shorting, copy trading, or social signal mirroring.
+- **FR-062** Fin shall generate a short learning card when a material portfolio move occurs, explaining what moved and why it matters.
+- **FR-063** The simulator shall clearly distinguish market-closed behavior, delayed pricing, and any stale-data state so users do not mistake it for live execution.
+
+### Feature Area 5 — Family and Shared Learning Flows
+
+**Purpose:** Create a monetizable family experience built around encouragement and financial literacy transfer, not surveillance.
+
+#### MVP behavior
+- Family premium is anchored in learning visibility, weekly recap, and co-present challenges.
+- Shareable artifacts and previews should convert Thomas-like buyers before a second household member fully signs up.
+- Private spending data stays private unless a user intentionally expands visibility.
+
+#### Core family journeys
+1. **Share-first conversion:** Sofia shares a milestone or simulator win card; Thomas opens a family preview explaining what the paid plan unlocks.
+2. **Weekly recap:** family members review streaks, lessons, and challenge outcomes together, ideally in a co-present moment.
+3. **Challenge the Parent:** light competitive learning activity that is fun in real time without exposing sensitive numbers.
+
+#### Detailed requirements
+- **FR-064** Users can generate share templates for milestones, lesson completions, streaks, and simulator highlights without exposing private budget or transaction data.
+- **FR-065** The family model shall support at least two roles in MVP: sponsor/parent and learner/member, with clear permissions.
+- **FR-066** The product shall provide a family preview experience with safe sample data before invite acceptance or purchase.
+- **FR-067** Weekly family recap shall prioritize learning progress, consistency, and challenge outcomes over raw financial totals.
+- **FR-068** Transaction-level spending data, income, safe-to-spend values, and budget shortfalls shall remain private by default in family contexts.
+- **FR-069** The MVP shall support at least one co-present challenge format, such as quiz or prediction play, that works even if only one member uses the product daily.
+- **FR-070** Family invitations shall use deep-linked previews and shareable context rather than aggressive in-product invite spam.
+
+### Feature Area 6 — Gamification System and Mode Controls
+
+**Purpose:** Make consistent financial behavior rewarding without making the product childish, noisy, or manipulative.
+
+#### Mode matrix
+
+| System | Full | Lite | Off |
+|---|---|---|---|
+| ProsperCoins balance and earning | Visible | Visible | Visible |
+| Streaks and milestone tracking | Visible | Visible | Minimal / quiet |
+| Leagues / clans / public competition | Visible | Hidden | Hidden |
+| Celebration intensity | High | Medium | Low |
+| Goldie + Fin companion system | On | On | On |
+| Investment simulator | On | On | On |
+| Share templates | Optional | Optional | Optional |
+
+#### Prosperity progression
+- **Prosperity Keys** should represent skill and consistency milestones, not absolute wealth.
+- Achievements should celebrate awareness, reflection, and resilience (for example: first weekly review, first recovery after overspend, first month of consistency).
+- Streak protection prevents one bad day from collapsing long-term behavior change.
+
+#### Detailed requirements
+- **FR-071** Users can choose Full, Lite, or Off mode during onboarding and change modes later without losing data or progress.
+- **FR-072** Off mode shall retain the core loop, Goldie, Fin, simulator learning, and core insights while removing most competitive and cosmetic layers.
+- **FR-073** League, leaderboard, and challenge ranking systems shall use normalized progress measures rather than absolute wealth or income.
+- **FR-074** Achievements and Prosperity Keys shall be tied to meaningful behaviors and learning milestones rather than raw spend count or app-open count.
+- **FR-075** Users can reduce celebration intensity, motion, and social visibility for accessibility and preference reasons.
+- **FR-076** Recovery behaviors, zero-spend awareness, and steady consistency shall contribute to progression so the system does not reward unhealthy spending activity.
+
+## Canonical Feature Journeys
+
+### Budget-First first session
+1. User selects budget-first intent.
+2. Goldie asks for one recent expense.
+3. User logs via text or receipt.
+4. Goldie updates Daily Spending Power and awards ProsperCoins.
+5. Goldie invites an optional handoff to Fin for the first virtual investment.
+6. Fin explains the result tomorrow in plain language.
+
+### Invest-First first session
+1. User selects invest-first intent.
+2. Goldie grants starter ProsperCoins and frames the simulator as education.
+3. Fin appears through explicit handoff with three recognizable assets.
+4. User makes first virtual purchase.
+5. Goldie reconnects the experience to real-world tracking as the way to earn more learning power.
+
+### Teach-Family conversion flow
+1. Learner shares a milestone or simulator card.
+2. Sponsor opens a preview with sample weekly recap and family learning value.
+3. Sponsor starts premium trial or purchase.
+4. Family uses recap and challenge surfaces without exposing private financial detail.
+
+## Feature Sequencing and Dependency Notes
+
+| Area | Sprint 1 | Sprint 2 | Sprint 3-4 |
+|---|---|---|---|
+| Transaction capture | manual entry, receipt scan, PDF/CSV bridge | MobilePay import | PSD2/open banking expansion |
+| Goldie insight quality | user-entered + upload-derived | stronger recurring-spend detection | higher-confidence full cash-flow view |
+| Fin context | simulator + manual behavior links | MobilePay-informed trade-off insights | PSD2-informed forecasting |
+| Subscription detection | upload/manual based | MobilePay-informed | PSD2/open banking informed |
+| Family premium | share templates + weekly recap + challenges | richer progress data | broader household workflows |
+
+## Step 2 Hardening Summary
+
+This feature-detail step was shaped by three serious elicitation methods:
+- **Comparative Analysis Matrix:** identified where ProsperPals must deliberately diverge from YNAB, Monarch, Cleo, and generic investing apps — especially on first-session value, tone, and family monetization.
+- **Red Team vs Blue Team:** hardened the design against coin farming, companion confusion, family surveillance, advice drift, and manual-entry fatigue.
+- **Critique & Refine:** tightened the feature set around the real differentiator — the Earn-to-Learn loop — and removed vague or ornamental behavior that would dilute the product.
+
