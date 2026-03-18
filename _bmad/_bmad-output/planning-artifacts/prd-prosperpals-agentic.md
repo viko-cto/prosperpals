@@ -2,6 +2,7 @@
 stepsCompleted:
   - 1-prd-foundation
   - 2-prd-feature-detail
+  - 3-prd-data-and-interface-contracts
 inputDocuments:
   - _bmad/_bmad-output/planning-artifacts/product-brief-prosperpals-agentic-2026-03-07.md
   - /home/node/clawd/research/prosperpals/bmad-session-notes-product-brief.md
@@ -9,12 +10,12 @@ inputDocuments:
   - /home/node/clawd/research/prosperpals/2026-03-17.md
 workflowType: 'prd'
 phase: 'prd'
-step: 2
-stepName: 'feature-detail'
+step: 3
+stepName: 'data-and-interface-contracts'
 elicitationMethods:
-  - comparative-analysis-matrix
-  - red-team-vs-blue-team
-  - critique-and-refine
+  - architecture-decision-records
+  - cross-functional-war-room
+  - self-consistency-validation
 status: 'draft-in-progress'
 ---
 
@@ -24,7 +25,7 @@ status: 'draft-in-progress'
 **Owner:** Nikolas / CopenDapp Labs  
 **Prepared by:** Viko  
 **Date:** 2026-03-17  
-**Status:** Draft — Steps 1-2 complete
+**Status:** Draft — Steps 1-3 complete
 
 ## Executive Summary
 
@@ -540,4 +541,266 @@ This feature-detail step was shaped by three serious elicitation methods:
 - **Comparative Analysis Matrix:** identified where ProsperPals must deliberately diverge from YNAB, Monarch, Cleo, and generic investing apps — especially on first-session value, tone, and family monetization.
 - **Red Team vs Blue Team:** hardened the design against coin farming, companion confusion, family surveillance, advice drift, and manual-entry fatigue.
 - **Critique & Refine:** tightened the feature set around the real differentiator — the Earn-to-Learn loop — and removed vague or ornamental behavior that would dilute the product.
+
+## Data and Interface Contracts
+
+This section defines the canonical product contracts that engineering, design, analytics, and compliance can build against without re-arguing the meaning of a user, money event, reward, trade, or share. The goal is to keep Sprint 1 manual entry, Sprint 2 MobilePay, and Sprint 3-4 PSD2/open banking on one continuous data model instead of three different systems stitched together later.
+
+### Contract Design Principles
+
+- **One canonical financial record model:** every money input path normalizes into the same `MoneyEvent` contract.
+- **Facts first, narrative second:** deterministic services calculate balances, streaks, prices, and rewards; Goldie and Fin explain those facts but do not invent them.
+- **Source traceability everywhere:** every meaningful user-facing number must be traceable to raw source records, confidence state, and freshness.
+- **Privacy-separated read models:** household/family sharing can only read from explicitly share-safe projections, never directly from private financial tables.
+- **Launch-stage continuity:** manual, receipt, PDF/CSV, MobilePay, and PSD2 are sources, not product forks.
+- **Multi-currency ready from day 1:** Denmark-first UI may default to DKK, but the underlying model must not hardcode one currency.
+- **Append-only ledgers for trust-critical systems:** ProsperCoins, simulator trades, and sensitive audit events must be reconstructable from immutable event history.
+
+### Canonical Domain Entities
+
+#### Identity, Preferences, and Household Context
+
+| Entity | Purpose | Required Fields | Notes |
+|---|---|---|---|
+| `UserAccount` | Core user identity and lifecycle | `id`, `email/phone`, `displayName`, `countryCode`, `baseCurrency`, `createdAt`, `status` | Base currency defaults to DKK for Denmark launch but remains editable. |
+| `UserProfile` | Behavioral configuration and onboarding choices | `userId`, `primaryIntent`, `gamificationMode`, `finLevel`, `activeCompanionPresentation`, `locale`, `timezone` | `primaryIntent` is an onboarding hint, not an access restriction. |
+| `Household` | Shared context for family or future couple scenarios | `id`, `name`, `planType`, `createdBy`, `status` | MVP supports family preview and parent/learner roles; architecture must not assume single-user forever. |
+| `HouseholdMember` | Membership and role assignment | `householdId`, `userId`, `role`, `joinedAt`, `status` | Roles start with `sponsor` and `learner/member`; permissions are explicit. |
+| `ConsentGrant` | Granular share/review permissions | `id`, `grantorUserId`, `granteeScope`, `dataCategory`, `accessLevel`, `createdAt`, `revokedAt` | Required for any household sharing beyond share-safe learning artifacts. |
+| `NotificationPreference` | Delivery and privacy settings | `userId`, `channel`, `enabled`, `privacyMode`, `quietHours` | Prevents sensitive financial detail from leaking to lock screens. |
+
+#### Financial Capture and Planning Entities
+
+| Entity | Purpose | Required Fields | Notes |
+|---|---|---|---|
+| `MoneyEvent` | Canonical financial record for spending, income, refund, transfer-like events | `id`, `userId`, `eventType`, `amountMinor`, `currency`, `occurredAt`, `merchantLabel`, `categoryId`, `sourceType`, `verificationState`, `confidenceScore`, `importJobId?`, `artifactId?`, `createdAt` | The single source-of-truth contract for manual entry, OCR, PDF/CSV, MobilePay, and PSD2-normalized records. |
+| `MoneyEventRevision` | User corrections or system reclassification history | `id`, `moneyEventId`, `changedFields`, `oldValue`, `newValue`, `changedBy`, `changedAt`, `reasonCode` | Preserves trust when categories or amounts are corrected. |
+| `Artifact` | Uploaded receipt, PDF statement, CSV, or image metadata | `id`, `userId`, `artifactType`, `storagePath`, `uploadedAt`, `parseStatus`, `hash`, `pageCount?` | Stores document provenance without embedding parse results into the file object. |
+| `ParsedCandidate` | Machine-generated extraction candidates awaiting review/posting | `id`, `artifactId`, `candidateType`, `payloadJson`, `confidenceScore`, `reviewStatus` | Required for low-confidence OCR and bank-statement bridge flows. |
+| `ImportConnection` | External source connection metadata | `id`, `userId`, `providerType`, `providerAccountRef`, `status`, `lastSyncAt`, `cursor`, `permissionsJson` | Provider-agnostic wrapper for MobilePay and PSD2 connectors. |
+| `ImportJob` | Individual sync or batch import run | `id`, `connectionId?`, `sourceType`, `startedAt`, `completedAt`, `status`, `dedupeSummary`, `errorCode?` | Enables replay, reconciliation, and staged rollouts. |
+| `RecurringPattern` | Detected recurring obligations or subscriptions | `id`, `userId`, `merchantFingerprint`, `typicalAmountMinor`, `cadence`, `confidenceScore`, `status`, `lastMatchedAt` | Derived model, never the raw source of truth. |
+| `PlanningProfile` | Budgeting assumptions and pay-cycle logic | `userId`, `planningMode`, `payCycleAnchor`, `rollingWindowDays`, `incomeCadence`, `lastUpdatedAt` | Supports fixed monthly and irregular-income planning. |
+| `SpendingPowerSnapshot` | Materialized daily planning view | `id`, `userId`, `snapshotDate`, `safeToSpendMinor`, `currency`, `moodLabel`, `inputWindowJson`, `calculationVersion`, `generatedAt` | Cached read model for the passive daily hook. |
+
+#### ProsperCoins, Progression, and Engagement Entities
+
+| Entity | Purpose | Required Fields | Notes |
+|---|---|---|---|
+| `ProsperCoinLedgerEvent` | Append-only ProsperCoin balance history | `id`, `userId`, `eventKind`, `deltaCoins`, `reasonCode`, `referenceType`, `referenceId`, `createdAt`, `idempotencyKey` | Balance is derived, never hand-edited. |
+| `ProsperCoinBalanceView` | Fast current balance read model | `userId`, `availableCoins`, `pendingCoins`, `lifetimeEarned`, `lastCalculatedAt` | Rebuildable from the ledger. |
+| `StreakState` | Current streak and freeze status | `userId`, `streakDays`, `lastQualifiedDate`, `freezeCount`, `updatedAt` | Derived from qualifying actions and freeze usage. |
+| `AchievementProgress` | Skill and milestone progression | `id`, `userId`, `achievementCode`, `progress`, `status`, `awardedAt?` | Must represent behavior/learning, not wealth. |
+| `LeagueSeasonMembership` | Optional competitive grouping | `id`, `userId`, `seasonId`, `leagueTier`, `scoreNormalized`, `status` | Hidden in Lite/Off but data model remains compatible. |
+
+#### Simulator, Market Data, and Learning Entities
+
+| Entity | Purpose | Required Fields | Notes |
+|---|---|---|---|
+| `AssetCatalog` | Curated simulator asset universe | `assetId`, `symbol`, `displayName`, `assetType`, `region`, `launchStatus`, `educationTag` | MVP uses recognizable equities, broad exposure, and major crypto only. |
+| `MarketPriceSnapshot` | Immutable price point used for display or trade | `id`, `assetId`, `priceMinor`, `currency`, `capturedAt`, `provider`, `delayClass`, `freshnessSeconds` | Freshness must be surfaced in-product. |
+| `VirtualPortfolio` | User’s simulator portfolio shell | `id`, `userId`, `baseCurrency`, `createdAt`, `status` | One active portfolio per user in MVP is acceptable, but model should not prevent future themed portfolios. |
+| `VirtualPosition` | Current holdings read model | `portfolioId`, `assetId`, `units`, `avgCostCoins`, `marketValueCoins`, `updatedAt` | Derived from executed trades plus current price snapshots. |
+| `VirtualOrder` | User trade intent | `id`, `portfolioId`, `assetId`, `side`, `requestedUnits`, `quotedPriceSnapshotId`, `quotedCostCoins`, `submittedAt`, `status` | Supports review/confirmation before execution when needed. |
+| `VirtualTradeExecution` | Immutable executed trade ledger | `id`, `orderId`, `portfolioId`, `assetId`, `units`, `executionPriceSnapshotId`, `coinsDebited`, `executedAt` | Critical for auditability and replay. |
+| `LearningTrack` | Structured education curriculum | `trackId`, `title`, `level`, `topic`, `status` | Enables beginner/intermediate/advanced progression. |
+| `LearningProgress` | User-specific lesson progression | `userId`, `trackId`, `lessonId`, `state`, `score?`, `completedAt?` | Private by default; only milestone-safe projections are shareable. |
+| `ScenarioEstimate` | What-if modeling output | `id`, `userId`, `scenarioType`, `inputsJson`, `resultJson`, `assumptionsJson`, `generatedAt`, `label` | Explicitly educational, not advisory. |
+
+#### Conversation, Insight, and Sharing Entities
+
+| Entity | Purpose | Required Fields | Notes |
+|---|---|---|---|
+| `ConversationThread` | Shared context between Goldie/Fin and the user | `id`, `userId`, `activePersona`, `contextVersion`, `createdAt`, `updatedAt` | One thread with persona overlays preserves continuity and fallback-to-one-companion capability. |
+| `ConversationMessage` | Individual turn in the conversation | `id`, `threadId`, `authorType`, `personaTag`, `messageType`, `body`, `createdAt`, `factBundleId?` | Persona tag records Goldie vs Fin without splitting history. |
+| `InsightRecord` | Generated financial or educational insight | `id`, `userId`, `insightType`, `factBundleJson`, `explanationMessageId`, `confidenceBand`, `createdAt`, `dismissedAt?` | Every insight must trace back to deterministic inputs. |
+| `ExplanationFeedback` | User calibration feedback for AI outputs | `id`, `messageId`, `feedbackType`, `topic`, `createdAt` | Used to tune depth and tone over time. |
+| `ShareArtifact` | Social/share-safe card or preview | `id`, `userId`, `artifactType`, `projectionJson`, `visibilityScope`, `createdAt`, `expiresAt?` | Must not contain private financial facts. |
+| `WeeklyRecap` | Family-safe summary artifact | `id`, `userId`, `householdId?`, `summaryPeriod`, `summaryJson`, `visibilityLevel`, `generatedAt` | Reads from safe projections only. |
+| `FamilyChallenge` | Co-present learning activity | `id`, `householdId`, `challengeType`, `rulesJson`, `startedAt`, `completedAt?`, `status` | Designed for engagement without exposing private spend detail. |
+| `AuditEvent` | Sensitive system and policy trail | `id`, `userId?`, `eventType`, `subjectType`, `subjectId`, `metadataJson`, `createdAt` | Required for compliance review, reversals, and incident response. |
+
+### Core State and Verification Contracts
+
+#### Money Event verification states
+
+| State | Meaning | User Impact |
+|---|---|---|
+| `verified-imported` | Imported from trusted external source and passed dedupe rules | Eligible for full insights and reward logic subject to rule caps |
+| `user-confirmed` | Parsed or entered record reviewed/confirmed by the user | Eligible for full insights and most rewards |
+| `estimated` | User-entered approximation or low-confidence import | Included in planning with approximate language |
+| `system-suspect` | Potential duplicate, malformed, or abuse-flagged record | Excluded from full rewards until resolved |
+| `reversed` | Voided by user/system with audit trail | Must not silently disappear from history |
+
+#### Trade execution states
+
+`quoted` → `submitted` → `executed` or `expired` or `rejected`
+
+The product must never present a trade as executed without an associated price snapshot, coin debit event, and execution timestamp. If price freshness breaches launch thresholds, the order must be blocked or explicitly labeled before execution.
+
+#### Consent lifecycle
+
+`granted` → `active` → `revoked` → `expired`
+
+Revocation must stop new household recaps, new share projections, and new partner/family visibility immediately. Historical audit events remain for compliance, but live household read models must update on the next projection cycle.
+
+## Technical and Interface Requirements
+
+### Canonical data contracts
+
+- **FR-077** ProsperPals shall normalize manual entry, receipt OCR, PDF/CSV imports, MobilePay imports, and PSD2 imports into one canonical `MoneyEvent` contract.
+- **FR-078** All monetary amounts shall be stored as integer minor units plus ISO currency code; UI formatting shall be a presentation concern.
+- **FR-079** Every `MoneyEvent`, `MarketPriceSnapshot`, and `InsightRecord` shall carry provenance metadata including source type, created/generated time, and confidence or freshness state.
+- **FR-080** Low-confidence parsed candidates shall require review or explicit user confirmation before becoming posted `MoneyEvent` records.
+- **FR-081** Deterministic calculation services shall produce Daily Spending Power, category totals, recurring pattern detection, ProsperCoin awards, and trade math; Goldie and Fin may explain these outputs but shall not author the underlying numeric facts.
+- **FR-082** The transaction import layer shall use provider adapters so MobilePay and PSD2 integrations can be added without changing the `MoneyEvent` contract or downstream logic.
+- **FR-083** Import jobs shall be replayable and idempotent, with duplicate detection based on provider reference, timestamp windows, normalized amount, and merchant fingerprint where available.
+- **FR-084** Derived planning models such as `RecurringPattern` and `SpendingPowerSnapshot` shall be recalculable from canonical source records and versioned calculation rules.
+
+### ProsperCoins and simulator contracts
+
+- **FR-085** ProsperCoins shall be stored in an append-only ledger with reference links to the triggering action, and current balance shall be computed from ledger events rather than manually maintained as a mutable field.
+- **FR-086** Simulator trades shall be stored as immutable execution records linked to both a quoted market snapshot and the ProsperCoin ledger event used to fund the trade.
+- **FR-087** ProsperPals shall block or explicitly warn on trade execution when market price freshness exceeds the configured education-safe threshold for that asset class.
+- **FR-088** Portfolio holdings, streak counts, and league scores shall be exposed as derived read models that can be rebuilt from ledgers and qualifying events.
+
+### Conversation, sharing, and trust contracts
+
+- **FR-089** Goldie and Fin shall operate on a shared conversation thread with persona tags so the product can preserve context while still presenting distinct companions.
+- **FR-090** Every user-facing insight and explanation shall be linked to a fact bundle or source bundle that can be surfaced in a “why am I seeing this?” view.
+- **FR-091** Share artifacts, family previews, and weekly recaps shall be generated from share-safe projection models and shall not query private transaction-level tables directly.
+- **FR-092** Sharing permissions shall be modeled as granular consent grants by data category, audience, and access level, with revocation timestamps.
+- **FR-093** Revoking a consent grant shall stop future household or family visibility immediately and shall remove revoked data from future recaps, previews, and dashboards.
+- **FR-094** ProsperPals shall create auditable security events for consent changes, import connection changes, trade execution, account recovery, and any admin-level data correction.
+- **FR-095** Push notifications, previews, and lock-screen-visible content shall not contain transaction amounts, merchant names, spending categories, safe-to-spend values, or budget shortfall data.
+
+### API and integration contracts
+
+- **FR-096** All client write operations that create or mutate trust-critical records shall accept an idempotency key so offline retries and network retries do not create duplicate events.
+- **FR-097** The platform shall support offline capture queues for manual entries and user confirmations, with duplicate suppression and ordered replay on reconnect.
+- **FR-098** All core loop state changes shall emit domain events for analytics and orchestration, including at minimum `money.logged`, `candidate.confirmed`, `coins.awarded`, `trade.executed`, `insight.generated`, and `share.created`.
+- **FR-099** External provider adapters shall normalize upstream schemas into canonical internal contracts before any reward, planning, or AI logic runs.
+- **FR-100** Market data services shall expose quote source, freshness, delay class, and fallback-provider status to downstream simulator and explanation services.
+- **FR-101** The import interface shall support staged sources from launch day: `manual`, `receipt`, `pdf`, `csv`, `mobilepay`, and `psd2`.
+- **FR-102** All insight-generation services shall distinguish verified, user-confirmed, estimated, corrected, and suspect data states in both logic and user-facing phrasing.
+- **FR-103** Family preview mode shall use isolated safe sample data and shall not require another real household member to exist before value is shown.
+- **FR-104** AI generation interfaces shall enforce an education-only policy layer that blocks suitability language, certainty claims, or direct real-world product recommendations before responses reach the user.
+
+## Interface Specifications
+
+### Client-facing API surface
+
+| Endpoint / Action | Purpose | Required Request Fields | Contract Notes |
+|---|---|---|---|
+| `POST /api/onboarding/intent` | Persist primary intent and default mode | `primaryIntent`, `gamificationMode`, `timezone`, `locale` | Must be editable later; no hard lock on product access. |
+| `POST /api/money-events` | Create manual money event | `idempotencyKey`, `eventType`, `amountMinor`, `currency`, `occurredAt`, `merchantLabel?`, `categoryId?`, `sourceType=manual` | Returns posted event plus reward preview if eligible. |
+| `POST /api/artifacts` | Upload receipt/PDF/CSV/image artifact | `artifactType`, `file`, `idempotencyKey` | Returns artifact id and parse status. |
+| `POST /api/artifacts/{id}/parse` | Start or retry parse | `parseMode` | Produces `ParsedCandidate` records; low-confidence candidates remain reviewable. |
+| `POST /api/parsed-candidates/{id}/confirm` | Turn candidate into canonical event(s) | `idempotencyKey`, `confirmationMode`, `overrides?` | Must preserve original candidate payload and any user edits. |
+| `POST /api/import-connections` | Create MobilePay/PSD2 connection | `providerType`, `authPayload`, `permissions` | Returns connection status and next sync expectations. |
+| `POST /api/import-jobs` | Trigger manual sync | `connectionId` or `sourceType` | Sync must be safe to retry. |
+| `GET /api/spending-power` | Read latest Daily Spending Power | `date?` | Returns snapshot, calculation inputs, and freshness/version info. |
+| `GET /api/prospercoins/balance` | Read available coin state | none | Returned balance must reconcile to ledger state. |
+| `POST /api/simulator/orders` | Submit virtual trade | `idempotencyKey`, `assetId`, `side`, `requestedUnits` or `requestedCoins`, `quoteSnapshotId` | Reject if quote stale beyond policy threshold or if coins insufficient. |
+| `GET /api/portfolio/summary` | Portfolio overview | `portfolioId?` | Returns holdings, latest quote freshness, gain/loss summaries, and learning prompts. |
+| `POST /api/fin/scenarios` | Request educational what-if scenario | `scenarioType`, `inputsJson` | Must label outputs educational and persist assumptions. |
+| `POST /api/shares` | Create share-safe card | `artifactType`, `sourceReference`, `visibilityScope` | Input may reference milestone or simulator highlight, never raw financial tables. |
+| `POST /api/households/invitations` | Invite family member or open preview path | `householdId?`, `inviteeContact?`, `previewMode` | Preview must work without a live second member. |
+
+### Internal service contracts
+
+| Service Contract | Input | Output | Failure Behavior |
+|---|---|---|---|
+| `TransactionNormalizationService` | raw source payload + source metadata | one or more canonical `MoneyEvent` objects + dedupe hints | Marks records `system-suspect` rather than dropping ambiguous data silently |
+| `RewardRulesService` | canonical event or learning action | ProsperCoin ledger delta + explanation text key | Must be deterministic and versioned |
+| `PlanningEngine` | canonical money events + planning profile + recurring patterns | `SpendingPowerSnapshot` + explanation facts | If data is sparse, output approximate ranges instead of false precision |
+| `MarketQuoteService` | asset ids | `MarketPriceSnapshot` records with freshness metadata | Falls back to secondary provider and flags degraded mode |
+| `SimulatorExecutionService` | trade intent + quote snapshot + balance state | `VirtualTradeExecution` + ledger events + updated positions | Must be atomic; partial success is forbidden |
+| `InsightComposer` | fact bundle + persona + topic + calibration state | explanation payload + compliance annotations | Must reject blocked advisory language |
+| `ShareProjectionService` | milestone/summary reference + visibility policy | share-safe projection JSON | Must fail closed if source reference contains private finance fields |
+
+### Domain event contracts
+
+| Event | Trigger | Required Payload |
+|---|---|---|
+| `money.logged` | Posted money event created | `userId`, `moneyEventId`, `sourceType`, `verificationState`, `amountMinor`, `currency`, `occurredAt` |
+| `candidate.confirmed` | Parsed candidate approved | `userId`, `candidateId`, `artifactId`, `resultingMoneyEventIds[]` |
+| `coins.awarded` | ProsperCoin ledger credit posted | `userId`, `ledgerEventId`, `deltaCoins`, `reasonCode`, `referenceType`, `referenceId` |
+| `trade.executed` | Simulator trade execution posted | `userId`, `portfolioId`, `tradeExecutionId`, `assetId`, `coinsDebited`, `quoteSnapshotId` |
+| `insight.generated` | Goldie or Fin insight persisted | `userId`, `insightId`, `insightType`, `confidenceBand`, `personaTag` |
+| `share.created` | Share artifact generated | `userId`, `shareArtifactId`, `artifactType`, `visibilityScope` |
+
+## Trust, Compliance, and Audit Requirements
+
+### Data classification and handling contract
+
+| Data Class | Examples | Default Visibility | Handling Rule |
+|---|---|---|---|
+| `private-financial` | raw transactions, safe-to-spend value, income, category spend | only the user | never exposed through share projections or household views without explicit grant |
+| `private-learning` | lesson attempts, quiz mistakes, explanation feedback | only the user | family views may show milestone completion, never raw score by default |
+| `share-safe-progress` | milestones completed, simulator highlight, streak badge, Prosperity Key tier | user-controlled sharing | generated through safe projections only |
+| `system-sensitive` | auth events, device history, import credentials metadata | internal only | encrypted, audited, least-privilege access |
+
+### Compliance operating rules
+
+- Financial education positioning must be reflected not only in copy, but in interface behavior, data labels, and API policy enforcement.
+- Simulator choices may highlight why an asset is educationally relevant, but they must not imply suitability for the user’s real money.
+- Every insight that uses estimated data must visibly hedge its phrasing.
+- Household sharing defaults to milestone visibility, not financial surveillance.
+- Auditability is a product requirement, not a back-office extra, because trust failures in financial products are product failures.
+
+## Measurable Non-Functional Requirements
+
+- **NFR-001 Performance:** The authenticated mobile app shell shall render the first meaningful view in <= 2.5 seconds p95 on a mid-range mobile device over 4G.
+- **NFR-002 Logging Latency:** Manual money-event submission shall return confirmation and reward outcome in <= 1.5 seconds p95 when the device is online.
+- **NFR-003 OCR Latency:** Receipt parsing shall return an initial parse result or clear progress state in <= 6 seconds p95.
+- **NFR-004 Planning Latency:** Reading the latest Daily Spending Power snapshot shall complete in <= 1.0 second p95; a forced recalculation shall complete in <= 4.0 seconds p95.
+- **NFR-005 Simulator Responsiveness:** Portfolio summary retrieval shall complete in <= 2.0 seconds p95, and trade submission shall resolve to executed/rejected/expired in <= 2.5 seconds p95 when quotes are fresh.
+- **NFR-006 Reliability:** Core logging, balance, and portfolio APIs shall achieve >= 99.5% monthly availability excluding scheduled maintenance.
+- **NFR-007 Ledger Integrity:** ProsperCoin awards, debits, and simulator executions shall be atomic, durable, and replay-safe; the system shall tolerate retries without double-posting.
+- **NFR-008 Security:** All financial and identity data shall be encrypted in transit and at rest; secrets and provider credentials shall be stored outside application code and rotated on a defined schedule.
+- **NFR-009 Recovery Objectives:** Backup and recovery procedures shall support an RPO of <= 5 minutes and an RTO of <= 60 minutes for trust-critical ledgers and canonical financial records.
+- **NFR-010 Traceability:** 100% of user-facing insights, rewards, and trade confirmations shall be traceable to underlying source records, rules versions, and timestamps in internal audit views.
+- **NFR-011 Offline Resilience:** Offline-captured manual entries and confirmations shall sync within <= 30 seconds p95 after reconnect and preserve original client timestamps.
+- **NFR-012 Privacy by Notification:** Contract tests shall enforce that push payloads never include private-financial fields such as merchant, amount, category, or safe-to-spend values.
+- **NFR-013 Data Freshness Transparency:** 100% of displayed market prices shall include freshness metadata; quotes older than 4 hours shall show a degraded-state label.
+- **NFR-014 Audit Retention:** Sensitive audit events covering consent, import connections, account recovery, and trade execution shall be retained for at least 24 months.
+
+## Step 3 Elicitation Outcomes
+
+### Architecture Decision Records
+
+| ADR | Decision | Why It Was Chosen | Product Consequence |
+|---|---|---|---|
+| ADR-001 | Use one canonical `MoneyEvent` model across all ingestion paths | Prevent Sprint 1, Sprint 2, and Sprint 3-4 from becoming separate systems | Goldie, planning, rewards, and analytics can work consistently regardless of source |
+| ADR-002 | Separate deterministic financial computation from LLM explanation | Trust collapses if the LLM becomes the calculator | Engineering must maintain fact bundles and rule engines as first-class services |
+| ADR-003 | Use append-only ledgers for ProsperCoins and simulator executions | Auditability and reversibility matter more than convenience | Balances and holdings become derived views, not hand-edited state |
+| ADR-004 | Goldie and Fin share one thread with persona tags | Supports explicit handoffs plus fallback to one adaptive companion | Conversation continuity survives persona presentation changes |
+| ADR-005 | Build family views from share-safe projections only | Privacy and virality need different data paths | Family features cannot accidentally expose raw finance data |
+| ADR-006 | Make currency multi-currency in storage from day 1 | Denmark-first must not become Denmark-locked | UI can stay DKK-first while architecture stays Nordic/EU-ready |
+
+### Cross-Functional War Room Resolutions
+
+- **Design + Engineering:** low-confidence parsing must create reviewable candidates, not auto-posted transactions, because trust beats automation theater.
+- **Product + Compliance:** the first-pick asset flow remains allowed only if framed as education and bound to policy checks that block suitability language.
+- **Growth + Privacy:** share cards and family previews are permitted growth surfaces only if they are backed by projection models that exclude private spend data.
+- **Operations + Engineering:** idempotency and replay were treated as launch requirements, not later hardening, because offline mobile usage and flaky connectivity are normal use cases.
+- **Product + Analytics:** event emission was required at the contract layer so WACLC and step-level funnel analysis do not depend on ad hoc front-end instrumentation.
+
+### Self-Consistency Validation for This Step
+
+- The contracts preserve the **80-second onboarding** promise by keeping manual entry, OCR, and starter-invest flows on the same write APIs and reward rules.
+- The contracts protect the **financial wellness, not advice** positioning by separating educational explanation from recommendation logic and enforcing policy checks before AI output reaches users.
+- The contracts preserve **Off mode** by making gamification visibility a presentation concern; the core simulator, planning, and companion contracts still work even when competition layers are hidden.
+- The contracts support **Thomas conversion without surveillance** by modeling family previews and share cards as safe projections rather than raw household ledger access.
+- The contracts support **Denmark-first launch sequencing** while remaining extensible for MobilePay, PSD2, and later multi-currency expansion.
+
+## Step 3 Hardening Summary
+
+This contracts step was deliberately hardened through three complementary elicitation methods:
+- **Architecture Decision Records:** forced explicit choices on canonical records, ledgers, companion context, privacy boundaries, and multi-currency readiness so the architecture cannot drift later.
+- **Cross-Functional War Room:** reconciled design smoothness, growth needs, legal boundaries, analytics needs, and engineering realities into one set of enforceable contracts.
+- **Self-Consistency Validation:** verified that the new contracts do not break the 80-second promise, the off-mode promise, the education-not-advice position, or the family privacy model established earlier in the PRD.
+
+ would dilute the product.
 
