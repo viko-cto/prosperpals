@@ -3,6 +3,7 @@ stepsCompleted:
   - 1-prd-foundation
   - 2-prd-feature-detail
   - 3-prd-data-and-interface-contracts
+  - 4-prd-polish-and-traceability
 inputDocuments:
   - _bmad/_bmad-output/planning-artifacts/product-brief-prosperpals-agentic-2026-03-07.md
   - /home/node/clawd/research/prosperpals/bmad-session-notes-product-brief.md
@@ -10,13 +11,13 @@ inputDocuments:
   - /home/node/clawd/research/prosperpals/2026-03-17.md
 workflowType: 'prd'
 phase: 'prd'
-step: 3
-stepName: 'data-and-interface-contracts'
+step: 4
+stepName: 'polish-and-traceability'
 elicitationMethods:
-  - architecture-decision-records
-  - cross-functional-war-room
+  - critique-and-refine
   - self-consistency-validation
-status: 'draft-in-progress'
+  - cross-functional-war-room
+status: 'draft-complete'
 ---
 
 # Product Requirements Document - ProsperPals
@@ -24,8 +25,8 @@ status: 'draft-in-progress'
 **Product:** ProsperPals  
 **Owner:** Nikolas / CopenDapp Labs  
 **Prepared by:** Viko  
-**Date:** 2026-03-17  
-**Status:** Draft — Steps 1-3 complete
+**Date:** 2026-03-18  
+**Status:** Draft complete — PRD ready for UX design, architecture, and epic breakdown
 
 ## Executive Summary
 
@@ -802,5 +803,76 @@ This contracts step was deliberately hardened through three complementary elicit
 - **Cross-Functional War Room:** reconciled design smoothness, growth needs, legal boundaries, analytics needs, and engineering realities into one set of enforceable contracts.
 - **Self-Consistency Validation:** verified that the new contracts do not break the 80-second promise, the off-mode promise, the education-not-advice position, or the family privacy model established earlier in the PRD.
 
- would dilute the product.
+## Step 4 Polish and Traceability Pass
+
+This final PRD pass was used to remove drift, make the document easier to hand off across disciplines, and verify that the product thesis is traceable from strategy through requirements and contracts. The outcome is a PRD that is ready to drive UX design, architecture, and epic/story breakdown without re-litigating the core product decisions.
+
+### Critique & Refine Corrections
+
+- **Audience framing clarified:** the MVP wedge is Denmark-first, Gen Z / early-career financial-wellness users, while the architecture remains extensible to broader age groups later. This resolves the common drift from “focused wedge” to “for everyone.”
+- **Sprint 1 positioning clarified:** manual entry, receipt capture, and PDF/CSV bridge flows are framed as completing the user’s money picture before MobilePay and PSD2 automation arrive, not as pretending to replace bank sync on day 1.
+- **Gamification boundaries tightened:** Off mode keeps ProsperCoins, Goldie, Fin, and the simulator because they are core learning mechanics, while competition intensity and celebratory noise remain optional presentation layers.
+- **Companion architecture locked:** Goldie and Fin remain distinct personas in one shared conversation and policy system, preserving explicit handoffs now and a one-companion fallback later without architectural churn.
+- **Build-language cleanup completed:** the stray artifact left at the prior document tail was removed, section status was updated, and the PRD was normalized around one implementation-ready vocabulary for records, ledgers, projections, and policy checks.
+
+### End-to-End Traceability Matrix
+
+| Product promise / decision | Success metric or validation gate | Primary product surfaces | Core requirements / contracts | Readiness signal |
+|---|---|---|---|---|
+| **80 seconds to first value** | Launch target: first useful insight <= 80 seconds median; onboarding completion >= 70% budget-first / >= 80% invest-first | Onboarding, Goldie fast log, first Fin handoff, starter simulator loop | FR-002 to FR-007, FR-033 to FR-036, FR-042 to FR-044, FR-096 to FR-098 | NFR-001 to NFR-005 define latency and response expectations for this promise |
+| **Know where money goes + what is safe to spend next** | WACLC, Day-7 retention, first useful insight <= 80 seconds | Goldie, Daily Spending Power, recurring-spend detection, recovery mode | FR-013 to FR-016, FR-033 to FR-041, FR-077 to FR-084, FR-090, FR-102 | Planning engine, provenance, and explanation traceability are all explicitly defined |
+| **Reward awareness, not spending** | Anti-metrics, zero-spend continuity, reward-abuse prevention | ProsperCoins, streaks, reflections, progression system | FR-017 to FR-024, FR-039, FR-050 to FR-056, FR-071 to FR-076, FR-085, FR-088 | Ledger integrity, idempotency, and normalized competitive scoring are specified |
+| **Learn investing safely without crossing into advice** | Goldie-to-Fin continuation > 80%; companion confusion < 10%; simulator engagement > 3x/week in Denmark validation | Fin, simulator, first-pick asset flow, scenario modeling | FR-005, FR-006, FR-018, FR-019, FR-042 to FR-049, FR-057 to FR-063, FR-100, FR-104 | Education-only policy layer, quote freshness rules, and virtual-only constraints are defined |
+| **Family monetization without surveillance** | Thomas conversion >= 30% of family-intent users by Day 30; validation interview gate for willingness-to-pay | Share cards, family preview, weekly recap, co-present challenges | FR-025 to FR-027, FR-064 to FR-070, FR-091 to FR-095, FR-103 | Share-safe projections, granular consent, and privacy-by-default handling are specified |
+| **Denmark-first launch, EU-ready architecture** | Receipt trust >= 85%; launch sequencing preserved across Sprint 1-4 | Manual entry, receipt OCR, PDF/CSV bridge, MobilePay, PSD2 | FR-003, FR-016, FR-040, FR-077 to FR-084, FR-096 to FR-101 | Canonical `MoneyEvent`, provider adapters, replay-safe imports, and multi-currency storage are defined |
+| **Financial wellness education, not financial advice** | Validation gate: policy-safe AI behavior; no suitability claims in UX or API outputs | Goldie/Fin messaging, simulator explanations, “why am I seeing this?” views | FR-028 to FR-032, FR-048, FR-089 to FR-095, FR-102, FR-104 | Compliance operating rules and auditable explanation paths are explicit |
+
+### Implementation Readiness Notes
+
+#### Ready for downstream design and architecture
+The following decisions are now sufficiently locked for the next BMAD phases to proceed without reopening product strategy:
+- one canonical `MoneyEvent` contract across all ingestion stages
+- one shared Goldie/Fin conversation system with persona overlays and explicit handoffs
+- append-only ledgers for ProsperCoins and simulator executions
+- share-safe projections and granular consent as the only valid foundation for family/social surfaces
+- gamification as a configurable overlay, not the owner of core product value
+- financial wellness education posture enforced in both UX copy and policy-aware service contracts
+
+#### Open validation items that remain product-critical but are not blockers for UX/architecture drafting
+- complete **5-8 pre-MVP interviews per primary archetype**
+- usability-test the Goldie-to-Fin handoff and verify confusion / continuation assumptions
+- test whether budget-first and invest-first remain distinct enough to justify separate onboarding language after week 2
+- validate Thomas-family willingness to pay before treating family premium as the dominant revenue path
+- tune ProsperCoin thresholds, learning gates, and premium boundary timing with real user behavior data
+
+#### First implementation slice implied by this PRD
+A sensible first vertical slice is now clear: onboarding intent capture -> one manual or receipt-based `MoneyEvent` -> deterministic reward award -> Daily Spending Power update -> explicit Goldie-to-Fin handoff -> one virtual trade -> next-day explanation card. If this slice works end-to-end with traceability, the category thesis is testable.
+
+### Step 4 Elicitation Outcomes
+
+#### Critique & Refine
+- Removed audience ambiguity so go-to-market can stay sharp even while architecture stays extensible.
+- Tightened Sprint 1 language so launch expectations remain honest and trust-preserving.
+- Confirmed that Off mode is a presentation choice, not a second-class product path.
+
+#### Self-Consistency Validation
+- The **North Star metric**, **launch targets**, **feature journeys**, **data contracts**, and **NFR traceability requirement** now point at the same loop instead of separate interpretations of success.
+- The family proposition still supports monetization without contradicting the privacy model.
+- The simulator still supports investing education without contradicting the non-advice positioning.
+- Launch sequencing remains consistent from product scope through API contract design.
+
+#### Cross-Functional War Room
+- **Design:** can now design Goldie/Fin surfaces and Off/Lite/Full controls without guessing which layers are core versus ornamental.
+- **Engineering:** has enough contract clarity to model canonical records, ledgers, idempotent writes, and replay-safe imports.
+- **Compliance:** has an explicit set of policy boundaries to review before implementation rather than after copywriting.
+- **Analytics:** can instrument WACLC, onboarding, handoff, reward, and family-preview funnels directly from declared events and read models.
+
+## Step 4 Hardening Summary
+
+This final polish step used three complementary elicitation methods to make the PRD implementation-ready:
+- **Critique & Refine:** removed ambiguity, corrected drift, and tightened the narrative so the product wedge remains focused.
+- **Self-Consistency Validation:** verified that strategy, scope, requirements, contracts, and NFRs all support the same category thesis.
+- **Cross-Functional War Room:** translated product intent into handoff-ready guidance for design, engineering, compliance, and analytics.
+
+**PRD verdict:** complete for BMAD PRD phase and ready to hand off into UX design, architecture, and epic/story planning.
 
