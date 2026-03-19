@@ -10,13 +10,13 @@ inputDocuments:
   - docs/bmad-workflow-plan.md
 workflowType: 'architecture'
 phase: 'architecture'
-step: 2
-stepName: 'data-security-and-integration-boundaries'
+step: 3
+stepName: 'runtime-operations-and-delivery'
 elicitationMethods:
   - architecture-decision-records
-  - red-team-vs-blue-team
-  - self-consistency-validation
-status: 'in-progress'
+  - cross-functional-war-room
+  - critique-and-refine
+status: 'complete'
 ---
 
 # Architecture Decision Document - ProsperPals
@@ -25,7 +25,7 @@ status: 'in-progress'
 **Owner:** Nikolas / CopenDapp Labs  
 **Prepared by:** Viko  
 **Date:** 2026-03-19  
-**Status:** Step 2 complete — architecture data, security, and integration boundaries locked; operations/delivery architecture next
+**Status:** Architecture complete — ready for epic/story decomposition
 
 ## Executive Summary
 
@@ -894,16 +894,389 @@ Exact schema names are flexible. The separation principle is not.
 | `sharing` | safe projections, recap artifacts, invite previews | raw transaction reads outside approved projection inputs |
 | `system` | audit, outbox, idempotency store, secrets integrations | product-specific business meaning |
 
-## Open Items for the Next Architecture Step
+## Step 3 — Runtime Operations and Delivery Architecture
 
-Step 3 should go deeper on:
-- runtime-specific deployment shape across Vercel web/app routes, workers, and scheduled jobs
-- CI/CD, migration safety, and environment promotion model
-- observability, tracing, alerting, and support-debug workflows
-- feature-flag strategy for Denmark-first staged rollout
-- performance budgeting for chat, portfolio refresh, and OCR paths
-- disaster recovery drills and operational runbooks
-- engineering-readiness implications for epic/story decomposition
+Step 3 turns the trusted system design into a shippable operating model. The question here is not just "can ProsperPals be built?" It is "can a small team ship it repeatedly without breaking financial trust, privacy, or learning momentum?"
+
+The answer should still be boring in the right places:
+- one production app surface
+- one primary database
+- one disciplined deployment pipeline
+- one release model that separates **deploy** from **expose**
+- one tracing story that connects money facts, AI explanations, and user-visible incidents
+
+This step defines the runtime split, CI/CD controls, observability, feature-flag rollout model, performance budgets, and operational runbooks required to move from architecture intent to engineering execution.
+
+## Operational Architecture Goals
+
+ProsperPals operations should optimize for five outcomes:
+1. **safe shipping velocity** for a small product team
+2. **deterministic recovery** when providers, workers, or AI flows fail
+3. **controlled staged rollout** across Denmark-first launch waves
+4. **support-grade debugging** without exposing sensitive finance data
+5. **clear release confidence** before new logic touches trust-critical flows
+
+From a first-principles perspective, the real operational risk is not traffic scale. It is silent trust erosion through bad releases, ambiguous data freshness, orphaned jobs, or impossible-to-debug companion behavior.
+
+## Runtime Topology and Deployment Shape
+
+ProsperPals should run as one product system across a few intentionally different runtime lanes.
+
+### Recommended runtime lanes
+
+| Runtime lane | Primary platform | Owns | Must not own |
+|---|---|---|---|
+| **Web rendering lane** | Vercel Next.js web runtime | landing pages, authenticated UI rendering, read-heavy dashboards, safe streaming UI | canonical finance writes or long-running imports |
+| **Application command lane** | Next.js Node route handlers / server actions | authenticated writes, orchestration, policy checks, idempotent commands, companion tool calls | browser-visible secrets, uncontrolled retries |
+| **Worker lane** | scheduled/background Node workers tied to Postgres/outbox queues | imports, projection rebuilds, recurring detection, recaps, quote refresh, retry/backoff processing | user-interactive rendering |
+| **Data platform lane** | Supabase Postgres/Auth/Storage/Realtimes | source-of-truth records, ledgers, RLS, artifacts, event state | product business rules embedded in ad hoc SQL jobs |
+| **Provider edge lane** | external APIs / webhooks | market data, OCR, MobilePay, PSD2 callbacks, email/push providers | internal truth decisions before normalization |
+
+### Runtime policy
+
+ProsperPals should treat **web latency**, **command correctness**, and **background completion** as different classes of work.
+
+- **Web rendering lane** should optimize for fast first paint and one-glance trust labels.
+- **Application command lane** should optimize for correctness, authorization, and durable write semantics.
+- **Worker lane** should optimize for retries, backoff, observability, and replay safety.
+
+That means a receipt upload confirmation should not compete in the same execution shape as a homepage read, and a recap-generation retry should not block a money-event post.
+
+### Edge vs Node stance
+
+ProsperPals should prefer **Node runtime** for all authenticated write flows, import processing, and AI orchestration. Edge runtimes may be used later for safe read acceleration, marketing pages, or low-risk cached surfaces, but they should not become the default for trust-critical product logic.
+
+**Why:**
+- Node gives better control for SDK compatibility, crypto, tracing, and heavier policy middleware.
+- Finance and AI write paths are more sensitive to determinism and auditability than raw global latency.
+- Denmark-first MVP does not need edge-compute heroics; it needs predictable behavior.
+
+#### ADR-012 — Keep trust-critical writes and AI orchestration on Node runtimes
+
+**Decision**  
+Authenticated writes, import commands, simulator executions, and companion orchestration should run on Node-based server runtimes rather than edge-first execution.
+
+**Rationale**
+- better library/runtime compatibility for finance, crypto, provider SDKs, and tracing
+- simpler debugging and lower surprise for a small team
+- easier control over timeouts, retries, and secret access
+
+**Consequence**
+- some non-critical reads may be marginally slower than edge-first patterns
+- the product gains more predictable correctness where it matters
+
+## Environment and Promotion Model
+
+ProsperPals should use **four named environments** with disciplined promotion rules:
+
+| Environment | Purpose | Data posture | Promotion rule |
+|---|---|---|---|
+| `local` | fast developer iteration | synthetic/dev data only | no provider production creds |
+| `preview` | PR validation and stakeholder review | seeded non-production data | auto-created from branches |
+| `staging` | pre-production integration validation | sanitized staging data + test providers | main-branch deploy + migration gate |
+| `production` | user-facing Denmark launch | production data | promoted only from green main with explicit release intent |
+
+### Promotion principles
+
+- code reaches `preview` automatically
+- code reaches `staging` from main after tests + schema checks
+- code reaches `production` only after a release decision, not just because a merge happened
+- feature exposure is controlled by flags, not by branch proliferation
+
+This keeps the team fast without letting “merged” mean “visible to users.”
+
+## CI/CD and Release Engineering Model
+
+### Recommended pipeline stages
+
+```text
+pull request opened
+  -> lint + typecheck + unit tests
+  -> schema diff validation
+  -> policy / contract tests
+  -> preview deploy
+  -> stakeholder review if UX-sensitive
+merge to main
+  -> integration tests against staging services
+  -> migration safety checks
+  -> build artifact + release notes stub
+  -> staging deployment
+release candidate approved
+  -> production deploy
+  -> post-deploy smoke flows
+  -> feature-flag expose by cohort
+```
+
+### P0 pipeline gates
+
+Before any production promotion, the pipeline should verify:
+- TypeScript build, lint, and formatter compliance
+- unit coverage for deterministic finance logic
+- contract tests for `MoneyEvent`, ProsperCoin, quote freshness, and consent flows
+- migration safety checks against current staging schema
+- basic Playwright-level smoke flows for onboarding, log, award, handoff, and trade confirmation
+- secret/config presence validation for required providers
+
+### Migration safety rules
+
+Migration mistakes are one of the fastest ways to destroy a small-team finance product. ProsperPals should therefore use these rules:
+
+1. **expand-migrate-contract** for any risky schema change
+2. destructive drops require explicit delayed cleanup, never same-release removal
+3. every migration must be reversible in operational intent, even if not literally down-migrated
+4. seed/test fixtures must cover current and next schema versions during transition windows
+5. RLS policy diffs must be reviewed like code, not treated as setup noise
+
+#### ADR-013 — Use preview/staging/production promotion with migration gates and post-deploy smoke tests
+
+**Decision**  
+ProsperPals should ship through preview → staging → production with explicit migration checks and post-deploy smoke validation rather than direct merge-to-prod automation.
+
+**Rationale**
+- money, consent, and simulator systems are too sensitive for blind promotion
+- small teams need release confidence more than maximum deployment frequency
+- architecture quality depends on catching schema and policy drift early
+
+**Consequence**
+- releases gain a small amount of ceremony
+- rollback confidence and sleep quality improve dramatically
+
+## Feature Flags and Denmark-First Rollout Strategy
+
+Deploying code and exposing product capability should be separate controls.
+
+### Flag classes
+
+| Flag class | Example | Owner | Notes |
+|---|---|---|---|
+| **operational** | enable outbox worker batch mode | engineering | used for safe infra tuning |
+| **market rollout** | MobilePay beta enabled | product/engineering | cohort/region gated |
+| **experience** | Full vs Lite vs Off default | product/design | presentation only, same ledgers underneath |
+| **provider fallback** | switch quote provider priority | engineering/ops | emergency containment |
+| **support/debug** | enable verbose trace view for internal staff | engineering | never user-visible |
+
+### Denmark-first exposure path
+
+1. internal team accounts
+2. trusted alpha cohort
+3. Denmark manual-entry public beta
+4. MobilePay limited cohort
+5. broader Denmark rollout
+6. PSD2 staged adoption once ingestion quality is proven
+
+Flags should be audience-aware using attributes such as:
+- country / locale
+- onboarding archetype
+- account age
+- tester cohort
+- feature entitlement / plan
+- import-provider eligibility
+
+#### ADR-014 — Control rollout with server-evaluated feature flags, not environment forks
+
+**Decision**  
+Launch sequencing for manual entry, MobilePay, PSD2, and family surfaces should be controlled by server-evaluated flags and cohort rules rather than separate codebases or environment-specific logic forks.
+
+**Rationale**
+- launch roadmap already requires staged capability exposure
+- environment forks create hidden divergence and make debugging harder
+- server-side evaluation keeps sensitive gating logic out of the client
+
+**Consequence**
+- flag hygiene becomes an architecture concern
+- the team can expose features gradually without rewriting flows
+
+## Observability, Tracing, and Alerting
+
+ProsperPals needs one coherent story for “what happened?” across product, finance, and AI events.
+
+### Telemetry stack requirements
+
+At minimum, the product should emit:
+- structured application logs
+- request traces for authenticated commands
+- job traces for outbox/worker processing
+- domain metrics for key loop conversions and failures
+- AI/tool invocation traces with prompt/policy version metadata
+- audit events for trust-critical actions
+
+### Required correlation identifiers
+
+Every trust-critical workflow should carry:
+- `request_id`
+- `user_id` or internal subject reference
+- `session_id`
+- `idempotency_key` where relevant
+- `source_object_id` for canonical finance events
+- `trace_id` shared across app, worker, and AI layers
+
+This is how ProsperPals avoids the classic support nightmare where the database knows one thing, logs know another, and the companion explanation cannot be reconstructed.
+
+### P0 operational dashboards
+
+Operations should have at least these dashboards:
+1. **Core loop health** — onboarding success, log success, award success, trade success
+2. **Import health** — artifact backlog, parse failure rate, provider sync error rate, review queue age
+3. **Market data health** — quote freshness, provider fallback rate, stale-trade blocks
+4. **Companion health** — tool-call failure rate, policy-block rate, explanation latency, hallucination/appeal feedback
+5. **Privacy/security health** — auth anomalies, token refresh failures, suspicious access attempts, consent-projection rebuild failures
+
+### Alert posture
+
+Page-worthy alerts should be reserved for:
+- canonical write failure spikes
+- duplicate-write/idempotency anomalies
+- outbox backlog beyond threshold
+- market data freshness breach during active trading windows
+- provider token refresh collapse
+- widespread auth/session failures
+- elevated AI policy-block or explanation failure rates after deploy
+
+Non-page alerts can cover slower drift like recap failures or rising OCR correction burden.
+
+#### ADR-015 — Use shared trace identifiers across money events, jobs, and AI explanations
+
+**Decision**  
+ProsperPals should require shared correlation IDs across synchronous requests, asynchronous jobs, and AI explanation flows.
+
+**Rationale**
+- support and debugging require reconstruction of cross-layer behavior
+- the product’s trust promise depends on proving where an explanation came from
+- without shared tracing, the team will lose days to incident archaeology
+
+**Consequence**
+- every module must participate in trace propagation
+- observability becomes cheaper over time instead of more chaotic
+
+## Performance and Reliability Budgets
+
+The architecture should define acceptable latency and reliability targets now so story decomposition does not accidentally optimize the wrong things.
+
+### P0 latency budgets
+
+| Flow | Target |
+|---|---:|
+| First authenticated home render | <= 2.5s on typical mobile connection |
+| Manual expense log confirmation | <= 1.5s median |
+| ProsperCoin award visibility after valid log | <= 2.0s |
+| Goldie response with deterministic fact bundle | <= 4.0s median |
+| Goldie → Fin handoff ready state | <= 2.5s after trigger |
+| Virtual trade confirmation | <= 2.0s with fresh quote |
+| Receipt parse initial acknowledgement | <= 1.5s |
+| Receipt parse full review ready | <= 20s P95 |
+
+### Reliability budgets
+
+| Capability | Budget |
+|---|---:|
+| Canonical money-event posting success | >= 99.5% |
+| ProsperCoin award side-effect completion within 60s | >= 99.0% |
+| Quote freshness compliance during eligible trade windows | >= 99.0% |
+| Outbox retry recovery without manual intervention | >= 95% of transient failures |
+| Daily recap generation by scheduled deadline | >= 98% |
+
+### Degradation rules
+
+If the system cannot meet full functionality, it should degrade in this order:
+1. block risky actions before showing false certainty
+2. preserve source-of-truth writes even if projections lag
+3. show explicit freshness / degraded-state labels
+4. reduce AI flourish before reducing deterministic insight quality
+5. fall back to manual workflows before breaking the core loop entirely
+
+## Support, Debuggability, and Internal Tooling
+
+ProsperPals will need internal visibility before it needs enterprise admin tooling. The minimum viable support surface should let the team answer:
+- did the user action reach the system?
+- did it create a canonical object?
+- did the reward/trade/explanation side effects fire?
+- was a provider issue, policy block, or user-data issue responsible?
+
+### P0 internal support views
+
+- user timeline by trace id and canonical object ids
+- money-event revision history and dedupe status
+- ProsperCoin ledger timeline with rule-code references
+- trade execution history with quote freshness labels
+- import connection health and last sync outcome
+- companion message trace with fact-bundle reference and policy outcome
+- flag/cohort exposure state for the user
+
+These tools should be internal-only and redact secrets, raw artifacts, and unnecessary PII by default.
+
+## Backup, Recovery, and Incident Discipline
+
+ProsperPals should assume failures will happen and design for calm recovery rather than heroic improvisation.
+
+### P0 recovery posture
+
+- daily verified database backups with documented restore test cadence
+- object-storage recovery plan for receipts/statements and generated share artifacts
+- runbook for provider outage mode (MobilePay, PSD2, quote provider, OCR)
+- runbook for queue backlog recovery
+- runbook for stale-quote trading freeze
+- runbook for erroneous ProsperCoin or simulator event reversal via compensating entries
+
+### Incident response stance
+
+For trust-critical incidents, the product should prefer:
+- temporary feature freeze
+- explicit user-facing degraded labels
+- reversible compensating actions
+- audit-preserving repair steps
+
+over silent mutation or hopeful retries.
+
+## Engineering Readiness for Epic Decomposition
+
+With Step 3 complete, the architecture is now specific enough to drive epics and stories. Engineering work can be decomposed along these operationally meaningful seams:
+- app shell + onboarding runtime
+- authenticated command/API layer
+- money-event capture + normalization
+- ProsperCoin ledger + projection jobs
+- simulator execution + quote policy
+- companion orchestration + fact-bundle pipeline
+- sharing/family projections
+- observability, support tooling, and release operations
+
+This is the right level of resolution for epic writing: concrete enough to avoid fuzzy ownership, still abstract enough not to hardcode implementation trivia into the backlog.
+
+## Open Items for Epic Decomposition
+
+The next phase should translate architecture into:
+- P0 epics for onboarding, logging, rewards, simulator, companion orchestration, and release safety
+- P1 epics for MobilePay, family learning surfaces, and richer insights
+- P2 epics for PSD2 scale-up, deeper personalization, and advanced support tooling
+- acceptance criteria that preserve the latency, privacy, and trust budgets defined here
+
+## Step 3 Elicitation Outcomes
+
+### Architecture Decision Records
+Used to lock release/promotion rules, Node-runtime discipline for trust-critical commands, cohort-based feature rollout, and shared-trace requirements before convenience shortcuts can fragment the operating model.
+
+### Cross-Functional War Room
+This step reconciled the needs of product, design, engineering, compliance, and support:
+- product gets staged Denmark-first exposure without environment chaos
+- design keeps a fast, calm UI because heavy work moves to command/worker lanes
+- engineering gets clear promotion gates and runtime responsibilities
+- compliance gets traceability and incident-grade audit posture
+- support gets reconstructable timelines instead of guesswork
+
+### Critique and Refine
+The operating model was pressure-tested against common startup mistakes: merge-to-prod bravado, invisible feature drift, under-instrumented AI flows, schema breakage, and no-runbook incident handling. Each section was refined toward small-team realism rather than enterprise cosplay.
+
+## Step 3 Hardening Summary
+
+ProsperPals architecture is now complete for the BMAD architecture phase. The product has a coherent answer for:
+- what gets built
+- where trusted state lives
+- how external noise becomes canonical truth
+- how releases move safely into production
+- how failures are traced, contained, and recovered
+
+**Architecture verdict:** ready for `epics-stories` decomposition. The next work should convert these system boundaries, budgets, and rollout rules into P0/P1/P2 delivery units with acceptance criteria.
+
+
 
 ## Step 2 Elicitation Outcomes
 
