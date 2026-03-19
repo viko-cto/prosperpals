@@ -1,6 +1,7 @@
 ---
 stepsCompleted:
   - 1-foundation-and-system-topology
+  - 2-data-security-and-integration-boundaries
 inputDocuments:
   - _bmad/_bmad-output/planning-artifacts/product-brief-prosperpals-agentic-2026-03-07.md
   - _bmad/_bmad-output/planning-artifacts/prd-prosperpals-agentic.md
@@ -9,12 +10,12 @@ inputDocuments:
   - docs/bmad-workflow-plan.md
 workflowType: 'architecture'
 phase: 'architecture'
-step: 1
-stepName: 'foundation-and-system-topology'
+step: 2
+stepName: 'data-security-and-integration-boundaries'
 elicitationMethods:
   - architecture-decision-records
-  - first-principles
-  - cross-functional-war-room
+  - red-team-vs-blue-team
+  - self-consistency-validation
 status: 'in-progress'
 ---
 
@@ -24,7 +25,7 @@ status: 'in-progress'
 **Owner:** Nikolas / CopenDapp Labs  
 **Prepared by:** Viko  
 **Date:** 2026-03-19  
-**Status:** Step 1 complete — architecture foundation locked, detailed data/security/integration design next
+**Status:** Step 2 complete — architecture data, security, and integration boundaries locked; operations/delivery architecture next
 
 ## Executive Summary
 
@@ -518,16 +519,415 @@ This foundation step explicitly reduces the following risks from the Product Bri
 - **family privacy leakage** by making share-safe projections architectural rather than optional
 - **small-team overload** by choosing a modular monolith instead of premature distributed systems
 
+## Step 2 — Data, Security, and Integration Boundaries
+
+Step 2 turns the Step 1 topology into enforceable backend rules. The goal is to answer the questions that actually determine whether ProsperPals can be trusted in production:
+- what data lives where
+- who is allowed to read it
+- how noisy imports become canonical records
+- how retries avoid double-posting
+- how offline capture, provider failures, and stale market data degrade safely
+
+The posture for this step is deliberately conservative: **private financial data is isolated, deterministic services own trust-critical state transitions, and every external provider is treated as unreliable until normalized, verified, and audited.**
+
+## Data Architecture and Canonical Storage Boundaries
+
+### Core schema domains
+
+ProsperPals should keep one Postgres database with explicit schema-level separation between major trust domains:
+
+```text
+auth/identity domain
+  users
+  profiles
+  households
+  household_members
+  consent_grants
+
+finance domain
+  money_events
+  money_event_revisions
+  artifacts
+  parsed_candidates
+  import_connections
+  import_jobs
+  recurring_patterns
+  planning_profiles
+  spending_power_snapshots
+
+value domain
+  prospercoin_ledger_events
+  prospercoin_balance_views
+  virtual_portfolios
+  virtual_orders
+  virtual_trade_executions
+  virtual_position_views
+
+conversation and learning domain
+  conversation_threads
+  conversation_messages
+  insight_records
+  explanation_feedback
+  learning_tracks
+  learning_progress
+  scenario_estimates
+
+sharing and audit domain
+  share_artifacts
+  weekly_recaps
+  family_challenges
+  audit_events
+  outbox_events
+```
+
+This is still one operational database, but the boundaries should be reflected in migration folders, service ownership, and SQL/RLS review. The point is not organizational beauty. The point is to reduce accidental joins between incompatible trust zones.
+
+### Table classification rules
+
+| Data zone | Tables / entities | Read posture | Write posture | Notes |
+|---|---|---|---|---|
+| **Private financial source-of-truth** | `money_events`, `money_event_revisions`, `planning_profiles`, `spending_power_snapshots` | user + tightly scoped backend services only | deterministic services only for derived writes | no family/share surface may query these directly |
+| **Sensitive import and artifact zone** | `artifacts`, `parsed_candidates`, `import_connections`, `import_jobs` | user + import/review services only | provider adapters + review flows | raw imported noise stays here until normalized |
+| **Trust-critical value ledgers** | `prospercoin_ledger_events`, `virtual_trade_executions` | user-readable summaries, backend writes only | append-only service writes only | never user-mutable |
+| **Derived projections** | `prospercoin_balance_views`, `virtual_position_views`, `recurring_patterns`, `weekly_recaps` | user-facing and share-safe depending on type | rebuildable by jobs/services | must be safe to recompute |
+| **Conversation / explanation** | `conversation_*`, `insight_records`, `scenario_estimates` | user + orchestration services | AI layer writes only after policy checks | must reference fact bundles, not raw free-form truth |
+| **Share-safe social** | `share_artifacts`, safe recap projections | user-selected audiences only | projection service only | contains no raw private finance fields |
+| **System audit** | `audit_events`, `outbox_events` | internal/admin via least privilege | all sensitive flows append here | immutable trail for reversals and incident review |
+
+### Database decision set (ADR extension)
+
+#### ADR-009 — Use private-source tables plus share-safe projection tables
+
+**Decision**  
+Private finance tables and shareable/family tables must be structurally different tables and views, not the same records with UI hiding.
+
+**Rationale**
+- privacy mistakes usually happen through convenience joins
+- family and growth features create pressure to “just expose a little more data”
+- structural separation is cheaper than constantly re-auditing ad hoc filters
+
+**Consequence**
+- recap and sharing flows require explicit projection jobs
+- team velocity is slightly lower, privacy confidence is much higher
+
+#### ADR-010 — Use append-only audit and value ledgers for irreversible or trust-critical events
+
+**Decision**  
+ProsperCoin awards/debits, simulator executions, consent changes, import credential changes, and admin corrections all create immutable audit rows.
+
+**Rationale**
+- financial trust requires reconstruction after bugs, abuse, or support disputes
+- reversals should be modeled as compensating events, not silent edits
+
+**Consequence**
+- support tooling must learn to read event history
+- debugging gets easier because history stops disappearing
+
+## Row-Level Security and Access Control Model
+
+Supabase RLS should be treated as a real boundary, not as marketing security. Application code can still enforce business rules, but the database should reject obviously illegal cross-user access even if an API bug appears upstream.
+
+### RLS posture by entity type
+
+| Entity type | Baseline RLS rule | Extra controls |
+|---|---|---|
+| User-owned records | `auth.uid() = user_id` | soft-delete visibility restricted; service role only for repair tools |
+| Household membership | readable only to active members | membership status + role filter + revocation timestamp enforced |
+| Consent grants | grantor can read/write own grants; grantee never edits | revocation writes audited; projections re-evaluated on change |
+| Share artifacts | readable by owner or signed share token scope | expiry and visibility scope enforced server-side |
+| Ledgers | user may read own derived balances and trade history; no direct insert/update/delete | backend service role only for append operations |
+| Import credentials metadata | owner-readable summary only, secrets hidden | encrypted provider tokens kept outside normal query paths |
+| Audit events | not directly user-readable except curated support/debug surfaces later | internal least-privilege only |
+
+### Access model layers
+
+1. **Database identity gate** — RLS ensures the wrong user cannot see the wrong row.
+2. **Service authorization gate** — domain service checks role, consent, feature flags, plan level, and data-class rules.
+3. **Projection gate** — family/social surfaces can only read pre-approved safe models.
+4. **AI policy gate** — Goldie/Fin can see fact bundles appropriate to the task, not arbitrary raw tables.
+
+### Consent enforcement model
+
+Consent is not a generic boolean. It should be modeled as a typed grant with:
+- `grantor_user_id`
+- `grantee_scope` (household, invitee, share-link audience)
+- `data_category`
+- `access_level`
+- `granted_at`
+- `revoked_at`
+- `source_surface`
+
+Any share- or family-facing read path must check **active consent at read time** or read from a projection materialized while that consent was active. On revocation, the projection job must tombstone or rebuild affected share-safe artifacts.
+
+## Import Adapter and Canonicalization Architecture
+
+### Import pipeline
+
+All non-manual ingestion paths should follow one staged pipeline:
+
+```text
+provider payload / uploaded artifact
+  -> adapter-specific parse
+  -> normalization candidate
+  -> dedupe / fingerprinting
+  -> confidence + verification assignment
+  -> review if required
+  -> canonical MoneyEvent post
+  -> domain events / rewards / planning refresh
+```
+
+### Provider adapter contract
+
+Each import adapter must emit a normalized contract before any downstream business logic runs:
+
+```ts
+type NormalizedMoneyEventCandidate = {
+  externalRef?: string
+  sourceType: 'receipt' | 'pdf' | 'csv' | 'mobilepay' | 'psd2'
+  sourceAccountRef?: string
+  occurredAt: string
+  bookingDate?: string
+  amountMinor: number
+  currency: string
+  direction: 'debit' | 'credit'
+  merchantLabel?: string
+  rawMerchantLabel?: string
+  categoryHint?: string
+  descriptionRaw?: string
+  confidenceScore: number
+  verificationState: 'verified-imported' | 'user-confirmed' | 'estimated' | 'system-suspect'
+  dedupeFingerprint: string
+  sourcePayloadRef: string
+}
+```
+
+This forces MobilePay and PSD2 providers to become interchangeable at the business-logic layer. If a provider changes shape, only the adapter should scream. The planning, reward, and AI layers should stay boring.
+
+### Dedupe and reconciliation rules
+
+A candidate should be considered a potential duplicate when enough of the following overlap:
+- normalized amount + currency
+- occurred-at window within policy threshold
+- merchant fingerprint similarity
+- provider reference equality when available
+- same artifact hash / same parsed line identity
+
+Duplicate handling rules:
+- **exact match:** suppress canonical repost, keep audit link
+- **high-confidence near match:** mark `system-suspect` and queue review
+- **partial conflict:** preserve both candidates, surface reconciliation UI, do not award duplicate ProsperCoins until resolved
+
+### Reconciliation stance by source
+
+| Source | Canonicality default | Human review expectation | Special rule |
+|---|---|---|---|
+| Manual entry | canonical immediately if valid | low | user intent itself is authoritative, but may be `estimated` |
+| Receipt OCR | candidate first | medium | amount + merchant may auto-post only at very high confidence |
+| PDF/CSV bridge | candidate or mixed batch | medium-high | powerful for audits, but noisy enough to demand review UX |
+| MobilePay | near-canonical after adapter + dedupe | low-medium | still must normalize and preserve sync job lineage |
+| PSD2 | near-canonical after adapter + dedupe | low-medium | strongest long-term source, but provider outages and schema quirks are expected |
+
+## Offline, Idempotency, and Retry Semantics
+
+A mobile-first finance product cannot behave like every request is online, unique, and perfectly delivered. Step 2 locks the retry model so duplicate writes do not erode trust.
+
+### Client idempotency contract
+
+Every trust-critical client write must carry:
+- `idempotency_key`
+- `client_created_at`
+- `client_mutation_type`
+- `client_device_id/session_id`
+
+The server should persist an idempotency record keyed by `(user_id, mutation_type, idempotency_key)` with the resulting canonical object id and response envelope hash. Retries should return the original success payload instead of re-running business logic.
+
+### Ordered offline replay rules
+
+Offline queue ordering should be preserved for:
+1. money-event creation
+2. parsed-candidate confirmations
+3. trade submissions
+4. consent changes
+
+If replay order is broken, derived views can become surprising even if data is technically valid. That is unacceptable for user trust.
+
+### Retry safety rules
+
+| Operation | Retry safe? | Rule |
+|---|---|---|
+| Manual money log | yes | same idempotency key returns original event and reward outcome |
+| Receipt upload | yes | same file hash + idempotency key returns original artifact or parse job |
+| Candidate confirm | yes with key | repeat returns same resulting canonical event ids |
+| Coin award | no direct client retry | always derived from server-side rule evaluation tied to source reference |
+| Trade submit | yes with key until execution state resolved | duplicate order creation forbidden |
+| Consent revoke | yes | revocation is monotonic; repeating it should be harmless |
+
+#### ADR-011 — Make idempotency a first-class persisted subsystem
+
+**Decision**  
+Idempotency handling should be stored in durable server-side records, not only in ephemeral cache.
+
+**Rationale**
+- mobile finance writes happen across reconnects, deployments, and flaky networks
+- losing idempotency memory during a cold start is how duplicate money events happen
+
+**Consequence**
+- write paths are a little more involved
+- user trust survives retry storms and bad hotel Wi-Fi
+
+## Security, Encryption, and Secret Management
+
+### Security posture
+
+ProsperPals should assume that the most damaging early incident is not a sophisticated nation-state breach. It is a boring but devastating privacy mistake: overexposed logs, leaked provider credentials, unsafe notification payloads, or an overly broad service token. Step 2 architecture therefore favors containment over cleverness.
+
+### Encryption requirements
+
+| Data type | At-rest handling | In-transit handling | Additional controls |
+|---|---|---|---|
+| User PII | database encryption + provider-managed disk encryption | TLS everywhere | restricted admin visibility |
+| Provider tokens / refresh secrets | encrypted via managed secret store / KMS-backed envelope | never returned to client after setup | rotate and audit on reconnect/change |
+| Receipt / statement artifacts | encrypted object storage | signed upload/download URLs only | malware/content-type checks + expiry |
+| Audit and ledger events | database encryption | TLS | append-only semantics + retention policy |
+| Notification payloads | minimal data only | provider TLS | no private-financial content permitted |
+
+### Secret handling rules
+
+- provider access tokens must not live in front-end state, browser storage, or analytics payloads
+- server logs must redact auth headers, provider payload secrets, statement content, and file URLs
+- local/dev environments must use separate provider apps and test accounts
+- support/admin tooling must never expose raw provider tokens, only health/status metadata
+
+### Audit-event minimum set
+
+ProsperPals should always emit audit events for:
+- login and account recovery anomalies
+- import connection create/update/delete
+- provider credential refresh failures
+- canonical money-event reversals or admin corrections
+- ProsperCoin ledger reversals
+- trade execution and trade rejection due to stale data
+- consent grant create/revoke/expire
+- share artifact creation for non-private scopes
+
+## Market Data Resilience and Stale-Quote Policy
+
+The simulator only works if users understand what prices mean and how fresh they are. Market data must be treated like a semi-trusted external dependency, not a magical truth stream.
+
+### Quote policy
+
+| State | Freshness rule | UX posture | Execution posture |
+|---|---|---|---|
+| `fresh` | within asset-class threshold | normal | allow trade |
+| `delayed-but-acceptable` | beyond live threshold but inside educational safe threshold | label delay clearly | allow with warning |
+| `stale` | older than safe threshold | degraded banner + explanation | block new trades |
+| `provider-degraded` | fallback source active | show source/freshness badge | allow only if fallback meets threshold |
+
+Suggested launch thresholds:
+- equities/ETFs: trade block if quote older than 4 hours during market-open educational windows
+- crypto: trade block if quote older than 30 minutes
+- closed-market periods may use last close, but that state must be obvious
+
+### Market data fallback strategy
+
+1. primary provider quote fetch
+2. secondary provider fallback if primary fails
+3. if neither qualifies, preserve last known quote for display only and block new execution
+4. generate Fin explanation that labels the limitation instead of pretending certainty
+
+## Background Jobs, Outbox, and Event Processing Lifecycle
+
+Step 2 does not require a full broker architecture, but it does require disciplined asynchronous processing.
+
+### Outbox/event lifecycle
+
+```text
+transaction commits canonical record
+  -> writes outbox event in same DB transaction
+  -> background worker claims event
+  -> executes side effect idempotently
+  -> marks outbox event processed / retries with backoff
+```
+
+### P0 asynchronous jobs
+
+- parsed artifact processing
+- recurring pattern refresh
+- spending-power snapshot regeneration
+- ProsperCoin balance projection rebuild
+- portfolio position refresh after trade
+- recap/share artifact generation
+- market quote refresh
+- stale-data / failed-import alerting
+
+### Failure handling rules
+
+- side effects must be idempotent and reference the canonical source object
+- permanent failures create audit events and operator-visible logs
+- reward or trade side effects may not silently fail after the user sees success
+- projections may lag briefly, but the source-of-truth record must not be ambiguous
+
+## Implementation Boundary Recommendations
+
+### Suggested Supabase schema grouping
+
+- `public_identity_*` or `identity.*` for user/profile/household/consent
+- `finance.*` for canonical money + planning data
+- `ingest.*` for artifacts, adapters, jobs, parsed candidates
+- `value.*` for ProsperCoins and simulator ledgers
+- `engagement.*` for conversations, insights, learning
+- `sharing.*` for share-safe projections
+- `system.*` for audit and outbox tables
+
+Exact schema names are flexible. The separation principle is not.
+
+### Suggested server module ownership
+
+| Module | Owns | Must not own |
+|---|---|---|
+| `imports` | adapters, normalization, dedupe, sync jobs | reward decisions, AI narration |
+| `money-events` | canonical posting, revisions, review resolution | direct family sharing |
+| `planning` | spending power, recurring detection, safe-to-spend facts | direct provider parsing |
+| `prosperity` | ProsperCoin ledger/rules/balance projections | raw market data fetching |
+| `simulator` | orders, executions, positions, price policy | household permission logic |
+| `companions` | persona orchestration, explanation generation, policy filtering | numeric truth generation |
+| `sharing` | safe projections, recap artifacts, invite previews | raw transaction reads outside approved projection inputs |
+| `system` | audit, outbox, idempotency store, secrets integrations | product-specific business meaning |
+
 ## Open Items for the Next Architecture Step
 
-Step 2 should go deeper on:
-- canonical database schema and table boundaries
-- RLS model and consent enforcement patterns
-- import adapter contracts and reconciliation model
-- offline sync, idempotency, and retry semantics
-- market data provider redundancy and stale-quote policy
-- detailed security, encryption, and audit-event strategy
-- background job execution model and event processing lifecycle
+Step 3 should go deeper on:
+- runtime-specific deployment shape across Vercel web/app routes, workers, and scheduled jobs
+- CI/CD, migration safety, and environment promotion model
+- observability, tracing, alerting, and support-debug workflows
+- feature-flag strategy for Denmark-first staged rollout
+- performance budgeting for chat, portfolio refresh, and OCR paths
+- disaster recovery drills and operational runbooks
+- engineering-readiness implications for epic/story decomposition
+
+## Step 2 Elicitation Outcomes
+
+### Architecture Decision Records
+Used to lock structural privacy separation, immutable audit/value ledgers, and durable idempotency before implementation shortcuts can calcify into product risk.
+
+### Red Team vs Blue Team
+This step was stress-tested against the most likely launch failures:
+- **Red team:** duplicate postings during reconnects, family privacy leaks via convenience joins, stale quote trading, token exposure, reward double-crediting, and provider-sync ambiguity.
+- **Blue team response:** persisted idempotency store, projection-only sharing, stale-quote execution blocks, secret redaction/segregation, append-only ledgers, and adapter-first canonicalization.
+
+### Self-Consistency Validation
+Step 2 was checked against the approved brief, PRD, and UX spec to ensure:
+- the 80-second onboarding promise still works with review and trust controls
+- Off mode still preserves the same underlying ledgers and planning logic
+- Goldie/Fin remain explanation layers over deterministic facts
+- family monetization still operates without surveillance or raw-finance sharing
+- Denmark-first launch sequencing still fits one canonical data model from manual entry to PSD2
+
+## Step 2 Hardening Summary
+
+This step converts ProsperPals from a good-looking architecture concept into a finance-grade system boundary design. The major outcome is simple: **private financial truth, reward value systems, simulator execution, AI explanation, and family sharing now have explicit fences between them.**
+
+That means the next step can focus on operational architecture — deployment, observability, CI/CD, and rollout discipline — without reopening the core trust model.
 
 ## Step 1 Hardening Summary
 
