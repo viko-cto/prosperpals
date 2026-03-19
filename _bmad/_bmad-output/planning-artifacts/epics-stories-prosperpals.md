@@ -1,6 +1,7 @@
 ---
 stepsCompleted:
   - 1-p0-mvp-launch-epics
+  - 2-p1-sprint-2-4-enhancements
 inputDocuments:
   - _bmad/_bmad-output/planning-artifacts/product-brief-prosperpals-agentic-2026-03-07.md
   - _bmad/_bmad-output/planning-artifacts/prd-prosperpals-agentic.md
@@ -9,12 +10,12 @@ inputDocuments:
   - /home/node/clawd/research/prosperpals/bmad-session-notes-product-brief.md
 workflowType: 'epics-stories'
 phase: 'epics-stories'
-step: 1
-stepName: 'p0-mvp-launch-epics'
+step: 2
+stepName: 'p1-sprint-2-4-enhancements'
 elicitationMethods:
-  - cross-functional-war-room
+  - architecture-decision-records
+  - comparative-analysis-matrix
   - critique-and-refine
-  - self-consistency-validation
 status: 'draft-complete'
 ---
 
@@ -24,7 +25,7 @@ status: 'draft-complete'
 **Owner:** Nikolas / CopenDapp Labs  
 **Prepared by:** Viko  
 **Date:** 2026-03-19  
-**Status:** P0 MVP launch backlog complete — ready for P1/P2 expansion
+**Status:** P0 + P1 backlog complete — ready for P2 expansion
 
 ## Overview
 
@@ -390,47 +391,245 @@ The P0 backlog intentionally covers the first buildable slice implied by the PRD
 
 That slice is now backed by the minimum family/share, provenance, consent, and operational stories needed to keep the category thesis trustworthy at launch.
 
-## P1 and P2 Queue for Next BMAD Steps
+## Detailed P1 Epics and Stories
 
-### Step 2 queue: P1 Sprint 2-4 enhancements
-- MobilePay ingestion and reconciliation
-- richer recurring/subscription automation from connected data
-- deeper family premium value and learning visibility
-- richer simulator analytics and broader insight depth
-- stronger league/challenge surfaces once healthy progression is proven
+P1 covers the first post-launch expansion window: the Sprint 2 to Sprint 4 enhancements that turn a credible Denmark-first MVP into a sticky product with better data quality, better family monetization, and a more durable educational loop.
+
+The P1 backlog is deliberately constrained by three rules:
+1. it must reuse the P0 canonical data and ledger contracts rather than create alternate paths
+2. it must increase user confidence faster than it increases surface area
+3. it must deepen the existing loop before introducing novel adjacency bets
+
+## P1 Epic List
+
+### Epic P1.1: Add MobilePay as the first automated transaction rail
+Bring the most culturally relevant Denmark-first payment source into ProsperPals without breaking the manual-first canonical model or trust posture.
+
+### Epic P1.2: Turn connected activity into better recurring-spend intelligence
+Use richer connected transaction history to improve recurring detection, subscription awareness, and forward-looking planning quality.
+
+### Epic P1.3: Make family premium feel worth paying for
+Expand family learning and sponsor visibility in ways that feel collaborative, premium, and privacy-safe rather than surveillance-heavy.
+
+### Epic P1.4: Make Fin smarter without becoming advice
+Deepen simulator insight quality, learning paths, and portfolio understanding while staying inside education-only policy boundaries.
+
+### Epic P1.5: Introduce healthy social progression only after the core loop is stable
+Layer in stronger leagues and challenge mechanics only when anti-abuse, mode preferences, and emotional-safety rules are already proven.
+
+## Epic P1.1: Add MobilePay as the first automated transaction rail
+
+**Goal:** reduce manual capture burden for Denmark-first users by introducing MobilePay-backed ingestion and reconciliation on the same canonical contracts used in P0.
+
+### Story P1.1.1: MobilePay connection, consent copy, and account-link lifecycle
+**Description:** Build the first-party connection flow for MobilePay import so users can link, re-authenticate, and disconnect with explicit consent boundaries and understandable expectations.
+
+**Acceptance Criteria:**
+- **Given** an eligible Denmark-first user opens transaction-source settings, **when** they choose to connect MobilePay, **then** the flow explains what ProsperPals will import, how often it refreshes, and what remains private **and** the user must explicitly consent before the link is created.
+- **Given** the user completes MobilePay authorization, **when** the connection succeeds, **then** the source is stored as a provider adapter instance on the same staged-source model as manual, receipt, PDF, and CSV imports **and** the UI shows last-sync state.
+- **Given** the connection expires or the user disconnects it, **when** the lifecycle state changes, **then** sync jobs stop, historical imported events remain traceable by source, **and** revocation is auditable without deleting canonical finance history.
+
+**Estimated Complexity:** L
+
+### Story P1.1.2: Reconciliation of imported events against manual and receipt history
+**Description:** Match MobilePay imports against previously logged money activity so users gain automation without duplicate noise or broken balances.
+
+**Acceptance Criteria:**
+- **Given** a MobilePay transaction is imported, **when** the reconciliation service evaluates it, **then** the system attempts to match it against prior manual, receipt, or statement-derived events using configured similarity and timing rules **and** surfaces the confidence of any proposed match.
+- **Given** the system detects a likely duplicate, **when** the user reviews the event, **then** ProsperPals merges or links the records according to policy **and** never silently double-counts the spend in Daily Spending Power or reward logic.
+- **Given** reconciliation confidence is low or conflicting, **when** Goldie presents the result, **then** the user gets a lightweight review decision path **and** the canonical record keeps provenance for both the imported candidate and the final confirmed event.
+
+**Estimated Complexity:** L
+
+### Story P1.1.3: Incremental sync, refresh states, and degraded-import handling
+**Description:** Operate MobilePay as a reliable automated source with sane refresh behavior, observable sync states, and user-facing recovery copy.
+
+**Acceptance Criteria:**
+- **Given** a MobilePay source is active, **when** scheduled or user-triggered refresh runs, **then** the sync processes incrementally using provider cursors or equivalent checkpoints **and** imported records remain idempotent under retry.
+- **Given** the provider is delayed, partially unavailable, or rate-limited, **when** the import state is shown in-product, **then** the user sees the last successful sync, degraded status, and recovery guidance **and** stale automated data never masquerades as current truth.
+- **Given** sync health regresses for a cohort after release, **when** operators inspect telemetry, **then** source-level health and job traces are visible **and** the feature can be degraded or rolled back behind existing flags without corrupting downstream models.
+
+**Estimated Complexity:** M
+
+## Epic P1.2: Turn connected activity into better recurring-spend intelligence
+
+**Goal:** make ProsperPals more useful once connected data arrives by increasing the quality of recurring pattern detection, forecasting inputs, and intervention timing.
+
+### Story P1.2.1: Connected recurring-obligation detection with confidence tiers
+**Description:** Upgrade recurring detection so Goldie can identify subscriptions, bills, and habitual charges from linked activity with clearer confidence and cleaner review.
+
+**Acceptance Criteria:**
+- **Given** a user has enough connected transaction history, **when** recurring analysis runs, **then** ProsperPals groups likely recurring merchants or obligations into candidate series with cadence, amount range, and confidence tier.
+- **Given** Goldie presents a likely recurring item, **when** the user inspects it, **then** the product distinguishes confirmed obligations from suggested patterns **and** allows the user to correct merchant grouping or cadence.
+- **Given** a recurring candidate is confirmed or dismissed, **when** planning models update, **then** Daily Spending Power and related forward-looking cards recompute using the decision **and** the underlying event history remains replay-safe.
+
+**Estimated Complexity:** M
+
+### Story P1.2.2: Subscription-change alerts and spend-drift explanation
+**Description:** Surface meaningful movement in bills and subscriptions so users notice creep, churn, and anomalies without being spammed.
+
+**Acceptance Criteria:**
+- **Given** a known recurring merchant changes materially in amount, frequency, or category, **when** ProsperPals detects the change, **then** Goldie can create a concise drift alert with the before/after pattern and confidence state.
+- **Given** multiple alerts compete for attention, **when** prioritization runs, **then** the product ranks alerts by likely impact on user planning and suppresses low-value noise according to notification policy.
+- **Given** the user opens a change alert, **when** the explanation is shown, **then** they can see why the pattern was flagged, what source data supports it, **and** what lightweight next action is available.
+
+**Estimated Complexity:** M
+
+### Story P1.2.3: Better forecasting inputs from connected income and bill patterns
+**Description:** Improve the planning engine using connected data so Daily Spending Power becomes more resilient for salary, irregular income, and high-variance spending patterns.
+
+**Acceptance Criteria:**
+- **Given** connected transaction history contains recognizable payroll or income-like patterns, **when** planning state recalculates, **then** the engine can separate likely income events from expenses **and** use them as weighted forward-looking inputs rather than naive raw averages.
+- **Given** the user has irregular or mixed income, **when** forecasting is rendered, **then** the product explains that the plan is based on observed ranges or recent variability **and** labels confidence accordingly.
+- **Given** new connected data materially changes the outlook, **when** the home view refreshes, **then** Goldie explains what changed in practical terms **and** the user can trace the update back to supporting events.
+
+**Estimated Complexity:** L
+
+## Epic P1.3: Make family premium feel worth paying for
+
+**Goal:** deepen sponsor-and-learner value so the family plan feels like a real educational product tier, not just a share feature.
+
+### Story P1.3.1: Family learning dashboard with role-safe progress visibility
+**Description:** Build the premium family dashboard that shows learning momentum, milestone progress, and challenge participation without exposing private transaction details.
+
+**Acceptance Criteria:**
+- **Given** a sponsor opens the family dashboard, **when** eligible members exist, **then** the dashboard shows progress summaries, lesson streaks, and challenge states drawn from share-safe projections **and** excludes private finance detail by design.
+- **Given** a learner/member opens the same family space, **when** their role-scoped view renders, **then** they see their own learning context plus approved shared milestones **and** sponsor-only management tools stay hidden.
+- **Given** a consent scope changes, **when** the dashboard reloads or recaps regenerate, **then** the visible metrics update immediately **and** revoked fields disappear without stale caching leaks.
+
+**Estimated Complexity:** M
+
+### Story P1.3.2: Guided family challenges, prompts, and recap templates
+**Description:** Add a richer set of collaborative learning loops so families have reasons to return weekly without needing both parties active every day.
+
+**Acceptance Criteria:**
+- **Given** a sponsor wants to run a collaborative activity, **when** they start a family challenge, **then** the product offers approved templates for savings, habit, or learning goals **and** avoids framing that could shame a learner for private spending.
+- **Given** a challenge period ends, **when** ProsperPals generates the recap, **then** the summary highlights learning progress, wins, and next-step prompts **and** uses safe projection data only.
+- **Given** one household member is inactive, **when** recap logic runs, **then** the system can still produce a meaningful collaborative summary or nudge path **and** does not collapse the family loop into a blank state.
+
+**Estimated Complexity:** M
+
+### Story P1.3.3: Premium family paywall moments and upgrade evidence surfaces
+**Description:** Show family-plan monetization at the moments where value is clearest, using proof of educational progress rather than generic upsell copy.
+
+**Acceptance Criteria:**
+- **Given** a free user reaches a family-relevant milestone or preview depth threshold, **when** the upgrade prompt appears, **then** it references visible family-learning value already experienced in-product **and** does not rely on fear-based gating.
+- **Given** the family premium paywall is shown, **when** the comparison renders, **then** it distinguishes free preview features from premium ongoing coaching, recaps, and role-safe visibility in simple language.
+- **Given** the user dismisses or converts on a premium moment, **when** analytics events are emitted, **then** the team can attribute upgrade performance to the specific evidence surface or trigger path.
+
+**Estimated Complexity:** M
+
+## Epic P1.4: Make Fin smarter without becoming advice
+
+**Goal:** improve learning depth and simulator usefulness without crossing regulatory boundaries or overwhelming mobile-first users.
+
+### Story P1.4.1: Richer portfolio analytics and category-level explanation cards
+**Description:** Expand the simulator workspace so users can understand concentration, gain/loss drivers, and simple diversification lessons in plain language.
+
+**Acceptance Criteria:**
+- **Given** a user has multiple virtual positions, **when** the enhanced portfolio view renders, **then** the product can show simple concentration, sector/category exposure, and change drivers in an educational format appropriate to their depth setting.
+- **Given** Fin explains a gain or loss driver, **when** the card is shown, **then** it links the narrative to observable market movement or portfolio mix rather than unsupported model opinion.
+- **Given** the user prefers Lite or Off mode, **when** analytics surfaces are displayed, **then** educational depth remains available **and** cosmetic or competitive embellishments stay appropriately reduced.
+
+**Estimated Complexity:** M
+
+### Story P1.4.2: Themed learning paths and scenario packs
+**Description:** Organize Fin’s educational experience into repeatable themes so users can go beyond one-off trades into structured learning.
+
+**Acceptance Criteria:**
+- **Given** a user wants more than basic trade feedback, **when** they open Fin’s learning area, **then** the product offers themed scenario or lesson packs such as diversification, volatility, long-term compounding, or opportunity cost.
+- **Given** a user enters a themed path, **when** Fin presents the lesson, **then** the sequence builds on prior actions and explanation depth settings **and** keeps all content explicitly educational rather than prescriptive.
+- **Given** a path milestone is completed, **when** rewards or recap content are generated, **then** ProsperCoins, achievements, or follow-up prompts are granted according to the same ledger and anti-abuse rules used elsewhere.
+
+**Estimated Complexity:** M
+
+### Story P1.4.3: Multi-day simulator insights and habit-to-investing feedback loops
+**Description:** Close the loop more tightly by showing how real-world behavior changes create more room for simulation learning over time.
+
+**Acceptance Criteria:**
+- **Given** a user has both logging history and simulator activity, **when** Fin generates a multi-day insight, **then** the product can connect spending-awareness improvements to increased virtual investing capacity or better scenario outcomes.
+- **Given** the insight uses mixed sources across time, **when** it is rendered, **then** freshness, confidence, and source provenance remain available through the explanation path.
+- **Given** the user acts on the suggested learning prompt, **when** they continue the loop, **then** Goldie and Fin maintain one coherent conversation state instead of fragmenting context across features.
+
+**Estimated Complexity:** M
+
+## Epic P1.5: Introduce healthy social progression only after the core loop is stable
+
+**Goal:** add competitive and communal motivation carefully, only after the reward system, mode controls, and trust posture are already resilient.
+
+### Story P1.5.1: League cohorts and normalized ranking surfaces
+**Description:** Build league-style progression that rewards consistency and learning behavior instead of absolute spending or wealth.
+
+**Acceptance Criteria:**
+- **Given** a user is eligible for league participation, **when** rankings are generated, **then** the score uses normalized learning/progress signals rather than absolute money values or spend volume.
+- **Given** a user is in Lite or Off mode, **when** the product renders progression surfaces, **then** league visibility is reduced or hidden according to preference while the underlying achievements remain intact.
+- **Given** a cohort configuration changes or a league is disabled behind a flag, **when** the feature state updates, **then** user balances, streaks, and core progression history remain unaffected.
+
+**Estimated Complexity:** M
+
+### Story P1.5.2: Time-boxed individual and shared challenges with abuse controls
+**Description:** Add stronger challenge mechanics that can motivate return behavior without incentivizing spammy logging or unhealthy comparison.
+
+**Acceptance Criteria:**
+- **Given** a user starts or joins a challenge, **when** rules are presented, **then** the challenge objective is tied to approved awareness or learning actions **and** not to raw transaction count or spend amount.
+- **Given** the system detects challenge-related farming, collusion, or suspicious action velocity, **when** scoring runs, **then** rewards are limited according to policy **and** the relevant reasons are visible internally for support/review.
+- **Given** a challenge ends, **when** recap and rewards are generated, **then** the product celebrates progress without humiliating low performers **and** offers an easy next-step continuation.
+
+**Estimated Complexity:** M
+
+### Story P1.5.3: Experimentation hooks for progression tuning and emotional safety
+**Description:** Create the instrumentation and flag model needed to tune gamification intensity safely after launch.
+
+**Acceptance Criteria:**
+- **Given** the team wants to adjust reward pacing, challenge cadence, or league visibility, **when** the configuration is changed, **then** the relevant rules can be tuned behind feature flags or config without schema-breaking migrations.
+- **Given** a new progression experiment runs, **when** telemetry is collected, **then** the team can compare retention, loop completion, and confusion/stress signals across cohorts.
+- **Given** an experiment causes negative emotional-safety outcomes or abuse regressions, **when** it is disabled, **then** the product can revert quickly **and** historical user progress remains valid.
+
+**Estimated Complexity:** M
+
+## P1 Coverage Notes
+
+The P1 backlog extends the same core loop rather than replacing it:
+1. automated capture reduces friction after manual trust is established
+2. connected recurring intelligence sharpens Goldie’s practical value
+3. family premium adds a real monetization path with safer role clarity
+4. richer simulator education increases return value for invest-first users
+5. stronger progression is delayed until abuse controls and emotional safety are ready
+
+This keeps ProsperPals disciplined: better data first, deeper value second, stronger game mechanics last.
+
+## P2 Queue for Next BMAD Step
 
 ### Step 3 queue: P2 post-MVP expansion
-- PSD2/open banking scale-up
-- broader Nordic/EU localization and multi-market rollout
-- deeper personalization and adaptive coaching
-- advanced support tooling, experimentation, and operational maturity
+- PSD2/open banking scale-up across more banks and broader adapter coverage
+- broader Nordic/EU localization, compliance hardening, and multi-market rollout
+- deeper personalization and adaptive coaching using validated behavior history
+- advanced support tooling, experimentation, and operational maturity beyond launch-safe baselines
 - future-ready partner reward catalog and non-cash value expansion
 
 ## Elicitation Outcomes Applied in This Step
 
-### Cross-Functional War Room
-- Kept onboarding, money capture, rewards, simulator, family, and trust as separate user-value epics so design, engineering, compliance, and analytics each have a clean ownership seam.
-- Pulled release safety and provenance into the P0 backlog explicitly because finance trust cannot be “hardened later.”
-- Preserved Denmark-first realism by treating PDF/CSV audit and receipt review as first-class launch stories rather than pretending MobilePay already exists.
+### Architecture Decision Records
+- Kept MobilePay on the same staged-source and canonical `MoneyEvent` architecture rather than creating a parallel import track that would rot later.
+- Forced richer family premium and simulator depth to reuse existing consent, ledger, and explanation contracts instead of inventing separate premium-only plumbing.
+- Positioned experimentation hooks as a configuration/flag problem, not a reason to fork product logic by mode or cohort.
+
+### Comparative Analysis Matrix
+- Prioritized MobilePay before PSD2 because Denmark-first launch quality improves more from one culturally native rail than from premature broad bank coverage.
+- Ordered recurring intelligence before bigger social mechanics because practical money clarity is more defensible than trying to out-gameify louder competitors.
+- Elevated family premium proof surfaces over generic paywall polish because monetization needs evidence-based moments, not just prettier upgrade screens.
 
 ### Critique & Refine
-- Removed vague “build the platform” style backlog buckets and forced every epic to deliver a user-visible outcome.
-- Split Goldie money capture from ProsperCoin progression so the backlog does not hide reward abuse rules inside generic data work.
-- Kept family value in P0, but bounded it to preview/share/co-present behavior instead of surveillance-heavy household finance features.
+- Removed any P1 item that smelled like “more features for the sake of roadmap volume” and kept only backlog items that deepen retention, trust, or monetization.
+- Kept stronger leagues and challenges in P1 rather than P0 so the launch product does not confuse motivation with gimmicks.
+- Made every P1 story explicitly reuse the canonical data, provenance, and policy boundaries already locked in prior phases.
 
-### Self-Consistency Validation
-- Verified the stories still honor the **80-second first value** promise.
-- Verified Fin stories remain inside **education, not advice** boundaries.
-- Verified Full/Lite/Off remains a presentation layer over one product core.
-- Verified share and family stories only operate through consented, share-safe projections.
-- Verified trust/operations stories preserve the architecture’s latency, audit, and reversibility posture.
+## Step 2 Hardening Summary
 
-## Step 1 Hardening Summary
-
-This P0 epic/story pass makes ProsperPals buildable without diluting the product thesis.
+This P1 epic/story pass turns ProsperPals from a credible MVP into a sharper post-launch plan without losing the product’s discipline.
 
 What is now locked:
-- the MVP launch backlog is organized around real user outcomes, not technical layers
-- each story is small enough to hand to a single dev agent or focused implementation session
-- privacy, provenance, idempotency, and release safety are embedded in P0 rather than deferred
-- the next BMAD step is now unambiguous: **expand the backlog with P1 Sprint 2-4 epics and stories**
+- Sprint 2-4 work is organized around the highest-confidence expansion sequence: MobilePay -> connected intelligence -> family premium -> deeper Fin -> stronger progression
+- every P1 story extends existing canonical contracts instead of creating roadmap debt
+- monetization and retention improvements are tied to visible user value, not vanity roadmap breadth
+- the next BMAD step is now unambiguous: **expand the backlog with P2 post-MVP epics and stories**
