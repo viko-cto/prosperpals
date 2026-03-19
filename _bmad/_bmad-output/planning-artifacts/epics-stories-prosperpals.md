@@ -2,6 +2,7 @@
 stepsCompleted:
   - 1-p0-mvp-launch-epics
   - 2-p1-sprint-2-4-enhancements
+  - 3-p2-post-mvp-expansion
 inputDocuments:
   - _bmad/_bmad-output/planning-artifacts/product-brief-prosperpals-agentic-2026-03-07.md
   - _bmad/_bmad-output/planning-artifacts/prd-prosperpals-agentic.md
@@ -10,12 +11,12 @@ inputDocuments:
   - /home/node/clawd/research/prosperpals/bmad-session-notes-product-brief.md
 workflowType: 'epics-stories'
 phase: 'epics-stories'
-step: 2
-stepName: 'p1-sprint-2-4-enhancements'
+step: 3
+stepName: 'p2-post-mvp-expansion'
 elicitationMethods:
   - architecture-decision-records
-  - comparative-analysis-matrix
-  - critique-and-refine
+  - cross-functional-war-room
+  - self-consistency-validation
 status: 'draft-complete'
 ---
 
@@ -25,7 +26,7 @@ status: 'draft-complete'
 **Owner:** Nikolas / CopenDapp Labs  
 **Prepared by:** Viko  
 **Date:** 2026-03-19  
-**Status:** P0 + P1 backlog complete — ready for P2 expansion
+**Status:** P0 + P1 + P2 backlog complete — ready for readiness check
 
 ## Overview
 
@@ -598,38 +599,236 @@ The P1 backlog extends the same core loop rather than replacing it:
 
 This keeps ProsperPals disciplined: better data first, deeper value second, stronger game mechanics last.
 
-## P2 Queue for Next BMAD Step
+## Detailed P2 Epics and Stories
 
-### Step 3 queue: P2 post-MVP expansion
-- PSD2/open banking scale-up across more banks and broader adapter coverage
-- broader Nordic/EU localization, compliance hardening, and multi-market rollout
-- deeper personalization and adaptive coaching using validated behavior history
-- advanced support tooling, experimentation, and operational maturity beyond launch-safe baselines
-- future-ready partner reward catalog and non-cash value expansion
+P2 covers the first real expansion era after Denmark-first product/market proof: ProsperPals becomes broader, more adaptive, and more operationally mature without abandoning the original loop. The point of P2 is not to pile on “enterprise later” fantasies. The point is to expand what already works into something that can survive more banks, more countries, more household structures, and more support load.
+
+The P2 backlog is governed by three rules:
+1. every expansion feature must still resolve back to the same canonical finance, ledger, consent, and explanation model
+2. multi-market growth must increase user trust, not just geographic reach
+3. personalization must remain assistive, explainable, and revocable rather than opaque or over-automated
+
+## P2 Epic List
+
+### Epic P2.1: Scale from one Denmark-first rail to a durable open-banking ingestion platform
+Extend ProsperPals from manual + MobilePay into broader PSD2/open-banking coverage using the same staged-source architecture, stronger reconciliation, and region-aware adapter operations.
+
+### Epic P2.2: Expand ProsperPals across Nordics and then the EU without losing product trust
+Localize planning logic, currency, copy, compliance posture, and operational support for multi-market rollout while preserving one coherent product core.
+
+### Epic P2.3: Personalize coaching and education using validated behavior history
+Make Goldie and Fin more adaptive over time using explicitly explainable models, consent-aware history, and user-controlled preference tuning.
+
+### Epic P2.4: Mature partner rewards and non-cash value exchange without breaking the economy
+Evolve ProsperCoins from a pure internal loop mechanic into a future-ready non-cash reward ecosystem with controlled sinks, partner offers, and fraud-resistant redemption logic.
+
+### Epic P2.5: Build the operational maturity needed for scale, trust, and experimentation
+Upgrade internal tooling, support, analytics, release discipline, and experimentation governance so the team can expand safely without turning the product into chaos.
+
+## Epic P2.1: Scale from one Denmark-first rail to a durable open-banking ingestion platform
+
+**Goal:** add PSD2/open-banking breadth without creating per-provider product behavior, duplicate finance states, or fragile reconciliation debt.
+
+### Story P2.1.1: Multi-provider bank connection orchestration and account-source normalization
+**Description:** Introduce the orchestration layer that can manage multiple open-banking providers, account lifecycles, and account metadata while preserving one source contract downstream.
+
+**Acceptance Criteria:**
+- **Given** a user in a supported market opens bank connection settings, **when** they start the open-banking flow, **then** the product can route them through the appropriate provider or aggregator **and** capture region/bank/account metadata on the staged-source model rather than inventing market-specific tables.
+- **Given** one user connects multiple accounts or institutions, **when** the connection completes, **then** account identity, consent window, sync status, and currency are preserved distinctly **and** downstream processing still resolves into canonical `MoneyEvent` and account reference contracts.
+- **Given** a provider changes terms, scopes, or refresh requirements, **when** the lifecycle state updates, **then** the product shows understandable reconnect guidance **and** bank-link fragility never silently corrupts planning state.
+
+**Estimated Complexity:** L
+
+### Story P2.1.2: Cross-provider reconciliation and duplicate suppression at scale
+**Description:** Harden transaction matching so the same real-world event can flow through manual, MobilePay, and open-banking sources without breaking trust.
+
+**Acceptance Criteria:**
+- **Given** the same financial event arrives from multiple source types, **when** reconciliation evaluates it, **then** the product can link or merge candidate records using source-aware confidence rules **and** expose why the chosen canonical outcome won.
+- **Given** provider feeds disagree on merchant text, timestamps, or settlement timing, **when** reconciliation runs, **then** the engine uses region-aware tolerances **and** preserves raw provenance for audit/support inspection.
+- **Given** reconciliation policy changes after launch, **when** historical events are replayed or re-evaluated, **then** the canonical record lineage remains explainable **and** user-facing balances do not drift silently.
+
+**Estimated Complexity:** L
+
+### Story P2.1.3: Consent renewal, provider degradation handling, and source-quality scoring
+**Description:** Operate a multi-provider ingestion system with visible source health, trust-aware fallbacks, and user-facing quality signals.
+
+**Acceptance Criteria:**
+- **Given** a bank connection approaches consent expiry, **when** the renewal window begins, **then** ProsperPals prompts the user with market-appropriate copy **and** keeps planning-state degradation explicit if renewal is delayed.
+- **Given** a provider becomes unreliable, rate-limited, or partially degraded, **when** import jobs and freshness checks run, **then** the system can score source quality, suppress unsafe conclusions, **and** downgrade user-visible confidence rather than pretending continuity.
+- **Given** support or operations reviews the ingestion fleet, **when** dashboards render, **then** source health, reconnect burden, reconciliation error rates, and bank/provider-level incident traces are available for triage.
+
+**Estimated Complexity:** M
+
+## Epic P2.2: Expand ProsperPals across Nordics and then the EU without losing product trust
+
+**Goal:** preserve the quiet, premium, trust-first ProsperPals experience while adapting to different currencies, financial habits, languages, and regulatory surfaces.
+
+### Story P2.2.1: Multi-currency planning, display, and market-awareness foundations
+**Description:** Add robust currency handling so ProsperPals can plan, explain, and simulate across non-DKK users without UI or logic confusion.
+
+**Acceptance Criteria:**
+- **Given** a user operates outside the Denmark-first DKK default, **when** they onboard or connect accounts, **then** the product stores primary currency, display preferences, and source currencies explicitly **and** avoids mixed-currency math without conversion metadata.
+- **Given** planning or simulator views use converted values, **when** they render, **then** exchange-rate source and freshness are labeled where relevant **and** the user can still understand original-value context when needed.
+- **Given** a user crosses markets or uses multi-currency accounts, **when** home and portfolio summaries compute, **then** the product remains understandable on mobile **and** never implies false precision across FX states.
+
+**Estimated Complexity:** L
+
+### Story P2.2.2: Region-aware copy, education framing, and compliance boundary packs
+**Description:** Package market-specific wording, disclosures, and education boundaries so ProsperPals can launch country by country without policy drift.
+
+**Acceptance Criteria:**
+- **Given** ProsperPals is enabled for a new market, **when** onboarding, simulator education, and sharing copy load, **then** the product can select region-appropriate language packs, disclosure text, and support links **and** keep the education-not-advice stance consistent.
+- **Given** local rules or review guidance differ by market, **when** policy content is updated, **then** the change can be versioned and rolled out by market or cohort **and** support/audit tools can identify which policy pack a user saw.
+- **Given** translation or localization quality is incomplete for a market, **when** rollout readiness is evaluated, **then** launch can be blocked or feature-limited by policy rather than shipping half-translated trust surfaces.
+
+**Estimated Complexity:** M
+
+### Story P2.2.3: Market rollout controls, support readiness, and region-safe feature flags
+**Description:** Give the team the operational switches needed to launch ProsperPals market by market instead of one risky all-at-once expansion.
+
+**Acceptance Criteria:**
+- **Given** the team enables a new Nordic or EU market, **when** feature rollout starts, **then** bank-source availability, simulator asset sets, paywall logic, and policy packs can be controlled independently by market.
+- **Given** support load or trust incidents spike in a specific region, **when** the issue is identified, **then** the team can throttle or roll back only the affected market-facing features **and** keep other markets stable.
+- **Given** rollout readiness is reviewed, **when** the scorecard is generated, **then** localization completeness, provider coverage, policy approval, support documentation, and analytics readiness are all required gates.
+
+**Estimated Complexity:** M
+
+## Epic P2.3: Personalize coaching and education using validated behavior history
+
+**Goal:** make ProsperPals feel increasingly “for me” while remaining controllable, explainable, and clearly bounded.
+
+### Story P2.3.1: Adaptive habit profile for Goldie and explanation profile for Fin
+**Description:** Build the user model layer that tracks stable behavior tendencies and preferred explanation style without turning the companions into black boxes.
+
+**Acceptance Criteria:**
+- **Given** a user builds enough history, **when** profile adaptation runs, **then** ProsperPals can infer stable tendencies such as logging consistency, category drift sensitivity, simulator curiosity, and explanation depth preference **and** store them in an auditable profile model.
+- **Given** Goldie or Fin adapts based on that profile, **when** the user sees a changed prompt or explanation style, **then** the behavior remains explainable in plain language **and** user controls can override the adaptation.
+- **Given** a user resets or reduces personalization, **when** the preference changes, **then** adaptive behaviors back off without deleting canonical financial history or breaking ongoing loops.
+
+**Estimated Complexity:** M
+
+### Story P2.3.2: Predictive nudges and recovery coaching with explicit confidence boundaries
+**Description:** Surface higher-quality proactive coaching based on observed habits while avoiding manipulative or overconfident “AI knows your life” vibes.
+
+**Acceptance Criteria:**
+- **Given** ProsperPals detects a likely upcoming budget pinch, routine lapse, or teachable simulator moment, **when** it generates a proactive nudge, **then** the nudge is labeled as a prediction or pattern-based suggestion **and** includes confidence-appropriate language.
+- **Given** the system lacks enough evidence or source quality is degraded, **when** proactive coaching logic evaluates, **then** it suppresses or softens the nudge rather than fabricating urgency.
+- **Given** a user engages with a recovery or planning nudge, **when** the loop continues, **then** the product can connect the nudge back to measurable outcomes for future tuning without crossing into punitive surveillance.
+
+**Estimated Complexity:** M
+
+### Story P2.3.3: Longitudinal learning plans and household-stage tailoring
+**Description:** Move beyond one-off lessons into longer educational arcs tuned to where the user or family is in their financial journey.
+
+**Acceptance Criteria:**
+- **Given** a user or family cohort has accumulated enough activity, **when** the learning planner runs, **then** ProsperPals can offer a longer path such as “stabilize spending,” “build investing confidence,” or “teach a teen safely” using approved educational modules.
+- **Given** a longitudinal path is active, **when** weekly recaps or simulator prompts are shown, **then** the product aligns them with the active learning arc **and** still respects Lite/Off mode presentation preferences.
+- **Given** the user changes life stage, household role, or motivation, **when** path selection updates, **then** the next plan can shift without invalidating prior progress or explanation history.
+
+**Estimated Complexity:** M
+
+## Epic P2.4: Mature partner rewards and non-cash value exchange without breaking the economy
+
+**Goal:** evolve ProsperCoins carefully so they unlock richer value while preserving the original educational and anti-abuse intent.
+
+### Story P2.4.1: Reward catalog service and controlled non-cash redemption ledger
+**Description:** Add the service layer for future partner or internal reward redemption while keeping reward economics auditable and reversible.
+
+**Acceptance Criteria:**
+- **Given** ProsperPals introduces redeemable non-cash rewards, **when** a user browses the catalog, **then** items are defined by explicit inventory/rule metadata **and** redemption uses the same append-only ledger discipline as simulator debits.
+- **Given** a redemption is requested, **when** the transaction succeeds or fails, **then** the ledger reflects a clear reservation/finalization outcome **and** support can trace the full lifecycle without manual guesswork.
+- **Given** catalog items change price, availability, or partner status, **when** the catalog updates, **then** prior redemption history remains intact **and** stale offers cannot be redeemed accidentally.
+
+**Estimated Complexity:** L
+
+### Story P2.4.2: Partner-offer eligibility, fraud controls, and fairness rules
+**Description:** Protect the product from turning ProsperCoins into a leaky promotional currency that rewards gaming more than learning.
+
+**Acceptance Criteria:**
+- **Given** a reward or partner offer has eligibility conditions, **when** the user attempts redemption, **then** ProsperPals validates account status, region, fraud flags, and required learning/progression criteria before approval.
+- **Given** abnormal redemption behavior appears, **when** fraud checks run, **then** suspicious flows can be limited or held for review **and** the event is visible in internal tooling with reason codes.
+- **Given** the team adds or removes partners, **when** rule configuration changes, **then** fairness and anti-abuse controls remain centrally governed rather than duplicated inside each offer flow.
+
+**Estimated Complexity:** M
+
+### Story P2.4.3: Reward economics dashboards and sink/balance tuning controls
+**Description:** Give the team the instrumentation needed to keep ProsperCoins motivating without inflation, stagnation, or exploitative pressure.
+
+**Acceptance Criteria:**
+- **Given** operators review reward health, **when** the economics dashboard loads, **then** issuance, spend velocity, sink usage, redemption failures, and suspicious concentration patterns are visible by cohort and market.
+- **Given** the team wants to adjust sink pricing or earning rates, **when** configuration changes are proposed, **then** the projected balance impact can be reviewed before rollout **and** changes can ship behind existing experimentation controls.
+- **Given** an economy change harms loop completion or emotional safety, **when** the team rolls it back, **then** user balances and prior redemptions remain internally consistent.
+
+**Estimated Complexity:** M
+
+## Epic P2.5: Build the operational maturity needed for scale, trust, and experimentation
+
+**Goal:** make ProsperPals operable by a growing team under real customer load without losing sight of trust, explainability, or product discipline.
+
+### Story P2.5.1: Advanced support console for finance, companion, and source-debug workflows
+**Description:** Expand internal tooling so support can understand what happened across money events, rewards, simulator actions, companion outputs, and consent boundaries in one place.
+
+**Acceptance Criteria:**
+- **Given** support investigates a user issue, **when** the advanced console loads, **then** timeline, source lineage, reconciliation state, ledger events, explanation bundles, and consent history are visible with role-safe redaction.
+- **Given** the issue spans AI output and deterministic finance logic, **when** support inspects the trace, **then** they can distinguish fact generation from narrative generation **and** see which model/config/version was involved.
+- **Given** the console is used in regulated or privacy-sensitive contexts, **when** access is granted, **then** elevated views are permissioned, audited, and revocable.
+
+**Estimated Complexity:** L
+
+### Story P2.5.2: Experiment registry, hypothesis tracking, and rollout governance
+**Description:** Formalize how ProsperPals runs product and AI experiments so growth work cannot casually damage trust-critical behavior.
+
+**Acceptance Criteria:**
+- **Given** the team proposes an experiment, **when** it is registered, **then** the hypothesis, target cohorts, metrics, stop conditions, and trust-risk classification are captured before rollout.
+- **Given** an experiment touches rewards, coaching, imports, or family visibility, **when** governance rules evaluate it, **then** required approvals or extra monitoring are enforced before exposure.
+- **Given** experiment results are reviewed, **when** the registry is queried, **then** decision history and linked metrics remain searchable so future teams can avoid rerunning bad ideas.
+
+**Estimated Complexity:** M
+
+### Story P2.5.3: Reliability scorecards, incident rehearsal, and recovery automation
+**Description:** Mature the trust posture with scorecards and incident routines that keep financial facts, ledgers, and user confidence recoverable under pressure.
+
+**Acceptance Criteria:**
+- **Given** the team reviews operational health, **when** the reliability scorecard is generated, **then** it includes ingestion latency, reconciliation error rate, stale-data exposure, notification safety, ledger integrity, and recovery time metrics.
+- **Given** a critical incident rehearsal or postmortem occurs, **when** it is logged, **then** the linked source/system/market impact, rollback path, and follow-up actions are stored and reviewable.
+- **Given** a recoverable failure affects calculations, imports, or reward posting, **when** recovery automation runs, **then** replay/rebuild tools can restore derived views from canonical records without inventing or losing trust-critical history.
+
+**Estimated Complexity:** L
+
+## P2 Coverage Notes
+
+The P2 backlog expands ProsperPals without changing its spine:
+1. open banking adds breadth but still flows through canonical finance contracts
+2. new markets change packaging and policy, not product identity
+3. personalization becomes deeper, but only with explicit confidence and user control
+4. reward expansion stays non-cash, auditable, and anti-abuse-first
+5. operational maturity grows in lockstep with user and market complexity
+
+This keeps ProsperPals from becoming a messy “finance everything app.” It stays a financial-wellness product with a very specific loop and a very specific trust posture.
 
 ## Elicitation Outcomes Applied in This Step
 
 ### Architecture Decision Records
-- Kept MobilePay on the same staged-source and canonical `MoneyEvent` architecture rather than creating a parallel import track that would rot later.
-- Forced richer family premium and simulator depth to reuse existing consent, ledger, and explanation contracts instead of inventing separate premium-only plumbing.
-- Positioned experimentation hooks as a configuration/flag problem, not a reason to fork product logic by mode or cohort.
+- Forced all post-MVP open-banking scale-up to reuse staged sources, canonical `MoneyEvent` contracts, and replay-safe ledgers instead of introducing region- or provider-specific shortcuts.
+- Kept personalization as a profile-and-policy layer sitting on top of deterministic facts rather than turning companions into opaque autonomous advisors.
+- Treated partner rewards as a controlled ledger and policy problem, not as a marketing plugin bolted awkwardly onto the coin system.
 
-### Comparative Analysis Matrix
-- Prioritized MobilePay before PSD2 because Denmark-first launch quality improves more from one culturally native rail than from premature broad bank coverage.
-- Ordered recurring intelligence before bigger social mechanics because practical money clarity is more defensible than trying to out-gameify louder competitors.
-- Elevated family premium proof surfaces over generic paywall polish because monetization needs evidence-based moments, not just prettier upgrade screens.
+### Cross-Functional War Room
+- Product, compliance, support, and platform concerns converged on market rollout as an operational discipline, not just a translation task.
+- Support and reliability maturity were promoted into the P2 backlog because expansion without internal clarity would shred trust faster than any missing feature.
+- Family and personalization expansion were constrained to keep collaboration helpful and educational instead of drifting toward surveillance or manipulative nudging.
 
-### Critique & Refine
-- Removed any P1 item that smelled like “more features for the sake of roadmap volume” and kept only backlog items that deepen retention, trust, or monetization.
-- Kept stronger leagues and challenges in P1 rather than P0 so the launch product does not confuse motivation with gimmicks.
-- Made every P1 story explicitly reuse the canonical data, provenance, and policy boundaries already locked in prior phases.
+### Self-Consistency Validation
+- Verified that every P2 story still strengthens one of the loop layers: capture, understand, motivate, learn, or safely operate.
+- Removed anything that implied real-money execution, advice-like automation, or black-box personalization.
+- Ensured market expansion, reward evolution, and support tooling all point back to the same data provenance and consent boundaries already set in the PRD and architecture.
 
-## Step 2 Hardening Summary
+## Step 3 Hardening Summary
 
-This P1 epic/story pass turns ProsperPals from a credible MVP into a sharper post-launch plan without losing the product’s discipline.
+This P2 epic/story pass finishes the backlog with a scale-up plan that is bigger, but not sloppier.
 
 What is now locked:
-- Sprint 2-4 work is organized around the highest-confidence expansion sequence: MobilePay -> connected intelligence -> family premium -> deeper Fin -> stronger progression
-- every P1 story extends existing canonical contracts instead of creating roadmap debt
-- monetization and retention improvements are tied to visible user value, not vanity roadmap breadth
-- the next BMAD step is now unambiguous: **expand the backlog with P2 post-MVP epics and stories**
+- post-MVP expansion is sequenced around durable platform growth: open banking -> market rollout -> adaptive coaching -> partner rewards -> operational maturity
+- every expansion story still reuses canonical ledgers, staged ingestion, consent controls, and explainability contracts
+- personalization and reward expansion stay tightly bounded so ProsperPals remains educational, premium, and trust-first
+- the next BMAD step is now unambiguous: **run the readiness check across brief, PRD, UX, architecture, and epic backlog**
