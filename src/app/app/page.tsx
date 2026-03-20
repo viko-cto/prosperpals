@@ -3,6 +3,7 @@ import { requireViewerSession } from "@/lib/auth/session";
 import { evaluateFeatureFlags } from "@/lib/feature-flags/config";
 import { formatCurrency, getFirstValueDurationSeconds } from "@/lib/finance/first-value";
 import { getDemoOnboardingState, getIntentLabel } from "@/lib/onboarding/demo-state";
+import { getDemoReceiptReviewState } from "@/lib/receipts/demo-receipts";
 import { formatProsperCoins, getDemoRewardLoopSummary } from "@/lib/simulator/demo-simulator";
 import { getDemoAnalyticsSummary } from "@/lib/telemetry/demo-event-store";
 import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-context";
@@ -13,6 +14,7 @@ export default async function AppHomePage() {
   const onboardingState = await getDemoOnboardingState();
   const analytics = await getDemoAnalyticsSummary(session.userId);
   const rewardLoop = await getDemoRewardLoopSummary(session.userId);
+  const receiptState = await getDemoReceiptReviewState(session.userId);
   const flags = evaluateFeatureFlags({
     countryCode: "DK",
     internalUser: session.email.endsWith("@prosperpals.local")
@@ -23,14 +25,22 @@ export default async function AppHomePage() {
 
   const logPreview = toStructuredLog("app.shell.rendered", requestContext, {
     auth_provider: session.authProvider,
-    rollout: rewardLoop.portfolio.positionCount ? "sprint-2" : onboardingState.firstValueCompletedAt ? "sprint-1-chunk-2" : "sprint-0",
+    rollout: receiptState.pendingCandidate || receiptState.latestConfirmed
+      ? "sprint-3"
+      : rewardLoop.portfolio.positionCount
+        ? "sprint-2"
+        : onboardingState.firstValueCompletedAt
+          ? "sprint-1-chunk-2"
+          : "sprint-0",
     selected_intent: onboardingState.selectedIntent,
     first_value_completed: Boolean(onboardingState.firstValueCompletedAt),
     first_value_seconds: firstValueSeconds,
     available_coins: rewardLoop.availableCoins,
     position_count: rewardLoop.portfolio.positionCount,
     durable_event_count: analytics.eventCount,
-    durable_target_met: analytics.targetMet
+    durable_target_met: analytics.targetMet,
+    receipt_confirmation_count: receiptState.confirmationCount,
+    receipt_pending_candidate: receiptState.pendingCandidate?.candidateId ?? null
   });
 
   return (
@@ -77,6 +87,17 @@ export default async function AppHomePage() {
               <Link className="button secondary" href="/app/simulator">
                 {rewardLoop.portfolio.positionCount ? "Review Fin portfolio" : "Open Fin simulator"}
               </Link>
+              <Link className="button secondary" href="/app/receipts">
+                {receiptState.pendingCandidate ? "Review receipt candidate" : "Open receipt review"}
+              </Link>
+              <Link className="button secondary" href="/app/explainability">
+                Why am I seeing this?
+              </Link>
+              {flags.supportTraceView ? (
+                <Link className="button secondary" href="/app/support">
+                  Operator timeline
+                </Link>
+              ) : null}
             </div>
           </article>
         </section>
@@ -111,7 +132,7 @@ export default async function AppHomePage() {
             <strong>{onboardingState.firstInsight?.headline ?? "No first insight yet"}</strong>
             <span className="muted-line">
               {onboardingState.firstMoneyEvent
-                ? `${formatCurrency(onboardingState.firstMoneyEvent.amountMinor, onboardingState.firstMoneyEvent.currency)} at ${onboardingState.firstMoneyEvent.merchantLabel}`
+                ? `${formatCurrency(onboardingState.firstMoneyEvent.amountMinor, onboardingState.firstMoneyEvent.currency)} at ${onboardingState.firstMoneyEvent.merchantLabel} · provenance: ${onboardingState.firstMoneyEvent.sourceType === "manual" ? "manual confirmed" : "reviewed parse"}`
                 : "Log one recent spend to make the home card feel alive."}
             </span>
           </article>
@@ -129,6 +150,24 @@ export default async function AppHomePage() {
                 : onboardingState.finHandoff?.starterAssets?.length
                   ? `${onboardingState.finHandoff.starterAssets.length} launch assets staged for the first trade.`
                   : "Starter asset preview will appear after intent selection or first-value completion."}
+            </span>
+          </article>
+
+          <article className="card compact-card">
+            <span className="eyebrow">Receipt review</span>
+            <strong>
+              {receiptState.pendingCandidate
+                ? "Candidate waiting for review"
+                : receiptState.latestConfirmed
+                  ? "Latest receipt confirmed"
+                  : "No receipt activity yet"}
+            </strong>
+            <span className="muted-line">
+              {receiptState.pendingCandidate
+                ? `${receiptState.pendingCandidate.merchantLabel} · ${Math.round(receiptState.pendingCandidate.confidenceScore * 100)}% confidence`
+                : receiptState.latestConfirmed
+                  ? `${receiptState.latestConfirmed.merchantLabel} · parsed then user-reviewed`
+                  : "Sprint 3 adds candidate-first OCR review so ambiguous scans never post magically."}
             </span>
           </article>
         </section>
@@ -202,12 +241,13 @@ export default async function AppHomePage() {
           </article>
 
           <article className="panel">
-            <h2>What Sprint 2 now proves</h2>
+            <h2>What the current build now proves</h2>
             <ul className="list">
               <li>ProsperCoins are awarded for awareness actions with a visible reason instead of a vague score bump.</li>
               <li>Fin gets an explicit starter simulator route rather than a hand-wavy “coming soon” promise.</li>
               <li>Quote freshness is shown honestly, including trade-blocking when the feed is too stale.</li>
-              <li>The first virtual trade now lands in an immutable demo ledger and rolls into a real portfolio summary.</li>
+              <li>Receipt OCR now enters through a candidate-first review path instead of auto-posting magical certainty.</li>
+              <li>Explainability and operator traces exist before this turns into a larger finance product.</li>
             </ul>
           </article>
         </section>

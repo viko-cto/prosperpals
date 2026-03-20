@@ -1,5 +1,5 @@
-import { getDemoLaunchAssetUniverse } from "@/lib/simulator/demo-simulator";
-import { moneyEventSchema } from "@/modules/finance/contracts";
+import { getDemoLaunchAssetUniverse } from "../simulator/demo-simulator.ts";
+import { moneyEventSchema } from "../../modules/finance/contracts.ts";
 
 export type FirstValueDraft = {
   userId: string;

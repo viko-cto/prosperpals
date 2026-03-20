@@ -54,3 +54,15 @@ input[type="text"], input[type="number"] { width: 100%; padding: 14px 16px; bord
 .compact-card { gap: 10px; display: grid; }
 .intent-grid, .mode-grid { align-items: stretch; }
 .footer-note { margin-top: 18px; font-size: 0.92rem; }
+.panel-header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.status-pill { display: inline-flex; align-items: center; padding: 8px 12px; border-radius: 999px; font-size: 0.84rem; border: 1px solid var(--border); }
+.status-pill--verified { color: #9cf1a8; background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.24); }
+.status-pill--reviewed { color: #a7f3d0; background: rgba(20, 184, 166, 0.12); border-color: rgba(20, 184, 166, 0.24); }
+.status-pill--estimated { color: #c4b5fd; background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.24); }
+.status-pill--stale { color: #fbbf24; background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.24); }
+.status-pill--needs-review { color: #fda4af; background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.24); }
+.explainability-panel { gap: 18px; display: grid; }
+.timeline { display: grid; gap: 14px; }
+.timeline-item { display: grid; gap: 12px; padding: 18px; border-radius: 18px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03); }
+.timeline-item__meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.timeline-item__body { display: grid; gap: 10px; }

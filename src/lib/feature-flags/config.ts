@@ -20,7 +20,7 @@ const defaultFlags: Record<FeatureFlagName, boolean> = {
   familyPreview: true,
   mobilepayBeta: false,
   psd2Beta: false,
-  supportTraceView: false
+  supportTraceView: true
 };
 
 function readFlagOverrides(): Partial<Record<FeatureFlagName, boolean>> {

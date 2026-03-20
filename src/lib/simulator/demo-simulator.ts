@@ -193,6 +193,11 @@ async function readLedgerRecords(): Promise<DemoLedgerRecord[]> {
   }
 }
 
+export async function readDemoLedgerRecords(userId?: string) {
+  const records = await readLedgerRecords();
+  return userId ? records.filter((record) => record.userId === userId) : records;
+}
+
 async function appendLedgerRecords(records: DemoLedgerRecord[]) {
   if (!records.length) {
     return;

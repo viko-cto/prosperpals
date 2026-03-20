@@ -41,6 +41,9 @@ export default async function SimulatorPage({ searchParams }: SimulatorPageProps
             <Link className="button secondary" href="/app/onboarding?intent=invest-first">
               Back to onboarding
             </Link>
+            <Link className="button secondary" href="/app/explainability#fin-trade">
+              Why am I seeing this?
+            </Link>
             <Link className="button secondary" href="/app">
               Back to app home
             </Link>
@@ -136,6 +139,7 @@ export default async function SimulatorPage({ searchParams }: SimulatorPageProps
                     <span className="muted-line">{position.units.toFixed(4)} units · cost {formatProsperCoins(position.costCoins)}</span>
                     <span className="muted-line">Current estimate {formatProsperCoins(position.currentValueCoins)} · {position.freshnessLabel}</span>
                     <p>{position.learningHeadline}</p>
+                    <span className="muted-line">Provenance: linked to quote snapshot and immutable ProsperCoin debit.</span>
                   </div>
                 ))}
               </div>

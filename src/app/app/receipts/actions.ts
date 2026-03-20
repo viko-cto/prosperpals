@@ -1,0 +1,92 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { requireViewerSession } from "@/lib/auth/session";
+import { getDemoOnboardingState } from "@/lib/onboarding/demo-state";
+import {
+  captureReceiptCandidate,
+  confirmReceiptCandidate
+} from "@/lib/receipts/demo-receipts";
+import { appendDemoAnalyticsEvent } from "@/lib/telemetry/demo-event-store";
+import { getRequestContext } from "@/lib/telemetry/request-context";
+
+export async function startReceiptReviewAction(formData: FormData) {
+  const session = await requireViewerSession();
+  const requestContext = await getRequestContext();
+  const onboardingState = await getDemoOnboardingState();
+  const merchantLabel = String(formData.get("merchantLabel") ?? "").trim() || "Føtex City";
+  const amountMajor = Number(formData.get("amountMajor") ?? 0) || 226.45;
+  const categoryId = String(formData.get("categoryId") ?? "groceries").trim() || "groceries";
+  const occurredAt = new Date().toISOString();
+
+  const candidate = await captureReceiptCandidate({
+    userId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    merchantLabel,
+    amountMajor,
+    categoryId,
+    occurredAt
+  });
+
+  await appendDemoAnalyticsEvent({
+    event: "receipt.candidate.created",
+    occurredAt,
+    userId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: requestContext.path,
+    selectedIntent: onboardingState.selectedIntent,
+    mode: onboardingState.mode,
+    targetTimeToValueSeconds: 80,
+    merchantLabel: candidate.merchantLabel,
+    amountMinor: candidate.amountMinor,
+    currency: candidate.currency,
+    headline: candidate.confidenceLabel,
+    message: candidate.reviewMessage
+  });
+
+  redirect(`/app/receipts?candidateId=${candidate.candidateId}`);
+}
+
+export async function confirmReceiptReviewAction(formData: FormData) {
+  const session = await requireViewerSession();
+  const requestContext = await getRequestContext();
+  const onboardingState = await getDemoOnboardingState();
+  const candidateId = String(formData.get("candidateId") ?? "").trim();
+  const merchantLabel = String(formData.get("merchantLabel") ?? "").trim();
+  const amountMajor = Number(formData.get("amountMajor") ?? 0);
+  const categoryId = String(formData.get("categoryId") ?? "groceries").trim() || "groceries";
+  const occurredAt = new Date().toISOString();
+
+  const result = await confirmReceiptCandidate({
+    userId: session.userId,
+    candidateId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    merchantLabel,
+    amountMajor,
+    categoryId,
+    occurredAt
+  });
+
+  await appendDemoAnalyticsEvent({
+    event: "receipt.candidate.confirmed",
+    occurredAt,
+    userId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: requestContext.path,
+    selectedIntent: onboardingState.selectedIntent,
+    mode: onboardingState.mode,
+    targetTimeToValueSeconds: 80,
+    merchantLabel: result.confirmation.merchantLabel,
+    amountMinor: result.confirmation.amountMinor,
+    currency: result.confirmation.currency,
+    dailySpendingPowerMinor: result.insight.dailySpendingPowerMinor,
+    headline: result.insight.headline,
+    message: result.confirmation.explanation
+  });
+
+  redirect(`/app/receipts?confirmed=${result.confirmation.candidateId}`);
+}

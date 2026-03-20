@@ -8,7 +8,9 @@ const demoAnalyticsEventSchema = z.object({
     "onboarding.first-value.completed",
     "rewards.awarded",
     "simulator.trade.executed",
-    "simulator.trade.blocked"
+    "simulator.trade.blocked",
+    "receipt.candidate.created",
+    "receipt.candidate.confirmed"
   ]),
   occurredAt: z.string().datetime(),
   userId: z.string().uuid(),
