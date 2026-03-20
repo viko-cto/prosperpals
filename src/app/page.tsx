@@ -55,13 +55,13 @@ export default function LandingPage() {
           </div>
 
           <div className="actions">
-            <Link className="button primary" href="/auth/sign-in?next=/app">
+            <Link className="button primary" href="/auth/sign-in?next=/app/onboarding%3Fintent%3Dbudget-first">
               Start with Goldie
             </Link>
-            <Link className="button secondary" href="/auth/sign-in?next=/app">
+            <Link className="button secondary" href="/auth/sign-in?next=/app/onboarding%3Fintent%3Dinvest-first">
               Practice investing
             </Link>
-            <Link className="button secondary" href="/auth/sign-in?next=/app">
+            <Link className="button secondary" href="/auth/sign-in?next=/app/onboarding%3Fintent%3Dfamily-preview">
               Preview family value
             </Link>
           </div>

@@ -42,5 +42,13 @@ p { color: var(--muted); line-height: 1.6; }
 .meta code, pre, code { font-family: "SFMono-Regular", ui-monospace, monospace; }
 pre { margin: 0; padding: 16px; background: rgba(0, 0, 0, 0.24); border-radius: 16px; border: 1px solid var(--border); overflow: auto; white-space: pre-wrap; }
 form { display: grid; gap: 16px; }
-input[type="text"] { width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.04); color: var(--text); }
+input[type="text"], input[type="number"] { width: 100%; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.04); color: var(--text); }
+.field-label { display: inline-block; margin-bottom: 10px; font-size: 0.92rem; color: var(--muted); }
+.choice-card { display: grid; gap: 8px; padding: 18px; border-radius: 18px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03); cursor: pointer; }
+.choice-card input { accent-color: var(--accent); }
+.choice-card strong { font-size: 1rem; }
+.choice-card span, .muted-line { color: var(--muted); font-size: 0.94rem; line-height: 1.5; }
+.choice-card--active { border-color: rgba(14, 165, 233, 0.55); box-shadow: 0 0 0 1px rgba(14, 165, 233, 0.2) inset; }
+.compact-card { gap: 10px; display: grid; }
+.intent-grid, .mode-grid { align-items: stretch; }
 .footer-note { margin-top: 18px; font-size: 0.92rem; }
