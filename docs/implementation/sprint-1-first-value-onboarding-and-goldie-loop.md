@@ -3,16 +3,16 @@
 **Date:** 2026-03-20  
 **Phase:** implementation  
 **Step:** sprint-1-first-value-onboarding-and-goldie-loop  
-**Status:** in progress (chunk 1 complete)
+**Status:** complete (chunk 1 + chunk 2 complete)
 
-## What this chunk shipped
+## What Sprint 1 shipped
 
-This Sprint 1 chunk stops ProsperPals from being only a trust scaffold and starts proving the first product heartbeat.
+Sprint 1 turns ProsperPals from a trust scaffold into a believable first-value product slice.
 
 ### 1. Entry-path preservation from landing -> auth -> protected app
-- Landing CTAs now carry intent-specific `next` targets into sign-in.
+- Landing CTAs carry intent-specific `next` targets into sign-in.
 - The onboarding flow preserves the selected intent across the public/authenticated boundary.
-- The selected paths now map to the three real launch promises:
+- The selected paths map to the three real launch promises:
   - `budget-first`
   - `invest-first`
   - `family-preview`
@@ -44,51 +44,68 @@ This Sprint 1 chunk stops ProsperPals from being only a trust scaffold and start
 - Starter assets are shown with freshness labels and “why this is here” teaching context.
 - This keeps the education-not-advice boundary visible early.
 
-### 6. First-value instrumentation preview
-- Added onboarding analytics/log preview using the request/trace context established in Sprint 0.
-- The flow now exposes the `target_time_to_value_seconds = 80` posture and whether first value has been completed.
+### 6. Protected home-card experience
+- Reworked `/app` from a scaffold-heavy status page into a real first-value home surface.
+- Added compact cards for Daily Spending Power, Goldie insight state, and Fin handoff readiness.
+- Added a durable analytics timeline so post-redirect product state can still be inspected on the home route.
+
+### 7. Durable analytics/event capture
+- Added an append-only demo analytics sink at `.prosperpals-runtime/demo-analytics.jsonl`.
+- Onboarding preference saves now write `onboarding.preferences.saved` events.
+- Budget-first completion now writes `onboarding.first-value.completed` events with:
+  - intent
+  - mode
+  - request + trace IDs
+  - measured time to value
+  - merchant label
+  - amount
+  - Daily Spending Power outcome
+  - Goldie headline
+- The home screen reads recent user-scoped events back and summarizes target performance.
 
 ## Elicitation methods applied
 
 ### 1. First Principles
-Used to keep the chunk honest: a user must be able to preserve intent, log one real expense, and receive one useful first-value insight before more complexity lands.
+Used to keep the slice honest: the user must be able to preserve intent, log one real expense, receive one useful first-value insight, and still see the result after the redirect.
 
 ### 2. Cross-Functional War Room
-Used to ensure product/design/engineering concerns stayed aligned around calm onboarding, visible trust boundaries, and non-judgmental first insights.
+Used to keep product, design, and engineering aligned around a calm premium surface, inspectable operational state, and education-not-advice boundaries.
 
 ### 3. Critique & Refine
-Used to avoid fake completion by limiting this chunk to one durable slice instead of pretending all of Sprint 1 was done in one pass.
+Used to push Sprint 1 to a clean stopping point instead of leaving the home route as an infrastructure dump with no durable product signal.
 
 ## Deliverables created or updated
-- `src/app/page.tsx`
+- `.gitignore`
 - `src/app/app/page.tsx`
-- `src/app/app/onboarding/page.tsx`
 - `src/app/app/onboarding/actions.ts`
-- `src/lib/onboarding/demo-state.ts`
-- `src/lib/finance/first-value.ts`
+- `src/app/globals.css`
+- `src/lib/telemetry/demo-event-store.ts`
 - `docs/implementation/sprint-1-first-value-onboarding-and-goldie-loop.md`
 
-## What remains in Sprint 1
-- richer home-card rendering for first-value completion state
-- companion-specific surfaces in the protected shell
-- analytics persistence beyond preview logs
-- first-value completion timing emitted to a durable sink
-- tighter copy/design pass for Nikolas
-
-## Exit criteria status after this chunk
+## Exit criteria status after Sprint 1
 
 ### A new user can preserve an entry path through auth
-**Met** in the demo implementation.
+**Met**.
 
 ### A new user can log one money event and see one useful insight
-**Met** in the demo implementation.
+**Met**.
 
 ### No mandatory bank linking exists in the first-value flow
 **Met**.
 
-### Core loop events are inspectable
-**Partially met** via trace-aware log preview and durable demo cookie state; persistent analytics/event storage still remains.
+### Core loop events are inspectable after redirect
+**Met** via append-only durable analytics events and home-route timeline rendering.
 
-## Recommended next chunk
+### The protected shell behaves like a product surface rather than a raw scaffold
+**Met**.
 
-Continue **implementation / sprint-1-first-value-onboarding-and-goldie-loop** with the protected home-card experience and durable analytics/event capture.
+## What remains outside Sprint 1
+- ProsperCoins crediting and visible reward progression
+- Fin simulator execution path
+- persistent database-backed analytics/event ingestion beyond the demo file sink
+- receipt capture / OCR path
+- operator/admin support surfaces for real event inspection
+
+## Recommended next step
+
+Continue with **implementation / sprint-2-reward-loop-and-fin-simulator-starter-slice**.

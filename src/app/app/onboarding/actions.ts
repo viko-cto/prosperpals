@@ -12,23 +12,41 @@ import {
   buildManualMoneyEvent,
   calculateDailySpendingPower,
   createFinStarterHandoff,
-  createGoldieInsight
+  createGoldieInsight,
+  getFirstValueDurationSeconds
 } from "@/lib/finance/first-value";
+import { appendDemoAnalyticsEvent } from "@/lib/telemetry/demo-event-store";
+import { getRequestContext } from "@/lib/telemetry/request-context";
 
 export async function saveOnboardingPreferencesAction(formData: FormData) {
+  const session = await requireViewerSession();
+  const requestContext = await getRequestContext();
   const current = await getDemoOnboardingState();
   const selectedIntent = normalizeIntent(formData.get("intent"));
   const mode = normalizeMode(formData.get("mode"));
+  const onboardingStartedAt =
+    current.onboardingStartedAt === new Date(0).toISOString()
+      ? new Date().toISOString()
+      : current.onboardingStartedAt;
 
   await setDemoOnboardingState({
     ...current,
     selectedIntent,
     mode,
-    onboardingStartedAt:
-      current.onboardingStartedAt === new Date(0).toISOString()
-        ? new Date().toISOString()
-        : current.onboardingStartedAt,
+    onboardingStartedAt,
     finHandoff: selectedIntent === "invest-first" ? createFinStarterHandoff() : current.finHandoff
+  });
+
+  await appendDemoAnalyticsEvent({
+    event: "onboarding.preferences.saved",
+    occurredAt: new Date().toISOString(),
+    userId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: requestContext.path,
+    selectedIntent,
+    mode,
+    targetTimeToValueSeconds: 80
   });
 
   redirect(`/app/onboarding?intent=${selectedIntent}`);
@@ -36,6 +54,7 @@ export async function saveOnboardingPreferencesAction(formData: FormData) {
 
 export async function submitBudgetFirstAction(formData: FormData) {
   const session = await requireViewerSession();
+  const requestContext = await getRequestContext();
   const current = await getDemoOnboardingState();
   const merchantLabel = String(formData.get("merchantLabel") ?? "").trim() || "Recent expense";
   const amountMajor = Number(formData.get("amountMajor") ?? 0);
@@ -57,16 +76,19 @@ export async function submitBudgetFirstAction(formData: FormData) {
     currency: moneyEvent.currency,
     dailySpendingPowerMinor
   });
+  const onboardingStartedAt =
+    current.onboardingStartedAt === new Date(0).toISOString()
+      ? new Date().toISOString()
+      : current.onboardingStartedAt;
+  const firstValueCompletedAt = new Date().toISOString();
+  const firstValueSeconds = getFirstValueDurationSeconds(onboardingStartedAt, firstValueCompletedAt);
 
   await setDemoOnboardingState({
     ...current,
     selectedIntent: "budget-first",
     mode,
-    onboardingStartedAt:
-      current.onboardingStartedAt === new Date(0).toISOString()
-        ? new Date().toISOString()
-        : current.onboardingStartedAt,
-    firstValueCompletedAt: new Date().toISOString(),
+    onboardingStartedAt,
+    firstValueCompletedAt,
     firstMoneyEvent: {
       merchantLabel,
       amountMinor: moneyEvent.amountMinor,
@@ -82,6 +104,24 @@ export async function submitBudgetFirstAction(formData: FormData) {
       dailySpendingPowerMinor
     },
     finHandoff: createFinStarterHandoff(moneyEvent.currency)
+  });
+
+  await appendDemoAnalyticsEvent({
+    event: "onboarding.first-value.completed",
+    occurredAt: firstValueCompletedAt,
+    userId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: requestContext.path,
+    selectedIntent: "budget-first",
+    mode,
+    targetTimeToValueSeconds: 80,
+    firstValueSeconds,
+    merchantLabel,
+    amountMinor: moneyEvent.amountMinor,
+    currency: moneyEvent.currency,
+    dailySpendingPowerMinor,
+    headline: insight.headline
   });
 
   redirect("/app?firstValue=budget");
