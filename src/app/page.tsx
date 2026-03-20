@@ -3,9 +3,9 @@ import { evaluateFeatureFlags } from "@/lib/feature-flags/config";
 
 const launchSlices = [
   "Controlled entry routes for Goldie, Fin, and family preview",
-  "Canonical MoneyEvent + ProsperCoin + simulator ledger contracts",
-  "Consent and audit scaffolding before social or family value",
-  "Request/trace propagation from the first protected route"
+  "Goldie first-value onboarding with Daily Spending Power and visible reward reasons",
+  "Fin starter simulator slice with quote freshness labels and one immutable virtual trade",
+  "Request/trace propagation plus durable analytics and demo-ledger sinks"
 ];
 
 export default function LandingPage() {
@@ -16,7 +16,7 @@ export default function LandingPage() {
       <div className="shell">
         <div className="header">
           <div>
-            <span className="eyebrow">ProsperPals Sprint 0</span>
+            <span className="eyebrow">ProsperPals Sprint 2</span>
           </div>
           <nav className="nav">
             <Link className="button secondary" href="/auth/sign-in?next=/app">
@@ -30,12 +30,12 @@ export default function LandingPage() {
 
         <section className="hero">
           <div className="grid" style={{ gap: 16 }}>
-            <h1>Trust scaffolding first. Glitter later.</h1>
+            <h1>Log it. Earn it. Trade it. Learn from it.</h1>
             <p>
-              This Sprint 0 scaffold gives ProsperPals the boring-but-correct base it needs:
-              protected and public routes, typed trust-critical contracts, server-evaluated feature
-              flags, telemetry IDs on every request, and Supabase migrations for the canonical
-              money, reward, trade, consent, and audit tables.
+              ProsperPals has now moved beyond pure scaffolding. The current prototype proves the
+              Denmark-first starter loop: protected/public routing, Goldie first-value onboarding,
+              visible ProsperCoin rewards, explicit Goldie → Fin handoff, and one trust-safe
+              virtual trade with honest quote freshness.
             </p>
           </div>
 
@@ -69,7 +69,7 @@ export default function LandingPage() {
 
         <section className="grid cols-2" style={{ marginTop: 24 }}>
           <article className="panel">
-            <h2>What Sprint 0 shipped</h2>
+            <h2>What the current starter slice ships</h2>
             <ul className="list">
               {launchSlices.map((item) => (
                 <li key={item}>{item}</li>
@@ -81,7 +81,8 @@ export default function LandingPage() {
             <h2>Initial flag posture</h2>
             <pre>{JSON.stringify(flags, null, 2)}</pre>
             <p className="footer-note">
-              MobilePay and PSD2 stay dark until the Denmark-first manual-entry loop is behaving.
+              MobilePay and PSD2 stay dark until this Denmark-first manual-and-reward loop behaves
+              cleanly under real usage.
             </p>
           </article>
         </section>

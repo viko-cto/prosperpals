@@ -1,3 +1,4 @@
+import { getDemoLaunchAssetUniverse } from "@/lib/simulator/demo-simulator";
 import { moneyEventSchema } from "@/modules/finance/contracts";
 
 export type FirstValueDraft = {
@@ -72,27 +73,15 @@ export function createFinStarterHandoff(currency = "DKK") {
   return {
     handoffHeadline: "Goldie → Fin handoff is ready.",
     handoffBody:
-      "Fin takes over only after Goldie makes the money picture legible. These starter assets are here to teach patterns, not tell the user what to buy.",
-    starterAssets: [
-      {
-        symbol: "NOVO-B.CO",
-        name: "Novo Nordisk",
-        freshnessLabel: "Fresh quote snapshot — <15 min old",
-        whyItIsHere: `Large Nordic household name. Easy to recognize in a Denmark-first ${currency} launch.`
-      },
-      {
-        symbol: "SPY",
-        name: "S&P 500 ETF",
-        freshnessLabel: "Fresh quote snapshot — <15 min old",
-        whyItIsHere: "Simple broad-market reference point for teaching diversification without hype."
-      },
-      {
-        symbol: "ORSTED.CO",
-        name: "Ørsted",
-        freshnessLabel: "Fresh quote snapshot — <15 min old",
-        whyItIsHere: "Useful for comparing familiar local narratives with real market volatility."
-      }
-    ]
+      "Fin only takes over after Goldie makes the money picture legible. The starter asset list shows freshness honestly, including when a trade should stay blocked.",
+    starterAssets: getDemoLaunchAssetUniverse()
+      .slice(0, 3)
+      .map((asset) => ({
+        symbol: asset.symbol,
+        name: asset.name,
+        freshnessLabel: asset.freshnessLabel,
+        whyItIsHere: asset.whyItIsHere.replace("Denmark-first launch", `Denmark-first ${currency} launch`)
+      }))
   };
 }
 

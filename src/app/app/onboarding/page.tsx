@@ -58,8 +58,8 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
               <span className="badge">Signed in as {session.email}</span>
               <p>
                 This flow preserves the chosen entry path, keeps gamification intensity as a
-                preference instead of a fork, and proves the first product truth: one user can get
-                to a useful Goldie moment without bank linking.
+                preference instead of a fork, and now bridges directly into Sprint 2: Goldie can
+                fund the first Fin simulator slice with visible ProsperCoin rewards.
               </p>
             </div>
 
@@ -141,7 +141,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
               <ul className="list">
                 <li>Entry-path selection survives the public → auth → protected transition.</li>
                 <li>Mode preference persists without branching product logic.</li>
-                <li>One manual event turns into a canonical finance record candidate and a visible first insight.</li>
+                <li>One manual event turns into a canonical finance record candidate, a visible first insight, and a ProsperCoin award reason.</li>
                 <li>Daily Spending Power appears before MobilePay or PSD2 are wired.</li>
               </ul>
             </article>
@@ -153,8 +153,9 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
             <article className="panel">
               <h2>Invest-first handoff preview</h2>
               <p>
-                Goldie still opens the door. Fin only takes over after the money picture becomes
-                legible. That keeps the education-not-advice boundary visible instead of magical.
+                Goldie still opens the door. Choosing the invest-first path now grants one starter
+                ProsperCoin funding event, but Fin only takes over through an explicit handoff.
+                That keeps the education-not-advice boundary visible instead of magical.
               </p>
               <div className="grid cols-3" style={{ marginTop: 16 }}>
                 {(state.finHandoff?.starterAssets ?? []).map((asset) => (
@@ -165,6 +166,11 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
                     <p>{asset.whyItIsHere}</p>
                   </div>
                 ))}
+              </div>
+              <div className="actions" style={{ marginTop: 16 }}>
+                <Link className="button primary" href="/app/simulator">
+                  Open Fin simulator
+                </Link>
               </div>
             </article>
           </section>

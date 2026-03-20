@@ -15,6 +15,7 @@ import {
   createGoldieInsight,
   getFirstValueDurationSeconds
 } from "@/lib/finance/first-value";
+import { awardProsperCoins } from "@/lib/simulator/demo-simulator";
 import { appendDemoAnalyticsEvent } from "@/lib/telemetry/demo-event-store";
 import { getRequestContext } from "@/lib/telemetry/request-context";
 
@@ -24,9 +25,10 @@ export async function saveOnboardingPreferencesAction(formData: FormData) {
   const current = await getDemoOnboardingState();
   const selectedIntent = normalizeIntent(formData.get("intent"));
   const mode = normalizeMode(formData.get("mode"));
+  const occurredAt = new Date().toISOString();
   const onboardingStartedAt =
     current.onboardingStartedAt === new Date(0).toISOString()
-      ? new Date().toISOString()
+      ? occurredAt
       : current.onboardingStartedAt;
 
   await setDemoOnboardingState({
@@ -39,7 +41,7 @@ export async function saveOnboardingPreferencesAction(formData: FormData) {
 
   await appendDemoAnalyticsEvent({
     event: "onboarding.preferences.saved",
-    occurredAt: new Date().toISOString(),
+    occurredAt,
     userId: session.userId,
     requestId: requestContext.requestId,
     traceId: requestContext.traceId,
@@ -48,6 +50,35 @@ export async function saveOnboardingPreferencesAction(formData: FormData) {
     mode,
     targetTimeToValueSeconds: 80
   });
+
+  if (selectedIntent === "invest-first") {
+    const reward = await awardProsperCoins({
+      userId: session.userId,
+      idempotencyKey: `invest-first-starter:${session.userId}`,
+      requestId: requestContext.requestId,
+      traceId: requestContext.traceId,
+      reasonCode: "INVEST_FIRST_STARTER",
+      coins: 20,
+      occurredAt,
+      referenceType: "onboarding_intent"
+    });
+
+    await appendDemoAnalyticsEvent({
+      event: "rewards.awarded",
+      occurredAt,
+      userId: session.userId,
+      requestId: requestContext.requestId,
+      traceId: requestContext.traceId,
+      path: requestContext.path,
+      selectedIntent,
+      mode,
+      targetTimeToValueSeconds: 80,
+      coins: reward.ledgerEvent.coins,
+      reasonCode: reward.ledgerEvent.reasonCode,
+      headline: reward.ledgerEvent.explanation,
+      message: `Balance now ${reward.summary.availableCoins} ProsperCoins.`
+    });
+  }
 
   redirect(`/app/onboarding?intent=${selectedIntent}`);
 }
@@ -71,7 +102,7 @@ export async function submitBudgetFirstAction(formData: FormData) {
 
   const dailySpendingPowerMinor = calculateDailySpendingPower(moneyEvent.amountMinor);
   const insight = createGoldieInsight({
-    merchantLabel: merchantLabel,
+    merchantLabel,
     amountMinor: moneyEvent.amountMinor,
     currency: moneyEvent.currency,
     dailySpendingPowerMinor
@@ -106,6 +137,17 @@ export async function submitBudgetFirstAction(formData: FormData) {
     finHandoff: createFinStarterHandoff(moneyEvent.currency)
   });
 
+  const reward = await awardProsperCoins({
+    userId: session.userId,
+    idempotencyKey: `first-awareness:${session.userId}:${categoryId}:${moneyEvent.amountMinor}:${onboardingStartedAt}`,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    reasonCode: "FIRST_AWARENESS_ACTION",
+    coins: 30,
+    occurredAt: firstValueCompletedAt,
+    referenceType: "money_event"
+  });
+
   await appendDemoAnalyticsEvent({
     event: "onboarding.first-value.completed",
     occurredAt: firstValueCompletedAt,
@@ -121,8 +163,25 @@ export async function submitBudgetFirstAction(formData: FormData) {
     amountMinor: moneyEvent.amountMinor,
     currency: moneyEvent.currency,
     dailySpendingPowerMinor,
-    headline: insight.headline
+    headline: insight.headline,
+    message: `Reward balance after first value: ${reward.summary.availableCoins} ProsperCoins.`
   });
 
-  redirect("/app?firstValue=budget");
+  await appendDemoAnalyticsEvent({
+    event: "rewards.awarded",
+    occurredAt: firstValueCompletedAt,
+    userId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: requestContext.path,
+    selectedIntent: "budget-first",
+    mode,
+    targetTimeToValueSeconds: 80,
+    coins: reward.ledgerEvent.coins,
+    reasonCode: reward.ledgerEvent.reasonCode,
+    headline: reward.ledgerEvent.explanation,
+    message: `Balance now ${reward.summary.availableCoins} ProsperCoins.`
+  });
+
+  redirect("/app?firstValue=budget&reward=awarded");
 }

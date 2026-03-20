@@ -3,6 +3,7 @@ import { requireViewerSession } from "@/lib/auth/session";
 import { evaluateFeatureFlags } from "@/lib/feature-flags/config";
 import { formatCurrency, getFirstValueDurationSeconds } from "@/lib/finance/first-value";
 import { getDemoOnboardingState, getIntentLabel } from "@/lib/onboarding/demo-state";
+import { formatProsperCoins, getDemoRewardLoopSummary } from "@/lib/simulator/demo-simulator";
 import { getDemoAnalyticsSummary } from "@/lib/telemetry/demo-event-store";
 import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-context";
 
@@ -11,6 +12,7 @@ export default async function AppHomePage() {
   const requestContext = await getRequestContext();
   const onboardingState = await getDemoOnboardingState();
   const analytics = await getDemoAnalyticsSummary(session.userId);
+  const rewardLoop = await getDemoRewardLoopSummary(session.userId);
   const flags = evaluateFeatureFlags({
     countryCode: "DK",
     internalUser: session.email.endsWith("@prosperpals.local")
@@ -21,10 +23,12 @@ export default async function AppHomePage() {
 
   const logPreview = toStructuredLog("app.shell.rendered", requestContext, {
     auth_provider: session.authProvider,
-    rollout: onboardingState.firstValueCompletedAt ? "sprint-1-chunk-2" : "sprint-0",
+    rollout: rewardLoop.portfolio.positionCount ? "sprint-2" : onboardingState.firstValueCompletedAt ? "sprint-1-chunk-2" : "sprint-0",
     selected_intent: onboardingState.selectedIntent,
     first_value_completed: Boolean(onboardingState.firstValueCompletedAt),
     first_value_seconds: firstValueSeconds,
+    available_coins: rewardLoop.availableCoins,
+    position_count: rewardLoop.portfolio.positionCount,
     durable_event_count: analytics.eventCount,
     durable_target_met: analytics.targetMet
   });
@@ -62,18 +66,22 @@ export default async function AppHomePage() {
               <li><strong>Selected path:</strong> {getIntentLabel(onboardingState.selectedIntent)}</li>
               <li><strong>Mode:</strong> {onboardingState.mode.toUpperCase()}</li>
               <li><strong>First value:</strong> {onboardingState.firstValueCompletedAt ? "Complete" : "Not yet complete"}</li>
-              <li><strong>Target:</strong> under 80 seconds to first useful money insight</li>
+              <li><strong>Available ProsperCoins:</strong> {formatProsperCoins(rewardLoop.availableCoins)}</li>
+              <li><strong>Starter trade:</strong> {rewardLoop.portfolio.positionCount ? "Executed" : "Not yet executed"}</li>
               <li><strong>Durable events:</strong> {analytics.eventCount}</li>
             </ul>
             <div className="actions" style={{ marginTop: 18 }}>
               <Link className="button primary" href={`/app/onboarding?intent=${onboardingState.selectedIntent}`}>
                 {onboardingState.firstValueCompletedAt ? "Refine onboarding flow" : "Complete first-value flow"}
               </Link>
+              <Link className="button secondary" href="/app/simulator">
+                {rewardLoop.portfolio.positionCount ? "Review Fin portfolio" : "Open Fin simulator"}
+              </Link>
             </div>
           </article>
         </section>
 
-        <section className="grid cols-3" style={{ marginTop: 24 }}>
+        <section className="grid cols-2" style={{ marginTop: 24 }}>
           <article className="card compact-card">
             <span className="eyebrow">Daily Spending Power</span>
             <strong>
@@ -91,6 +99,14 @@ export default async function AppHomePage() {
           </article>
 
           <article className="card compact-card">
+            <span className="eyebrow">ProsperCoins</span>
+            <strong>{formatProsperCoins(rewardLoop.availableCoins)}</strong>
+            <span className="muted-line">
+              {rewardLoop.latestReward?.explanation ?? "No reward posted yet. The first awareness action should fund the simulator bridge."}
+            </span>
+          </article>
+
+          <article className="card compact-card">
             <span className="eyebrow">Goldie</span>
             <strong>{onboardingState.firstInsight?.headline ?? "No first insight yet"}</strong>
             <span className="muted-line">
@@ -101,12 +117,18 @@ export default async function AppHomePage() {
           </article>
 
           <article className="card compact-card">
-            <span className="eyebrow">Fin readiness</span>
-            <strong>{onboardingState.finHandoff?.handoffHeadline ?? "Fin stays parked until Goldie has signal"}</strong>
+            <span className="eyebrow">Fin portfolio</span>
+            <strong>
+              {rewardLoop.latestTrade
+                ? `${rewardLoop.latestTrade.assetName} starter slice active`
+                : onboardingState.finHandoff?.handoffHeadline ?? "Fin stays parked until Goldie has signal"}
+            </strong>
             <span className="muted-line">
-              {onboardingState.finHandoff?.starterAssets?.length
-                ? `${onboardingState.finHandoff.starterAssets.length} starter assets staged for education-first handoff.`
-                : "Starter asset preview will appear after intent selection or first-value completion."}
+              {rewardLoop.latestTrade
+                ? `${formatProsperCoins(rewardLoop.portfolio.estimatedValueCoins)} current estimate · ${rewardLoop.latestTrade.quoteFreshnessLabel}`
+                : onboardingState.finHandoff?.starterAssets?.length
+                  ? `${onboardingState.finHandoff.starterAssets.length} launch assets staged for the first trade.`
+                  : "Starter asset preview will appear after intent selection or first-value completion."}
             </span>
           </article>
         </section>
@@ -141,20 +163,34 @@ export default async function AppHomePage() {
           </article>
 
           <article className="panel">
-            <h2>Durable analytics timeline</h2>
-            {analytics.recentEvents.length ? (
+            <h2>Reward loop + portfolio summary</h2>
+            {rewardLoop.portfolio.positionCount ? (
               <div className="grid" style={{ gap: 12 }}>
-                {analytics.recentEvents.map((event) => (
-                  <div key={`${event.occurredAt}-${event.event}`} className="card compact-card">
-                    <strong>{event.event}</strong>
-                    <span className="muted-line">{new Date(event.occurredAt).toLocaleString("en-DK", { dateStyle: "short", timeStyle: "medium", timeZone: "UTC" })} UTC</span>
-                    <span className="muted-line">Intent: {event.selectedIntent} · Mode: {event.mode.toUpperCase()}</span>
-                    {event.headline ? <span className="muted-line">{event.headline}</span> : null}
+                <div className="card compact-card">
+                  <strong>{rewardLoop.latestTrade?.assetName}</strong>
+                  <span className="muted-line">Invested {formatProsperCoins(rewardLoop.portfolio.investedCoins)} · current estimate {formatProsperCoins(rewardLoop.portfolio.estimatedValueCoins)}</span>
+                  <span className="muted-line">{rewardLoop.latestTrade?.learningHeadline}</span>
+                </div>
+                {rewardLoop.portfolio.positions.map((position) => (
+                  <div key={position.assetId} className="card compact-card">
+                    <strong>{position.assetName}</strong>
+                    <span className="muted-line">{position.units.toFixed(4)} units · {position.freshnessLabel}</span>
+                    <span className="muted-line">Cost {formatProsperCoins(position.costCoins)} · value {formatProsperCoins(position.currentValueCoins)}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p>No durable analytics events yet. Saving preferences or completing onboarding will append them.</p>
+              <div className="grid" style={{ gap: 12 }}>
+                <p>
+                  No starter trade yet. Goldie has done the first-value work; the next honest step is
+                  sending ProsperCoins into one Fin-led virtual position with visible quote freshness.
+                </p>
+                <div className="actions">
+                  <Link className="button primary" href="/app/simulator">
+                    Run starter trade
+                  </Link>
+                </div>
+              </div>
             )}
           </article>
         </section>
@@ -166,12 +202,12 @@ export default async function AppHomePage() {
           </article>
 
           <article className="panel">
-            <h2>What Sprint 1 chunk 2 now unlocks</h2>
+            <h2>What Sprint 2 now proves</h2>
             <ul className="list">
-              <li>The protected shell now behaves like a real home card instead of a scaffolding dump.</li>
-              <li>Onboarding choices and first-value completion append to a durable event sink.</li>
-              <li>Measured time-to-value can be inspected after the redirect, not only inside ephemeral action state.</li>
-              <li>Goldie/Fin surfaces now have a visible bridge into the upcoming reward and simulator slice.</li>
+              <li>ProsperCoins are awarded for awareness actions with a visible reason instead of a vague score bump.</li>
+              <li>Fin gets an explicit starter simulator route rather than a hand-wavy “coming soon” promise.</li>
+              <li>Quote freshness is shown honestly, including trade-blocking when the feed is too stale.</li>
+              <li>The first virtual trade now lands in an immutable demo ledger and rolls into a real portfolio summary.</li>
             </ul>
           </article>
         </section>
@@ -183,9 +219,10 @@ export default async function AppHomePage() {
           </article>
 
           <article className="panel">
-            <h2>Analytics sink</h2>
+            <h2>Runtime sinks</h2>
             <div className="meta">
-              <div><strong>Path</strong>: <code>{analytics.sinkPath}</code></div>
+              <div><strong>Analytics path</strong>: <code>{analytics.sinkPath}</code></div>
+              <div><strong>Ledger path</strong>: <code>{rewardLoop.ledgerPath}</code></div>
               <div><strong>Recent event count</strong>: {analytics.eventCount}</div>
               <div><strong>Latest target verdict</strong>: {analytics.targetMet == null ? "Not measured yet" : analytics.targetMet ? "Met" : "Missed"}</div>
             </div>

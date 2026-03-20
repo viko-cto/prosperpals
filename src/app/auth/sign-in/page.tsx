@@ -14,11 +14,11 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         <section className="hero" style={{ maxWidth: 680, margin: "0 auto" }}>
           <span className="eyebrow">Authenticated shell</span>
           <div className="grid" style={{ gap: 12 }}>
-            <h1>Demo sign in for Sprint 0</h1>
+            <h1>Demo sign in for the starter loop</h1>
             <p>
-              Full Supabase auth wiring comes next. For Sprint 0, the goal is proving route
-              separation, request tracing, and trusted server boundaries without blocking local or
-              preview environments on external auth setup.
+              Full Supabase auth wiring still comes later. For the current prototype, the goal is
+              proving route separation, request tracing, and trusted server boundaries without
+              blocking the Goldie → reward → Fin simulator flow on external auth setup.
             </p>
           </div>
 

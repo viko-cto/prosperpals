@@ -5,7 +5,10 @@ import { z } from "zod";
 const demoAnalyticsEventSchema = z.object({
   event: z.enum([
     "onboarding.preferences.saved",
-    "onboarding.first-value.completed"
+    "onboarding.first-value.completed",
+    "rewards.awarded",
+    "simulator.trade.executed",
+    "simulator.trade.blocked"
   ]),
   occurredAt: z.string().datetime(),
   userId: z.string().uuid(),
@@ -20,7 +23,14 @@ const demoAnalyticsEventSchema = z.object({
   amountMinor: z.number().int().optional(),
   currency: z.string().length(3).optional(),
   dailySpendingPowerMinor: z.number().int().nonnegative().optional(),
-  headline: z.string().min(1).max(200).optional()
+  headline: z.string().min(1).max(200).optional(),
+  coins: z.number().int().positive().optional(),
+  reasonCode: z.string().min(2).max(80).optional(),
+  assetId: z.string().min(1).max(40).optional(),
+  assetName: z.string().min(1).max(120).optional(),
+  quoteFreshnessSeconds: z.number().int().nonnegative().optional(),
+  tradeStatus: z.string().min(2).max(80).optional(),
+  message: z.string().min(1).max(240).optional()
 });
 
 export type DemoAnalyticsEvent = z.infer<typeof demoAnalyticsEventSchema>;
