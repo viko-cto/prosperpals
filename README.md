@@ -3,11 +3,13 @@
 AI-first personal finance companion for Gen Z (Goldie & Fin).
 
 ## Status
-ProsperPals has completed the BMAD planning pipeline and the current implementation lane through Sprint 3.
+ProsperPals has completed the BMAD planning pipeline, the current implementation lane through Sprint 3, and the alpha-readiness decision chain through the locked pre-alpha NO-GO packet.
 
-**Current status:** `implementation-complete`
+**Current status:** `alpha-readiness / interview-evidence-and-hosted-hardening-execution`
 
-**Next recommended step:** `alpha-readiness / 1-gap-close-plan` completed → `alpha-readiness / 2-user-validation-and-alpha-hardening-brief`
+**Decision posture:** `NO-GO remains locked until interview evidence, hosted hardening, receipt realism, and operator readiness are captured in durable artifacts`
+
+**Next recommended step:** populate the operating pack in `docs/alpha-readiness/` and return later to a formal GO / CONDITIONAL GO / NO-GO re-decision.
 
 ## What exists now
 - BMAD planning artifacts in `_bmad/_bmad-output/planning-artifacts/`
@@ -21,7 +23,8 @@ ProsperPals has completed the BMAD planning pipeline and the current implementat
 - Supabase SQL migrations for canonical trust-critical tables
 - Server-evaluated feature flags and request/trace propagation
 - Idempotency tests for both SQL trust tables and the demo reward/trade loop
-- Alpha-readiness gap-close plan in `docs/implementation/alpha-readiness-gap-close-plan.md`
+- Alpha-readiness gap-close, validation, kickoff, NO-GO decision, and execution-packet artifacts in `docs/implementation/`
+- Repo-native alpha execution operating pack in `docs/alpha-readiness/` for interview logs, batch syntheses, hosted-hardening evidence, operator readiness, receipt realism, and re-decision dashboard inputs
 
 ## Getting started
 ```bash
@@ -51,6 +54,11 @@ This verifies that repeated writes to the core trust-critical tables remain idem
 10. Implementation → Sprint 2 reward loop and Fin simulator starter slice
 11. Implementation → Sprint 3 explainability, receipt intake, and operator safety
 12. Alpha readiness → gap-close plan
+13. Alpha readiness → user validation and alpha hardening brief
+14. Alpha readiness → cohort recruitment and hosted hardening kickoff
+15. Alpha readiness → interview-wave synthesis and alpha go/no-go
+16. Alpha readiness → execution evidence packet
+17. Alpha readiness → interview evidence and hosted hardening execution operating pack
 
 ## Immediate next step
-`alpha-readiness / 2-user-validation-and-alpha-hardening-brief`
+Populate the interview/evidence/checklist artifacts in `docs/alpha-readiness/`, keep the NO-GO locked, and re-enter decision review only after the required evidence exists.
