@@ -2,70 +2,74 @@
 
 **Date:** 2026-03-22  
 **Evidence type:** repo-state execution note  
-**Decision use:** separates what is already safe (`no auto-post before review`) from what is still unsafe (`duplicate confirmation can create duplicate money truth`).
+**Decision use:** proves the current demo slice now protects both trust boundaries that matter here: no auto-post before review, and no duplicate canonical truth on repeated confirmation.
 
 ## Verdict
 
 ### Proven now
 - Receipt candidates do **not** auto-post to canonical truth before user review.
+- Reconfirming the same receipt candidate is now **candidate-scoped and idempotent**.
 
-### Not proven — and currently false in the demo runtime
-- Reconfirming the same receipt candidate does **not** stay idempotent.
+A same-candidate double confirmation now returns the existing reviewed result instead of writing a second confirmation record or a second reviewed money event.
 
-A same-candidate double confirmation currently creates duplicate confirmation records and duplicate reviewed money events.
-
-## Positive evidence: no auto-post before review
+## Evidence basis
 
 The current automated test suite passed on 2026-03-22, including:
 - `receipt OCR candidates stay reviewable until explicit confirmation`
+- `duplicate receipt confirmation reuses the first reviewed truth instead of writing a second one`
 
-That test proves the intended trust boundary:
+## Positive evidence: no auto-post before review
+
+The review-state test still proves the original trust boundary:
 - pending candidate exists after capture,
 - `latestConfirmed` is still empty,
 - only after confirmation does the reviewed receipt land.
 
-## Negative evidence: duplicate confirmation is currently possible
+## Positive evidence: duplicate confirmation is suppressed
 
-A temp-runtime execution in this run confirmed the same candidate twice. The result was:
+A temp-runtime execution in this run confirmed the same candidate twice. The result pattern is now:
 
 ```json
 {
-  "candidateId": "d55914bb-e20b-4461-8bfd-a55e6175eaaa",
-  "firstConfirmationId": "8407b7a9-e93c-4405-9f65-a875106302bf",
-  "secondConfirmationId": "016c4efb-4589-4cbc-8cf0-1c5c6fd55aed",
-  "confirmationCount": 2,
-  "recordKinds": [
-    "receipt_candidate",
-    "receipt_candidate",
-    "receipt_confirmation",
-    "receipt_candidate",
-    "receipt_confirmation"
-  ],
-  "uniqueMoneyEventIds": 2
+  "candidateScopedIdempotency": true,
+  "confirmationCount": 1,
+  "confirmedCandidateCount": 1,
+  "sameConfirmationIdReturned": true,
+  "sameMoneyEventIdReturned": true
 }
 ```
 
 ### Meaning
-For one `candidateId`, the current flow can produce:
-- two `receipt_confirmation` records,
-- two distinct reviewed `moneyEventId` values,
-- and therefore duplicate canonical money truth.
+For one `candidateId`, the current flow now produces:
+- one `receipt_confirmation` record,
+- one reviewed `moneyEventId`,
+- and one confirmed candidate state,
+- even if the confirmation path is submitted again.
 
-## Why this happens in the current code
+## Why this is now true in the current code
 
-`confirmReceiptCandidate(...)` searches for the latest matching `receipt_candidate` by `candidateId`, but it does **not** reject or short-circuit if a confirmation already exists for that candidate.
+`confirmReceiptCandidate(...)` now checks for an existing `receipt_confirmation` with the same `candidateId` before writing new reviewed truth.
 
-Unlike the ProsperCoin/trade demo ledger, the receipt confirmation path does not currently use a candidate-scoped idempotency guard.
+If one exists, it returns the already-confirmed candidate plus the existing confirmation/money event payload instead of appending more records.
+
+The server action also skips duplicate analytics writes when the confirmation was already completed.
+
+## Repo files used for this proof
+- `src/lib/receipts/demo-receipts.ts`
+- `src/app/app/receipts/actions.ts`
+- `test/sprint-3-explainability-operator-safety.test.mjs`
 
 ## Practical alpha readout
 
-This note supports:
+This note now supports:
 - **Ambiguous candidates never auto-post to canonical truth** — yes.
-- **Reprocessing the same receipt does not create duplicate truth** — no, still an open blocker.
+- **Reprocessing the same receipt does not create duplicate truth** — yes, in the current demo slice.
 
-## Blocking implication for alpha readiness
+## Remaining alpha limitation
 
-The hosted alpha should remain **NO-GO** on receipt realism until the repo can show:
-1. candidate-scoped receipt confirmation idempotency,
-2. a passing automated test for duplicate confirm suppression,
-3. and an updated lineage note proving the same candidate cannot create two reviewed money events.
+This closes the duplicate-confirmation blocker, but it does **not** by itself make hosted alpha ready.
+
+The hosted alpha should still remain **NO-GO** on receipt realism until the repo also shows:
+1. a real upload/storage/provider chain,
+2. stored asset metadata linked to the parse candidate,
+3. and hosted durability beyond local runtime file sinks.

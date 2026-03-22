@@ -81,8 +81,8 @@ For every line marked complete or manual fallback, link the proof note under `do
 - [x] User correction is required before truth changes  
   - status: complete
   - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-happy-path.md`
-- [ ] Reprocessing the same receipt does not create duplicate truth  
-  - status: open blocker
+- [x] Reprocessing the same receipt does not create duplicate truth  
+  - status: complete
   - proof note: `docs/alpha-readiness/evidence/receipts/receipt-idempotency-and-no-auto-post-proof.md`
 - [ ] OCR failure degrades honestly and safely  
   - status: open blocker
@@ -118,11 +118,10 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note:
 
 ## Current blockers
-1. The same `candidateId` can currently be confirmed twice, producing two reviewed `moneyEventId` values (`receipt-idempotency-and-no-auto-post-proof.md`).
-2. The receipt path is still a typed demo parse; there is no real file upload/storage/provider chain yet (`receipt-lineage-failure-path.md`).
-3. `artifactId` lineage exists inside demo records, but it is not yet linked to stored asset metadata or provider output (`receipt-lineage-failure-path.md`).
+1. The receipt path is still a typed demo parse; there is no real file upload/storage/provider chain yet (`receipt-lineage-failure-path.md`).
+2. `artifactId` lineage exists inside demo records, but it is not yet linked to stored asset metadata or provider output (`receipt-lineage-failure-path.md`).
 
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
-- Why the NO-GO remains locked: receipt realism is still demo-only and currently non-idempotent on repeated confirmation, so canonical truth can still duplicate and real upload/provider evidence is absent.
-- What exact artifacts would change that answer next: a real upload/provider happy/ambiguous/failure evidence set plus a passing duplicate-confirmation suppression proof.t answer next: a real upload/provider happy/ambiguous/failure evidence set plus a passing duplicate-confirmation suppression proof.
+- Why the NO-GO remains locked: receipt realism is still demo-only even though duplicate confirmation is now suppressed; real upload/provider evidence and hosted durability are still absent.
+- What exact artifacts would change that answer next: a real upload/provider happy/ambiguous/failure evidence set plus hosted durability proof beyond local runtime file sinks.

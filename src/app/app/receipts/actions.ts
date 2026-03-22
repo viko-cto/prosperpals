@@ -70,23 +70,25 @@ export async function confirmReceiptReviewAction(formData: FormData) {
     occurredAt
   });
 
-  await appendDemoAnalyticsEvent({
-    event: "receipt.candidate.confirmed",
-    occurredAt,
-    userId: session.userId,
-    requestId: requestContext.requestId,
-    traceId: requestContext.traceId,
-    path: requestContext.path,
-    selectedIntent: onboardingState.selectedIntent,
-    mode: onboardingState.mode,
-    targetTimeToValueSeconds: 80,
-    merchantLabel: result.confirmation.merchantLabel,
-    amountMinor: result.confirmation.amountMinor,
-    currency: result.confirmation.currency,
-    dailySpendingPowerMinor: result.insight.dailySpendingPowerMinor,
-    headline: result.insight.headline,
-    message: result.confirmation.explanation
-  });
+  if (!result.alreadyConfirmed) {
+    await appendDemoAnalyticsEvent({
+      event: "receipt.candidate.confirmed",
+      occurredAt,
+      userId: session.userId,
+      requestId: requestContext.requestId,
+      traceId: requestContext.traceId,
+      path: requestContext.path,
+      selectedIntent: onboardingState.selectedIntent,
+      mode: onboardingState.mode,
+      targetTimeToValueSeconds: 80,
+      merchantLabel: result.confirmation.merchantLabel,
+      amountMinor: result.confirmation.amountMinor,
+      currency: result.confirmation.currency,
+      dailySpendingPowerMinor: result.insight.dailySpendingPowerMinor,
+      headline: result.insight.headline,
+      message: result.confirmation.explanation
+    });
+  }
 
   redirect(`/app/receipts?confirmed=${result.confirmation.candidateId}`);
 }

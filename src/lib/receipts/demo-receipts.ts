@@ -71,6 +71,17 @@ export type ReceiptReviewState = {
   confirmationCount: number;
 };
 
+type ReceiptConfirmationResult = {
+  candidate: ReceiptCandidateRecord;
+  confirmation: ReceiptConfirmationRecord;
+  moneyEvent: z.infer<typeof moneyEventSchema>;
+  insight: ReturnType<typeof createGoldieInsight> & {
+    dailySpendingPowerMinor: number;
+    currency: string;
+  };
+  alreadyConfirmed: boolean;
+};
+
 function getReceiptPath() {
   return process.env.PROSPERPALS_DEMO_RECEIPT_PATH ?? DEFAULT_RECEIPT_PATH;
 }
@@ -137,6 +148,77 @@ async function appendReceiptRecords(records: ReceiptRecord[]) {
     `${records.map((record) => JSON.stringify(record)).join("\n")}\n`,
     "utf8"
   );
+}
+
+function buildReviewedMoneyEvent(input: {
+  userId: string;
+  candidateId: string;
+  artifactId: string;
+  occurredAt: string;
+  traceId: string;
+  merchantLabel: string;
+  amountMinor: number;
+  currency: string;
+  categoryId: string;
+  confidenceScore: number;
+  moneyEventId: string;
+}) {
+  return moneyEventSchema.parse({
+    id: input.moneyEventId,
+    userId: input.userId,
+    idempotencyKey: `receipt-confirmation:${input.userId}:${input.candidateId}`,
+    eventType: "expense",
+    amountMinor: input.amountMinor,
+    currency: input.currency,
+    occurredAt: input.occurredAt,
+    merchantLabel: input.merchantLabel,
+    categoryId: input.categoryId,
+    sourceType: "receipt_ocr",
+    verificationState: "parsed_reviewed",
+    confidenceScore: input.confidenceScore,
+    artifactId: input.artifactId,
+    traceId: input.traceId
+  });
+}
+
+function buildReceiptConfirmationResult(input: {
+  candidate: ReceiptCandidateRecord;
+  confirmation: ReceiptConfirmationRecord;
+  alreadyConfirmed: boolean;
+}): ReceiptConfirmationResult {
+  const moneyEvent = buildReviewedMoneyEvent({
+    userId: input.confirmation.userId,
+    candidateId: input.confirmation.candidateId,
+    artifactId: input.confirmation.artifactId,
+    occurredAt: input.confirmation.occurredAt,
+    traceId: input.confirmation.traceId,
+    merchantLabel: input.confirmation.merchantLabel,
+    amountMinor: input.confirmation.amountMinor,
+    currency: input.confirmation.currency,
+    categoryId: input.confirmation.categoryId,
+    confidenceScore: input.confirmation.confidenceScore,
+    moneyEventId: input.confirmation.moneyEventId
+  });
+
+  const dailySpendingPowerMinor = calculateDailySpendingPower(input.confirmation.amountMinor);
+  const insight = createGoldieInsight({
+    merchantLabel: input.confirmation.merchantLabel,
+    amountMinor: input.confirmation.amountMinor,
+    currency: input.confirmation.currency,
+    dailySpendingPowerMinor
+  });
+
+  return {
+    candidate: input.candidate,
+    confirmation: input.confirmation,
+    moneyEvent,
+    insight: {
+      ...insight,
+      dailySpendingPowerMinor,
+      currency: input.confirmation.currency
+    },
+    alreadyConfirmed: input.alreadyConfirmed
+  };
 }
 
 export async function readDemoReceiptRecords(userId?: string): Promise<ReceiptRecord[]> {
@@ -218,6 +300,30 @@ export async function confirmReceiptCandidate(input: {
     throw new Error(`Receipt candidate not found: ${input.candidateId}`);
   }
 
+  const existingConfirmation = [...records]
+    .reverse()
+    .find(
+      (record): record is ReceiptConfirmationRecord =>
+        record.kind === "receipt_confirmation" && record.candidateId === input.candidateId
+    );
+
+  if (existingConfirmation) {
+    const confirmedCandidate = [...records]
+      .reverse()
+      .find(
+        (record): record is ReceiptCandidateRecord =>
+          record.kind === "receipt_candidate" &&
+          record.candidateId === input.candidateId &&
+          record.reviewStatus === "confirmed"
+      ) ?? candidate;
+
+    return buildReceiptConfirmationResult({
+      candidate: confirmedCandidate,
+      confirmation: existingConfirmation,
+      alreadyConfirmed: true
+    });
+  }
+
   const occurredAt = input.occurredAt ?? new Date().toISOString();
   const amountMinor = Math.max(1, Math.round(input.amountMajor * 100));
   const merchantLabel = input.merchantLabel.trim() || candidate.merchantLabel;
@@ -227,21 +333,19 @@ export async function confirmReceiptCandidate(input: {
     amountMinor !== candidate.amountMinor ||
     categoryId !== candidate.categoryId;
 
-  const moneyEvent = moneyEventSchema.parse({
-    id: crypto.randomUUID(),
+  const moneyEventId = crypto.randomUUID();
+  const moneyEvent = buildReviewedMoneyEvent({
     userId: input.userId,
-    idempotencyKey: `receipt-confirmation:${input.userId}:${candidate.candidateId}`,
-    eventType: "expense",
+    candidateId: candidate.candidateId,
+    artifactId: candidate.artifactId,
+    occurredAt,
+    traceId: input.traceId,
+    merchantLabel,
     amountMinor,
     currency: candidate.currency,
-    occurredAt,
-    merchantLabel,
     categoryId,
-    sourceType: "receipt_ocr",
-    verificationState: "parsed_reviewed",
     confidenceScore: candidate.confidenceScore,
-    artifactId: candidate.artifactId,
-    traceId: input.traceId
+    moneyEventId
   });
 
   const confirmation = receiptConfirmationRecordSchema.parse({
@@ -249,7 +353,7 @@ export async function confirmReceiptCandidate(input: {
     id: crypto.randomUUID(),
     candidateId: candidate.candidateId,
     artifactId: candidate.artifactId,
-    moneyEventId: moneyEvent.id,
+    moneyEventId,
     userId: input.userId,
     occurredAt,
     requestId: input.requestId,
@@ -280,24 +384,11 @@ export async function confirmReceiptCandidate(input: {
 
   await appendReceiptRecords([candidateUpdate, confirmation]);
 
-  const dailySpendingPowerMinor = calculateDailySpendingPower(amountMinor);
-  const insight = createGoldieInsight({
-    merchantLabel,
-    amountMinor,
-    currency: candidate.currency,
-    dailySpendingPowerMinor
-  });
-
-  return {
+  return buildReceiptConfirmationResult({
     candidate: candidateUpdate,
     confirmation,
-    moneyEvent,
-    insight: {
-      ...insight,
-      dailySpendingPowerMinor,
-      currency: candidate.currency
-    }
-  };
+    alreadyConfirmed: false
+  });
 }
 
 export async function getDemoReceiptReviewState(userId: string): Promise<ReceiptReviewState> {

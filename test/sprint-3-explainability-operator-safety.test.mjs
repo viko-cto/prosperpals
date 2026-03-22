@@ -70,6 +70,55 @@ test('receipt OCR candidates stay reviewable until explicit confirmation', async
     assert.equal(confirmed.moneyEvent.sourceType, 'receipt_ocr');
     assert.equal(confirmed.moneyEvent.verificationState, 'parsed_reviewed');
     assert.equal(confirmed.confirmation.correctionApplied, true);
+    assert.equal(confirmed.alreadyConfirmed, false);
+  });
+});
+
+test('duplicate receipt confirmation reuses the first reviewed truth instead of writing a second one', async () => {
+  await withTempRuntime(async () => {
+    const receipts = await import('../src/lib/receipts/demo-receipts.ts');
+
+    const candidate = await receipts.captureReceiptCandidate({
+      userId,
+      requestId: 'receipt-req-010',
+      traceId,
+      merchantLabel: 'Netto Nørreport',
+      amountMajor: 98.5,
+      categoryId: 'groceries'
+    });
+
+    const first = await receipts.confirmReceiptCandidate({
+      userId,
+      candidateId: candidate.candidateId,
+      requestId: 'receipt-req-011',
+      traceId,
+      merchantLabel: 'Netto Nørreport',
+      amountMajor: 98.5,
+      categoryId: 'groceries'
+    });
+
+    const second = await receipts.confirmReceiptCandidate({
+      userId,
+      candidateId: candidate.candidateId,
+      requestId: 'receipt-req-012',
+      traceId,
+      merchantLabel: 'Netto Nørreport',
+      amountMajor: 98.5,
+      categoryId: 'groceries'
+    });
+
+    const records = await receipts.readDemoReceiptRecords(userId);
+    const confirmations = records.filter((record) => record.kind === 'receipt_confirmation');
+    const confirmedCandidates = records.filter(
+      (record) => record.kind === 'receipt_candidate' && record.reviewStatus === 'confirmed'
+    );
+
+    assert.equal(first.alreadyConfirmed, false);
+    assert.equal(second.alreadyConfirmed, true);
+    assert.equal(second.confirmation.id, first.confirmation.id);
+    assert.equal(second.moneyEvent.id, first.moneyEvent.id);
+    assert.equal(confirmations.length, 1);
+    assert.equal(confirmedCandidates.length, 1);
   });
 });
 
