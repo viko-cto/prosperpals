@@ -49,7 +49,7 @@ test('receipt OCR candidates stay reviewable until explicit confirmation', async
   await withTempRuntime(async () => {
     const receipts = await import('../src/lib/receipts/demo-receipts.ts');
 
-    const candidate = await receipts.captureReceiptCandidate({
+    const captured = await receipts.captureReceiptCandidate({
       userId,
       requestId: 'receipt-req-001',
       traceId,
@@ -57,6 +57,9 @@ test('receipt OCR candidates stay reviewable until explicit confirmation', async
       amountMajor: 226.45,
       categoryId: 'groceries'
     });
+
+    assert.equal(captured.status, 'candidate');
+    const candidate = captured.candidate;
 
     const beforeConfirm = await receipts.getDemoReceiptReviewState(userId);
     assert.equal(beforeConfirm.pendingCandidate.candidateId, candidate.candidateId);
@@ -90,7 +93,7 @@ test('uploaded receipt artifacts persist metadata and stay linked to candidate l
   await withTempRuntime(async ({ tempDir }) => {
     const receipts = await import('../src/lib/receipts/demo-receipts.ts');
 
-    const candidate = await receipts.captureReceiptCandidate({
+    const captured = await receipts.captureReceiptCandidate({
       userId,
       requestId: 'receipt-req-020',
       traceId,
@@ -103,6 +106,9 @@ test('uploaded receipt artifacts persist metadata and stay linked to candidate l
         bytes: Buffer.from('fake-jpeg-binary')
       }
     });
+
+    assert.equal(captured.status, 'candidate');
+    const candidate = captured.candidate;
 
     const artifacts = await receipts.readDemoReceiptArtifactRecords(userId);
     assert.equal(artifacts.length, 1);
@@ -118,11 +124,44 @@ test('uploaded receipt artifacts persist metadata and stay linked to candidate l
   });
 });
 
+test('failed receipt parsing stops before candidate creation and exposes recovery proof', async () => {
+  await withTempRuntime(async () => {
+    const receipts = await import('../src/lib/receipts/demo-receipts.ts');
+
+    const result = await receipts.captureReceiptCandidate({
+      userId,
+      requestId: 'receipt-req-030',
+      traceId,
+      merchantLabel: 'FAIL_PROVIDER_NETTO',
+      amountMajor: 98.5,
+      categoryId: 'groceries',
+      upload: {
+        fileName: 'receipt-netto.png',
+        mimeType: 'image/png',
+        bytes: Buffer.from('fake-png-binary')
+      }
+    });
+
+    assert.equal(result.status, 'failed');
+    assert.equal(result.failure.failureStage, 'provider_parse');
+    assert.match(result.failure.userMessage, /failed safely/i);
+
+    const reviewState = await receipts.getDemoReceiptReviewState(userId);
+    const records = await receipts.readDemoReceiptRecords(userId);
+    const candidates = records.filter((record) => record.kind === 'receipt_candidate');
+
+    assert.equal(reviewState.pendingCandidate, undefined);
+    assert.equal(reviewState.failureCount, 1);
+    assert.equal(reviewState.latestFailure.failureCode, 'OCR_PROVIDER_UNAVAILABLE');
+    assert.equal(candidates.length, 0);
+  });
+});
+
 test('duplicate receipt confirmation reuses the first reviewed truth instead of writing a second one', async () => {
   await withTempRuntime(async () => {
     const receipts = await import('../src/lib/receipts/demo-receipts.ts');
 
-    const candidate = await receipts.captureReceiptCandidate({
+    const captured = await receipts.captureReceiptCandidate({
       userId,
       requestId: 'receipt-req-010',
       traceId,
@@ -130,6 +169,9 @@ test('duplicate receipt confirmation reuses the first reviewed truth instead of 
       amountMajor: 98.5,
       categoryId: 'groceries'
     });
+
+    assert.equal(captured.status, 'candidate');
+    const candidate = captured.candidate;
 
     const first = await receipts.confirmReceiptCandidate({
       userId,
@@ -188,7 +230,7 @@ test('support console aggregates safe timeline data and release checks', async (
     const telemetry = await import('../src/lib/telemetry/demo-event-store.ts');
     const support = await import('../src/lib/support/demo-support.ts');
 
-    const candidate = await receipts.captureReceiptCandidate({
+    const captured = await receipts.captureReceiptCandidate({
       userId,
       requestId: 'receipt-req-003',
       traceId,
@@ -196,6 +238,9 @@ test('support console aggregates safe timeline data and release checks', async (
       amountMajor: 148.5,
       categoryId: 'groceries'
     });
+
+    assert.equal(captured.status, 'candidate');
+    const candidate = captured.candidate;
 
     await receipts.confirmReceiptCandidate({
       userId,

@@ -22,6 +22,7 @@ But hosted alpha is still **NO-GO** because durability remains local-runtime and
 - `receipt-lineage-happy-path.md`
 - `receipt-lineage-ambiguous-path.md`
 - `receipt-lineage-failure-path.md`
+- `receipt-provider-failure-recovery-proof.md`
 - `receipt-idempotency-and-no-auto-post-proof.md`
 
 ## Every trace should show

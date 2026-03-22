@@ -229,7 +229,7 @@ This is meaningful progress because it converts the earlier receipt-lineage gap 
 But the step is still **not complete** because:
 - artifact files and metadata still land in local runtime storage,
 - there is still no external OCR/provider call,
-- provider/upload failure handling is not yet modeled as a user-visible safe recovery lane,
+- provider/upload failure handling is now modeled as a user-visible safe recovery lane with durable failure records, but it is still demo-triggered rather than a live hosted provider integration,
 - interview evidence, operator-readiness evidence, and re-decision roll-up artifacts are still largely unpopulated.
 
 So the outcome stays the same:
@@ -271,6 +271,7 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/evidence/redecision/README.md`
 - `docs/alpha-readiness/evidence/receipts/receipt-lineage-happy-path.md`
 - `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
+- `docs/alpha-readiness/evidence/receipts/receipt-provider-failure-recovery-proof.md`
 - `src/app/app/receipts/page.tsx`
 - `src/app/app/receipts/actions.ts`
 - `src/lib/receipts/demo-receipts.ts`

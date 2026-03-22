@@ -34,7 +34,7 @@ export async function startReceiptReviewAction(formData: FormData) {
   const receiptUpload = await readUploadedReceipt(formData);
   const occurredAt = new Date().toISOString();
 
-  const candidate = await captureReceiptCandidate({
+  const result = await captureReceiptCandidate({
     userId: session.userId,
     requestId: requestContext.requestId,
     traceId: requestContext.traceId,
@@ -44,6 +44,29 @@ export async function startReceiptReviewAction(formData: FormData) {
     occurredAt,
     upload: receiptUpload
   });
+
+  if (result.status === "failed") {
+    await appendDemoAnalyticsEvent({
+      event: "receipt.candidate.failed",
+      occurredAt,
+      userId: session.userId,
+      requestId: requestContext.requestId,
+      traceId: requestContext.traceId,
+      path: requestContext.path,
+      selectedIntent: onboardingState.selectedIntent,
+      mode: onboardingState.mode,
+      targetTimeToValueSeconds: 80,
+      merchantLabel,
+      amountMinor: Math.max(1, Math.round(amountMajor * 100)),
+      currency: "DKK",
+      headline: result.failure.failureCode,
+      message: result.failure.userMessage
+    });
+
+    redirect(`/app/receipts?failure=${result.failure.id}`);
+  }
+
+  const candidate = result.candidate;
 
   await appendDemoAnalyticsEvent({
     event: "receipt.candidate.created",

@@ -51,6 +51,22 @@ const receiptCandidateRecordSchema = z.object({
   reviewMessage: z.string().min(1).max(240)
 });
 
+const receiptFailureRecordSchema = z.object({
+  kind: z.literal("receipt_failure"),
+  id: z.string().uuid(),
+  artifactId: z.string().uuid(),
+  userId: z.string().uuid(),
+  occurredAt: z.string().datetime(),
+  requestId: z.string().min(6),
+  traceId: z.string().uuid(),
+  failureStage: z.enum(["upload_validation", "provider_parse"]),
+  failureCode: z.string().min(2).max(80),
+  recoveryAction: z.string().min(2).max(240),
+  userMessage: z.string().min(1).max(240),
+  providerReference: z.string().min(4).max(180),
+  storageMode: z.enum(["uploaded", "simulated"])
+});
+
 const receiptConfirmationRecordSchema = z.object({
   kind: z.literal("receipt_confirmation"),
   id: z.string().uuid(),
@@ -72,11 +88,13 @@ const receiptConfirmationRecordSchema = z.object({
 
 const receiptRecordSchema = z.discriminatedUnion("kind", [
   receiptCandidateRecordSchema,
+  receiptFailureRecordSchema,
   receiptConfirmationRecordSchema
 ]);
 
 export type ReceiptArtifactRecord = z.infer<typeof receiptArtifactRecordSchema>;
 export type ReceiptCandidateRecord = z.infer<typeof receiptCandidateRecordSchema>;
+export type ReceiptFailureRecord = z.infer<typeof receiptFailureRecordSchema>;
 export type ReceiptConfirmationRecord = z.infer<typeof receiptConfirmationRecordSchema>;
 export type ReceiptRecord = z.infer<typeof receiptRecordSchema>;
 
@@ -85,6 +103,7 @@ export type ReceiptReviewState = {
   artifactSinkPath: string;
   pendingCandidate?: ReceiptCandidateRecord;
   latestArtifact?: ReceiptArtifactRecord;
+  latestFailure?: ReceiptFailureRecord;
   latestConfirmed?: ReceiptConfirmationRecord & {
     dailySpendingPowerMinor: number;
     headline: string;
@@ -92,7 +111,12 @@ export type ReceiptReviewState = {
   };
   recentCandidates: ReceiptCandidateRecord[];
   confirmationCount: number;
+  failureCount: number;
 };
+
+type ReceiptCaptureResult =
+  | { status: "candidate"; candidate: ReceiptCandidateRecord; artifact: ReceiptArtifactRecord }
+  | { status: "failed"; failure: ReceiptFailureRecord; artifact: ReceiptArtifactRecord };
 
 type ReceiptConfirmationResult = {
   candidate: ReceiptCandidateRecord;
@@ -312,6 +336,36 @@ export async function readDemoReceiptArtifactRecords(userId?: string): Promise<R
   }
 }
 
+function buildReceiptFailure(input: {
+  userId: string;
+  artifactId: string;
+  requestId: string;
+  traceId: string;
+  occurredAt: string;
+  failureStage: ReceiptFailureRecord["failureStage"];
+  failureCode: string;
+  recoveryAction: string;
+  userMessage: string;
+  providerReference: string;
+  storageMode: ReceiptFailureRecord["storageMode"];
+}) {
+  return receiptFailureRecordSchema.parse({
+    kind: "receipt_failure",
+    id: crypto.randomUUID(),
+    artifactId: input.artifactId,
+    userId: input.userId,
+    occurredAt: input.occurredAt,
+    requestId: input.requestId,
+    traceId: input.traceId,
+    failureStage: input.failureStage,
+    failureCode: input.failureCode,
+    recoveryAction: input.recoveryAction,
+    userMessage: input.userMessage,
+    providerReference: input.providerReference,
+    storageMode: input.storageMode
+  });
+}
+
 async function persistReceiptArtifact(input: {
   userId: string;
   requestId: string;
@@ -363,6 +417,10 @@ async function persistReceiptArtifact(input: {
   return artifact;
 }
 
+function shouldSimulateProviderFailure(merchantLabel: string) {
+  return /fail|broken|error/i.test(merchantLabel);
+}
+
 export async function captureReceiptCandidate(input: {
   userId: string;
   requestId: string;
@@ -376,10 +434,10 @@ export async function captureReceiptCandidate(input: {
     mimeType: string;
     bytes: Buffer;
   };
-}) {
+}): Promise<ReceiptCaptureResult> {
   const occurredAt = input.occurredAt ?? new Date().toISOString();
+  const normalizedMerchantLabel = input.merchantLabel.trim() || "Unknown merchant";
   const amountMinor = Math.max(1, Math.round(input.amountMajor * 100));
-  const confidenceScore = getConfidenceScore(input.merchantLabel, amountMinor);
   const artifactId = crypto.randomUUID();
   const artifact = await persistReceiptArtifact({
     userId: input.userId,
@@ -390,6 +448,55 @@ export async function captureReceiptCandidate(input: {
     upload: input.upload
   });
 
+  const unsupportedMimeType = input.upload?.mimeType
+    ? !["image/jpeg", "image/png", "image/webp", "application/pdf", "text/plain"].includes(
+        input.upload.mimeType
+      )
+    : false;
+
+  if (unsupportedMimeType) {
+    const failure = buildReceiptFailure({
+      userId: input.userId,
+      artifactId,
+      requestId: input.requestId,
+      traceId: input.traceId,
+      occurredAt,
+      failureStage: "upload_validation",
+      failureCode: "UNSUPPORTED_FILE_TYPE",
+      recoveryAction:
+        "Retry with a JPG, PNG, WEBP, PDF, or plain-text receipt export so the review lane can preserve artifact lineage safely.",
+      userMessage:
+        "This file type is not supported for the alpha receipt lane yet. ProsperPals kept the upload metadata but stopped before OCR so nothing could silently post.",
+      providerReference: `upload-validation:${artifactId}`,
+      storageMode: artifact.storageMode
+    });
+
+    await appendReceiptRecords([failure]);
+    return { status: "failed", failure, artifact };
+  }
+
+  if (shouldSimulateProviderFailure(normalizedMerchantLabel)) {
+    const failure = buildReceiptFailure({
+      userId: input.userId,
+      artifactId,
+      requestId: input.requestId,
+      traceId: input.traceId,
+      occurredAt,
+      failureStage: "provider_parse",
+      failureCode: "OCR_PROVIDER_UNAVAILABLE",
+      recoveryAction:
+        "Retry the capture or switch to manual merchant and amount entry while the provider lane is unhealthy. Canonical money truth stays unchanged until a reviewed candidate exists.",
+      userMessage:
+        "Receipt parsing failed safely. Goldie did not create a money event or review candidate, so you can retry without worrying about duplicate spending truth.",
+      providerReference: `provider-failure:${artifactId}`,
+      storageMode: artifact.storageMode
+    });
+
+    await appendReceiptRecords([failure]);
+    return { status: "failed", failure, artifact };
+  }
+
+  const confidenceScore = getConfidenceScore(normalizedMerchantLabel, amountMinor);
   const candidate = receiptCandidateRecordSchema.parse({
     kind: "receipt_candidate",
     candidateId: crypto.randomUUID(),
@@ -398,7 +505,7 @@ export async function captureReceiptCandidate(input: {
     occurredAt,
     requestId: input.requestId,
     traceId: input.traceId,
-    merchantLabel: input.merchantLabel.trim() || "Unknown merchant",
+    merchantLabel: normalizedMerchantLabel,
     amountMinor,
     currency: "DKK",
     categoryId: input.categoryId.trim() || "groceries",
@@ -411,7 +518,7 @@ export async function captureReceiptCandidate(input: {
   });
 
   await appendReceiptRecords([candidate]);
-  return candidate;
+  return { status: "candidate", candidate, artifact };
 }
 
 export async function confirmReceiptCandidate(input: {
@@ -533,6 +640,9 @@ export async function getDemoReceiptReviewState(userId: string): Promise<Receipt
   const candidates = records.filter(
     (record): record is ReceiptCandidateRecord => record.kind === "receipt_candidate"
   );
+  const failures = records.filter(
+    (record): record is ReceiptFailureRecord => record.kind === "receipt_failure"
+  );
   const confirmations = records.filter(
     (record): record is ReceiptConfirmationRecord => record.kind === "receipt_confirmation"
   );
@@ -561,8 +671,10 @@ export async function getDemoReceiptReviewState(userId: string): Promise<Receipt
     artifactSinkPath: getReceiptArtifactsPath(),
     pendingCandidate,
     latestArtifact: artifacts.at(-1),
+    latestFailure: failures.at(-1),
     latestConfirmed,
     recentCandidates: [...candidates].reverse().slice(0, 4),
-    confirmationCount: confirmations.length
+    confirmationCount: confirmations.length,
+    failureCount: failures.length
   };
 }

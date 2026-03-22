@@ -9,7 +9,7 @@ import {
 } from "./actions";
 
 type ReceiptPageProps = {
-  searchParams?: Promise<{ candidateId?: string; confirmed?: string }>;
+  searchParams?: Promise<{ candidateId?: string; confirmed?: string; failure?: string }>;
 };
 
 export default async function ReceiptReviewPage({ searchParams }: ReceiptPageProps) {
@@ -22,9 +22,12 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
   const logPreview = toStructuredLog("receipt.review.rendered", requestContext, {
     pending_candidate: candidate?.candidateId ?? null,
     candidate_query: resolved.candidateId ?? null,
+    failure_query: resolved.failure ?? null,
     latest_confirmation: receiptState.latestConfirmed?.candidateId ?? null,
     latest_artifact: receiptState.latestArtifact?.artifactId ?? null,
-    confirmation_count: receiptState.confirmationCount
+    latest_failure: receiptState.latestFailure?.id ?? null,
+    confirmation_count: receiptState.confirmationCount,
+    failure_count: receiptState.failureCount
   });
 
   return (
@@ -44,6 +47,25 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
             </Link>
           </div>
         </div>
+
+        {receiptState.latestFailure ? (
+          <section className="panel" style={{ marginBottom: 24 }}>
+            <h2>Latest safe failure recovery</h2>
+            <div className="grid cols-2" style={{ alignItems: "start" }}>
+              <div className="card compact-card">
+                <span className="eyebrow">{receiptState.latestFailure.failureStage.replaceAll("_", " ")}</span>
+                <strong>{receiptState.latestFailure.failureCode}</strong>
+                <span className="muted-line">{receiptState.latestFailure.userMessage}</span>
+              </div>
+              <div className="meta">
+                <div><strong>Recovery action</strong>: {receiptState.latestFailure.recoveryAction}</div>
+                <div><strong>Provider ref</strong>: {receiptState.latestFailure.providerReference}</div>
+                <div><strong>Storage mode</strong>: {receiptState.latestFailure.storageMode}</div>
+                <div><strong>Failure count</strong>: {receiptState.failureCount}</div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="grid cols-2" style={{ alignItems: "start" }}>
           <article className="hero">
@@ -105,6 +127,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
               <li>Confirmed receipts are explainable back to candidate, artifact, and trace IDs.</li>
               <li>Support can inspect the capture path without raw-database archaeology.</li>
               <li>Uploaded assets now record storage metadata plus parser/provider lineage.</li>
+              <li>Failed uploads/OCR parses surface a safe recovery lane instead of silently faking a candidate.</li>
             </ul>
           </article>
         </section>
@@ -210,6 +233,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
               <div><strong>Artifact sink path</strong>: <code>{receiptState.artifactSinkPath}</code></div>
               <div><strong>Pending candidate</strong>: {candidate ? candidate.candidateId : "none"}</div>
               <div><strong>Confirmation count</strong>: {receiptState.confirmationCount}</div>
+              <div><strong>Failure count</strong>: {receiptState.failureCount}</div>
             </div>
           </article>
 

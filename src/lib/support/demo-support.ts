@@ -26,6 +26,8 @@ function toTimelineTitle(event: string) {
       return "Starter trade blocked";
     case "receipt.candidate.created":
       return "Receipt candidate created";
+    case "receipt.candidate.failed":
+      return "Receipt capture failed safely";
     case "receipt.candidate.confirmed":
       return "Receipt candidate confirmed";
     default:
@@ -94,11 +96,18 @@ export async function getDemoSupportConsole(userId: string, context: {
     id: record.kind === "receipt_candidate" ? record.candidateId : record.id,
     occurredAt: record.occurredAt,
     type: "receipt",
-    title: record.kind === "receipt_candidate" ? "Receipt OCR candidate" : "Receipt review confirmed",
+    title:
+      record.kind === "receipt_candidate"
+        ? "Receipt OCR candidate"
+        : record.kind === "receipt_failure"
+          ? "Receipt capture failure"
+          : "Receipt review confirmed",
     subtitle:
       record.kind === "receipt_candidate"
         ? `${record.merchantLabel} · ${record.confidenceLabel}`
-        : record.explanation,
+        : record.kind === "receipt_failure"
+          ? `${record.failureCode} · ${record.userMessage}`
+          : record.explanation,
     traceId: record.traceId,
     requestId: record.requestId,
     details:
@@ -108,11 +117,17 @@ export async function getDemoSupportConsole(userId: string, context: {
             `Category: ${record.categoryId}`,
             `Review status: ${record.reviewStatus}`
           ]
-        : [
-            `Money event id: ${record.moneyEventId}`,
-            `Correction applied: ${record.correctionApplied ? "yes" : "no"}`,
-            `Category: ${record.categoryId}`
-          ]
+        : record.kind === "receipt_failure"
+          ? [
+              `Stage: ${record.failureStage}`,
+              `Recovery: ${record.recoveryAction}`,
+              `Provider ref: ${record.providerReference}`
+            ]
+          : [
+              `Money event id: ${record.moneyEventId}`,
+              `Correction applied: ${record.correctionApplied ? "yes" : "no"}`,
+              `Category: ${record.categoryId}`
+            ]
   }));
 
   const timeline = [...analyticsTimeline, ...ledgerTimeline, ...receiptTimeline]

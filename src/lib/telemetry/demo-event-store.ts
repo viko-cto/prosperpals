@@ -10,6 +10,7 @@ const demoAnalyticsEventSchema = z.object({
     "simulator.trade.executed",
     "simulator.trade.blocked",
     "receipt.candidate.created",
+    "receipt.candidate.failed",
     "receipt.candidate.confirmed"
   ]),
   occurredAt: z.string().datetime(),
