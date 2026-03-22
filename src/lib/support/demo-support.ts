@@ -1,3 +1,4 @@
+import { readDemoAuditEvents } from "../audit/demo-audit.ts";
 import { getReleaseSafetySummary } from "../operations/release-safety.ts";
 import { readDemoReceiptRecords } from "../receipts/demo-receipts.ts";
 import { readDemoLedgerRecords } from "../simulator/demo-simulator.ts";
@@ -6,7 +7,7 @@ import { readDemoAnalyticsEvents } from "../telemetry/demo-event-store.ts";
 export type SupportTimelineItem = {
   id: string;
   occurredAt: string;
-  type: "analytics" | "ledger" | "receipt";
+  type: "analytics" | "ledger" | "receipt" | "audit";
   title: string;
   subtitle: string;
   traceId?: string;
@@ -39,10 +40,11 @@ export async function getDemoSupportConsole(userId: string, context: {
   countryCode?: string;
   internalUser?: boolean;
 } = {}) {
-  const [analyticsEvents, ledgerRecords, receiptRecords, releaseSafety] = await Promise.all([
+  const [analyticsEvents, ledgerRecords, receiptRecords, auditEvents, releaseSafety] = await Promise.all([
     readDemoAnalyticsEvents(userId, 12),
     readDemoLedgerRecords(userId),
     readDemoReceiptRecords(userId),
+    readDemoAuditEvents({ subjectUserId: userId, limit: 6 }),
     getReleaseSafetySummary(context)
   ]);
 
@@ -130,7 +132,28 @@ export async function getDemoSupportConsole(userId: string, context: {
             ]
   }));
 
-  const timeline = [...analyticsTimeline, ...ledgerTimeline, ...receiptTimeline]
+  const auditTimeline: SupportTimelineItem[] = auditEvents.map((event) => ({
+    id: event.id ?? `${event.eventCode}-${event.requestId}`,
+    occurredAt: event.occurredAt,
+    type: "audit",
+    title:
+      event.eventCode === "support.timeline.viewed"
+        ? "Operator support timeline viewed"
+        : event.eventCode,
+    subtitle:
+      event.actorUserId && event.subjectUserId
+        ? `Actor ${event.actorUserId} accessed support context for ${event.subjectUserId}`
+        : "Operator audit event recorded",
+    traceId: event.traceId,
+    requestId: event.requestId,
+    details: [
+      `Reason: ${String(event.payload.reason ?? "unspecified")}`,
+      `Path: ${String(event.payload.path ?? "unknown")}`,
+      `Support trace flag: ${event.payload.supportTraceView === true ? "enabled" : "disabled"}`
+    ]
+  }));
+
+  const timeline = [...auditTimeline, ...analyticsTimeline, ...ledgerTimeline, ...receiptTimeline]
     .sort((left, right) => new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime())
     .slice(0, 16);
 

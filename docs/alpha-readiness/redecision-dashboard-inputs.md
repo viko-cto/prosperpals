@@ -3,7 +3,7 @@
 Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-GO review.
 
 ## Review metadata
-- **Review date:** 2026-03-22 (repo-state operator-readiness evidence update)
+- **Review date:** 2026-03-22 21:25 UTC (repo-state operator audit path update)
 - **Prepared by:** BMAD catch-up worker
 - **Decision currently under consideration:** NO-GO
 
@@ -47,7 +47,7 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 
 ## 4. Operator/access readiness snapshot
 - **Role/access table complete:** no — current roles are now explicitly documented, but support-only/admin-only boundaries are still not implemented
-- **Auditable actions confirmed:** no — request/trace context exists, but operator actions and flag changes are not durably actor-logged
+- **Auditable actions confirmed:** partial — support-surface access is now actor-scoped and timestamped in the demo audit sink, but flag changes and future interventions are still not durably actor-logged
 - **Help / export / deletion path ready:** no — manual fallback exists, but there is no product-native request path or durable completion audit
 - **Incident pause criteria documented:** yes
 - **Canonical evidence links:**
@@ -59,12 +59,12 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 
 ## 5. Open blockers
 1. Hosted trust-critical user state still depends on cookie/local-runtime persistence rather than authoritative hosted durability.
-2. Operator actions, support-surface access, and feature-flag changes are not yet durably actor-audited.
+2. Support-surface access is now actor-audited in the demo runtime, but hosted durability plus feature-flag and intervention audit coverage are still missing.
 3. Support-only/admin-only roles and account-intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health reporting are still unpopulated.
 
 ## 6. Decision summary
 - **Recommended decision:** NO-GO
-- **Why:** the receipt lane and operator-readiness documentation are materially stronger, but hosted durability, actor-scoped audits, real support/admin boundaries, and interview evidence are still not at alpha-trust level.
+- **Why:** the receipt lane is stronger and the first actor-scoped support audit path now exists, but hosted durability, broader operator audit coverage, real support/admin boundaries, and interview evidence are still not at alpha-trust level.
 - **If CONDITIONAL GO, max cohort size and manual controls:** not justified yet
 - **If NO-GO, exact blockers keeping the decision locked:** local-runtime trust sinks, missing operator audit trail, missing support/admin boundaries, and missing interview evidence.

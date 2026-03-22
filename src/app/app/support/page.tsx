@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireViewerSession } from "@/lib/auth/session";
+import { recordSupportTimelineViewAudit } from "@/lib/audit/demo-audit";
 import { evaluateFeatureFlags } from "@/lib/feature-flags/config";
 import { getDemoSupportConsole } from "@/lib/support/demo-support";
 import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-context";
@@ -7,20 +8,10 @@ import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-cont
 export default async function SupportPage() {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
+  const internalUser = session.email.endsWith("@prosperpals.local");
   const flags = evaluateFeatureFlags({
     countryCode: "DK",
-    internalUser: session.email.endsWith("@prosperpals.local")
-  });
-
-  const supportConsole = await getDemoSupportConsole(session.userId, {
-    countryCode: "DK",
-    internalUser: session.email.endsWith("@prosperpals.local")
-  });
-
-  const logPreview = toStructuredLog("support.timeline.rendered", requestContext, {
-    support_trace_view: flags.supportTraceView,
-    timeline_count: supportConsole.timeline.length,
-    release_checks: supportConsole.releaseSafety.checks.length
+    internalUser
   });
 
   if (!flags.supportTraceView) {
@@ -41,6 +32,27 @@ export default async function SupportPage() {
       </main>
     );
   }
+
+  await recordSupportTimelineViewAudit({
+    actorUserId: session.userId,
+    subjectUserId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: requestContext.path,
+    reason: "internal support timeline review",
+    supportTraceView: flags.supportTraceView
+  });
+
+  const supportConsole = await getDemoSupportConsole(session.userId, {
+    countryCode: "DK",
+    internalUser
+  });
+
+  const logPreview = toStructuredLog("support.timeline.rendered", requestContext, {
+    support_trace_view: flags.supportTraceView,
+    timeline_count: supportConsole.timeline.length,
+    release_checks: supportConsole.releaseSafety.checks.length
+  });
 
   return (
     <main>

@@ -9,7 +9,7 @@ ProsperPals has completed the BMAD planning pipeline, the current implementation
 
 **Decision posture:** `NO-GO remains locked until interview evidence, hosted hardening, receipt realism, and operator readiness are captured in durable artifacts`
 
-**Next recommended step:** keep the NO-GO locked while proving hosted durability or actor-scoped operator auditability and populating the remaining interview evidence in `docs/alpha-readiness/`. Return to a formal GO / CONDITIONAL GO / NO-GO re-decision only after that evidence exists.
+**Next recommended step:** keep the NO-GO locked while moving the new operator audit path onto hosted durability, extending it to flag/intervention actions, and populating the remaining interview evidence in `docs/alpha-readiness/`. Return to a formal GO / CONDITIONAL GO / NO-GO re-decision only after that evidence exists.
 
 ## What exists now
 - BMAD planning artifacts in `_bmad/_bmad-output/planning-artifacts/`
@@ -17,7 +17,7 @@ ProsperPals has completed the BMAD planning pipeline, the current implementation
 - Demo auth shell for local/preview use until Supabase auth wiring is added
 - Sprint 1 first-value onboarding with Goldie, Daily Spending Power, and durable onboarding analytics
 - Sprint 2 reward loop with visible ProsperCoin reasons, explicit Goldie → Fin handoff, and a starter simulator route
-- Sprint 3 trust hardening for receipt candidate review, explainability, operator traces, release safety, privacy-safe notifications, and bounded upload/artifact receipt lineage
+- Sprint 3 trust hardening for receipt candidate review, explainability, operator traces, release safety, privacy-safe notifications, bounded upload/artifact receipt lineage, and actor-scoped support-view audit logging
 - Durable demo ledgers for ProsperCoin credits/debits and virtual trade executions
 - Curated launch asset list with honest quote freshness and stale-trade blocking
 - Supabase SQL migrations for canonical trust-critical tables

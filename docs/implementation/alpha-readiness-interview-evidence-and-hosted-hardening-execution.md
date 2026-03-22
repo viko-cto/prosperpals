@@ -213,7 +213,7 @@ These are not polishing issues. They are re-decision blockers.
 
 ---
 
-## Current execution readout (updated 2026-03-22 18:18 UTC)
+## Current execution readout (updated 2026-03-22 21:25 UTC)
 
 The lane has now moved beyond a purely typed receipt simulation **and** beyond a placeholder operator runbook.
 
@@ -224,6 +224,7 @@ The repo currently proves:
 - stored receipt artifact metadata (`fileName`, `mimeType`, `sizeBytes`, `storagePath`),
 - parser/provider lineage fields tied to the same `artifactId` used by candidate + confirmation,
 - explicit role/access documentation for user vs founder/operator vs missing support/admin roles,
+- actor-scoped support-surface audit events with timestamp/request/trace/subject context persisted to the demo audit sink,
 - manual but repo-documented help/export/deletion fallback paths,
 - and explicit incident pause criteria tied to current flag and support surfaces.
 
@@ -232,7 +233,7 @@ This is meaningful progress because the operator/access lane is no longer hand-w
 But the step is still **not complete** because:
 - artifact files and metadata still land in local runtime storage,
 - there is still no external OCR/provider call,
-- operator actions and feature-flag changes are not durably actor-audited,
+- the new operator audit trail is still local-runtime and does not yet cover feature-flag changes or future interventions,
 - support-only/admin-only boundaries and account-intervention controls are still absent,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
@@ -243,7 +244,7 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> prove hosted durability or actor-scoped operator auditability next, then populate the human evidence pack.
+> move the new operator audit path onto hosted durability, extend it to flag/intervention actions, then populate the human evidence pack.
 
 ---
 

@@ -54,6 +54,7 @@ export const consentGrantSchema = z.object({
 
 export const auditEventSchema = z.object({
   id: z.string().uuid().optional(),
+  occurredAt: z.string().datetime(),
   actorUserId: z.string().uuid().nullable().optional(),
   subjectUserId: z.string().uuid().nullable().optional(),
   eventCode: z.string().min(4).max(120),

@@ -17,14 +17,15 @@ Every operator-side action affecting user trust should be actor-scoped and times
 
 ### What is traceable today
 - receipt creation, receipt failure, and receipt confirmation preserve request/trace references,
+- internal support-surface access now writes an actor-scoped `support.timeline.viewed` audit event with timestamp, request ID, trace ID, and subject context,
 - the support timeline renders those references together with trust-critical context,
 - receipt failure records preserve failure stage, recovery action, and provider reference.
 
 ### What is still missing
-- opening `/app/support` is not durably audit-logged,
-- `auditEventSchema` exists but is not wired into a live audit trail,
+- the current audit sink is still local-runtime instead of hosted durable,
 - feature-flag / safety-toggle changes are not actor-logged,
-- account-access interventions are not implemented.
+- account-access interventions are not implemented,
+- support-only/admin-only boundaries are still not implemented.
 
 Record evidence for:
 - viewing sensitive artifacts,

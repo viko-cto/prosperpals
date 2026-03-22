@@ -14,7 +14,8 @@ async function withTempRuntime(run) {
     receiptArtifacts: process.env.PROSPERPALS_DEMO_RECEIPT_ARTIFACTS_PATH,
     receiptUploads: process.env.PROSPERPALS_DEMO_RECEIPT_UPLOAD_DIR,
     ledger: process.env.PROSPERPALS_DEMO_LEDGER_PATH,
-    analytics: process.env.PROSPERPALS_DEMO_ANALYTICS_PATH
+    analytics: process.env.PROSPERPALS_DEMO_ANALYTICS_PATH,
+    audit: process.env.PROSPERPALS_DEMO_AUDIT_PATH
   };
 
   process.env.PROSPERPALS_DEMO_RECEIPT_PATH = path.join(tempDir, 'demo-receipts.jsonl');
@@ -22,6 +23,7 @@ async function withTempRuntime(run) {
   process.env.PROSPERPALS_DEMO_RECEIPT_UPLOAD_DIR = path.join(tempDir, 'receipt-uploads');
   process.env.PROSPERPALS_DEMO_LEDGER_PATH = path.join(tempDir, 'demo-ledger.jsonl');
   process.env.PROSPERPALS_DEMO_ANALYTICS_PATH = path.join(tempDir, 'demo-analytics.jsonl');
+  process.env.PROSPERPALS_DEMO_AUDIT_PATH = path.join(tempDir, 'demo-operator-audit.jsonl');
 
   try {
     await run({ tempDir });
@@ -40,6 +42,9 @@ async function withTempRuntime(run) {
 
     if (previous.analytics) process.env.PROSPERPALS_DEMO_ANALYTICS_PATH = previous.analytics;
     else delete process.env.PROSPERPALS_DEMO_ANALYTICS_PATH;
+
+    if (previous.audit) process.env.PROSPERPALS_DEMO_AUDIT_PATH = previous.audit;
+    else delete process.env.PROSPERPALS_DEMO_AUDIT_PATH;
 
     await fs.rm(tempDir, { recursive: true, force: true });
   }
@@ -225,6 +230,7 @@ test('notification contract blocks private financial details', async () => {
 
 test('support console aggregates safe timeline data and release checks', async () => {
   await withTempRuntime(async () => {
+    const audit = await import('../src/lib/audit/demo-audit.ts');
     const receipts = await import('../src/lib/receipts/demo-receipts.ts');
     const simulator = await import('../src/lib/simulator/demo-simulator.ts');
     const telemetry = await import('../src/lib/telemetry/demo-event-store.ts');
@@ -290,12 +296,24 @@ test('support console aggregates safe timeline data and release checks', async (
       message: 'Receipt review posted a canonical event after confirmation.'
     });
 
+    await audit.recordSupportTimelineViewAudit({
+      actorUserId: '22222222-2222-4222-8222-222222222222',
+      subjectUserId: userId,
+      requestId: 'audit-req-001',
+      traceId,
+      path: '/app/support',
+      reason: 'support review for receipt issue',
+      supportTraceView: true,
+      occurredAt: new Date().toISOString()
+    });
+
     const consoleState = await support.getDemoSupportConsole(userId, {
       countryCode: 'DK',
       internalUser: true
     });
 
     assert.ok(consoleState.timeline.length >= 4);
+    assert.ok(consoleState.timeline.some((item) => item.type === 'audit'));
     assert.ok(consoleState.timeline.some((item) => item.type === 'receipt'));
     assert.ok(consoleState.timeline.some((item) => item.type === 'ledger'));
     assert.ok(consoleState.releaseSafety.checks.some((check) => check.id === 'notification-contract' && check.ok));
