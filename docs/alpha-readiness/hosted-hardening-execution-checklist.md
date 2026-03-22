@@ -33,20 +33,20 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## B2. Alpha environment integrity
 - [ ] Preview and alpha-hosted environments are clearly separated  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
 - [ ] Required secrets/config are documented  
-  - status:
-  - proof note:
-- [ ] Feature flags/defaults are explicit  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
+- [x] Feature flags/defaults are explicit  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
 - [ ] Release-safety checks exist for the alpha path  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
 - [ ] Rollback / kill-switch procedure exists  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
 
 ## B3. Observability for learning
 - [ ] First aha is trackable  
@@ -125,4 +125,4 @@ For every line marked complete or manual fallback, link the proof note under `do
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
 - Why the NO-GO remains locked: receipt realism is still demo-only and currently non-idempotent on repeated confirmation, so canonical truth can still duplicate and real upload/provider evidence is absent.
-- What exact artifacts would change that answer next: a real upload/provider happy/ambiguous/failure evidence set plus a passing duplicate-confirmation suppression proof.
+- What exact artifacts would change that answer next: a real upload/provider happy/ambiguous/failure evidence set plus a passing duplicate-confirmation suppression proof.t answer next: a real upload/provider happy/ambiguous/failure evidence set plus a passing duplicate-confirmation suppression proof.
