@@ -13,23 +13,23 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## B1. Durable hosted truth
 - [ ] Onboarding state persists per user  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] Reward ledger is hosted and durable  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] Simulator trades are hosted and durable  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] Receipt candidates survive redeploys  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] Support and audit traces survive redeploys  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] No critical path depends on local runtime file sinks  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 
 ## B2. Alpha environment integrity
 - [ ] Preview and alpha-hosted environments are clearly separated  
@@ -50,20 +50,20 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## B3. Observability for learning
 - [ ] First aha is trackable  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] Return behavior is trackable  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] Trust-critical failures are visible  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Receipt errors and support issues are triaged quickly  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/support-help-path.md`
 - [ ] Founder-visible cohort-health reporting exists  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/redecision-dashboard-inputs.md`
 
 ## C. Receipt realism
 - [x] Real upload path exists  
@@ -85,43 +85,45 @@ For every line marked complete or manual fallback, link the proof note under `do
   - status: complete
   - proof note: `docs/alpha-readiness/evidence/receipts/receipt-idempotency-and-no-auto-post-proof.md`
 - [ ] OCR failure degrades honestly and safely  
-  - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-provider-failure-recovery-proof.md`
 - [x] Ambiguous candidates never auto-post to canonical truth  
   - status: complete
   - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-ambiguous-path.md`
 
 ## D. Operator/access readiness
 - [ ] User / founder-operator / support-only / admin-only visibility is defined  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`
 - [ ] Support views of sensitive artifacts are auditable  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Corrections / overrides are auditable  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Account-access interventions are auditable  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Feature-flag / safety-toggle changes are auditable  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Least-privilege support path exists  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`
 - [ ] Manual help / export / deletion path exists  
-  - status:
-  - proof note:
-- [ ] Incident pause criteria exist  
-  - status:
-  - proof note:
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/export-deletion-fallback.md`
+- [x] Incident pause criteria exist  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/incident-pause-and-escalation.md`
 
 ## Current blockers
-1. The upload/artifact path is now real enough for the demo runtime, but OCR/provider failure handling is still not modeled (`receipt-lineage-failure-path.md`).
-2. Artifact metadata and uploaded files still live in local runtime storage, so hosted durability is still not proven (`receipt-lineage-failure-path.md`).
+1. Trust-critical user state still depends on cookie/local-runtime sinks instead of authoritative hosted durability.
+2. Operator actions are still not durably actor-audited; `auditEventSchema` exists but is not wired.
+3. Support-only/admin-only roles and account-intervention controls are still absent.
+4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
-- Why the NO-GO remains locked: receipt realism is materially better, but hosted durability and honest failure/recovery handling are still absent.
-- What exact artifacts would change that answer next: hosted durability proof beyond local sinks, plus an explicit upload/provider failure-path evidence set with safe user recovery behavior.
+- Why the NO-GO remains locked: the receipt lane is materially stronger and the operator pack is now explicit, but hosted durability, actor-scoped audits, and real support/admin boundaries are still missing.
+- What exact artifacts would change that answer next: hosted durability proof beyond local sinks, real operator audit logging, support/admin role boundaries, and populated interview/redecision evidence.

@@ -213,24 +213,29 @@ These are not polishing issues. They are re-decision blockers.
 
 ---
 
-## Current execution readout (updated 2026-03-22)
+## Current execution readout (updated 2026-03-22 18:18 UTC)
 
-The lane has now moved beyond a purely typed receipt simulation.
+The lane has now moved beyond a purely typed receipt simulation **and** beyond a placeholder operator runbook.
 
 The repo currently proves:
 - candidate-first review with explicit confirmation before money truth changes,
 - candidate-scoped receipt confirmation idempotency,
 - a bounded real upload path from `/app/receipts`,
 - stored receipt artifact metadata (`fileName`, `mimeType`, `sizeBytes`, `storagePath`),
-- parser/provider lineage fields tied to the same `artifactId` used by candidate + confirmation.
+- parser/provider lineage fields tied to the same `artifactId` used by candidate + confirmation,
+- explicit role/access documentation for user vs founder/operator vs missing support/admin roles,
+- manual but repo-documented help/export/deletion fallback paths,
+- and explicit incident pause criteria tied to current flag and support surfaces.
 
-This is meaningful progress because it converts the earlier receipt-lineage gap from “artifact ID with no real attachment” into an inspectable upload/artifact chain.
+This is meaningful progress because the operator/access lane is no longer hand-wavy: the repo now says exactly what exists, what is still manual fallback, and what is still an open blocker.
 
 But the step is still **not complete** because:
 - artifact files and metadata still land in local runtime storage,
 - there is still no external OCR/provider call,
-- provider/upload failure handling is now modeled as a user-visible safe recovery lane with durable failure records, but it is still demo-triggered rather than a live hosted provider integration,
-- interview evidence, operator-readiness evidence, and re-decision roll-up artifacts are still largely unpopulated.
+- operator actions and feature-flag changes are not durably actor-audited,
+- support-only/admin-only boundaries and account-intervention controls are still absent,
+- interview evidence is still unpopulated,
+- and the re-decision roll-up is still not backed by real cohort evidence.
 
 So the outcome stays the same:
 
@@ -238,7 +243,7 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> finish the hosted-hardening and receipt-failure side of the trust proof, then populate the human evidence pack.
+> prove hosted durability or actor-scoped operator auditability next, then populate the human evidence pack.
 
 ---
 
