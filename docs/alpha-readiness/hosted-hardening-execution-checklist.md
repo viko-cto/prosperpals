@@ -67,29 +67,29 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## C. Receipt realism
 - [ ] Real upload path exists  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
 - [ ] Stored asset metadata links to parse candidate  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
 - [ ] OCR/provider origin is recorded  
-  - status:
-  - proof note:
-- [ ] Low-confidence parses are visibly flagged  
-  - status:
-  - proof note:
-- [ ] User correction is required before truth changes  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
+- [x] Low-confidence parses are visibly flagged  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-ambiguous-path.md`
+- [x] User correction is required before truth changes  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-happy-path.md`
 - [ ] Reprocessing the same receipt does not create duplicate truth  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-idempotency-and-no-auto-post-proof.md`
 - [ ] OCR failure degrades honestly and safely  
-  - status:
-  - proof note:
-- [ ] Ambiguous candidates never auto-post to canonical truth  
-  - status:
-  - proof note:
+  - status: open blocker
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
+- [x] Ambiguous candidates never auto-post to canonical truth  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-ambiguous-path.md`
 
 ## D. Operator/access readiness
 - [ ] User / founder-operator / support-only / admin-only visibility is defined  
@@ -118,11 +118,11 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note:
 
 ## Current blockers
-1.
-2.
-3.
+1. The same `candidateId` can currently be confirmed twice, producing two reviewed `moneyEventId` values (`receipt-idempotency-and-no-auto-post-proof.md`).
+2. The receipt path is still a typed demo parse; there is no real file upload/storage/provider chain yet (`receipt-lineage-failure-path.md`).
+3. `artifactId` lineage exists inside demo records, but it is not yet linked to stored asset metadata or provider output (`receipt-lineage-failure-path.md`).
 
 ## Decision posture
-- Current recommendation if review were held today:
-- Why the NO-GO remains locked:
-- What exact artifacts would change that answer next:
+- Current recommendation if review were held today: NO-GO
+- Why the NO-GO remains locked: receipt realism is still demo-only and currently non-idempotent on repeated confirmation, so canonical truth can still duplicate and real upload/provider evidence is absent.
+- What exact artifacts would change that answer next: a real upload/provider happy/ambiguous/failure evidence set plus a passing duplicate-confirmation suppression proof.
