@@ -17,7 +17,7 @@ ProsperPals has completed the BMAD planning pipeline, the current implementation
 - Demo auth shell for local/preview use until Supabase auth wiring is added
 - Sprint 1 first-value onboarding with Goldie, Daily Spending Power, and durable onboarding analytics
 - Sprint 2 reward loop with visible ProsperCoin reasons, explicit Goldie → Fin handoff, and a starter simulator route
-- Sprint 3 trust hardening for receipt candidate review, explainability, operator traces, release safety, and privacy-safe notifications
+- Sprint 3 trust hardening for receipt candidate review, explainability, operator traces, release safety, privacy-safe notifications, and bounded upload/artifact receipt lineage
 - Durable demo ledgers for ProsperCoin credits/debits and virtual trade executions
 - Curated launch asset list with honest quote freshness and stale-trade blocking
 - Supabase SQL migrations for canonical trust-critical tables

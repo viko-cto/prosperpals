@@ -1,14 +1,25 @@
-# Receipt Lineage — Failure Path / Missing Hosted Pieces
+# Receipt Lineage — Failure Path / Remaining Hosted Gaps
 
 **Date:** 2026-03-22  
-**Evidence type:** repo-state gap note  
-**Decision use:** documents what is still missing before ProsperPals can claim a real hosted receipt lane.
+**Evidence type:** repo-state gap note after bounded upload-lineage implementation  
+**Decision use:** documents what the new upload/path artifact work closes, and what still blocks hosted alpha.
 
 ## Verdict
 
-A real upload/provider failure path does **not** exist yet in the repo.
+ProsperPals now has a **bounded real upload path inside the demo runtime**, plus stored artifact metadata and parser/provider lineage.
 
-The current Sprint 3 receipt slice is a safe demo of candidate-first review, not a production or hosted receipt ingestion rail.
+But a real hosted/provider failure path still does **not** exist yet.
+
+So this is progress, not closure.
+
+## What changed in this run
+
+The repo now supports:
+- optional receipt file upload from `/app/receipts`,
+- persisted receipt artifact records in a dedicated artifact sink,
+- stored file metadata (`fileName`, `mimeType`, `sizeBytes`, `storagePath`),
+- parser/provider lineage (`parserProvider`, `parserModel`, `providerReference`),
+- linkage from uploaded artifact → `artifactId` → parse candidate → reviewed confirmation.
 
 ## Evidence basis
 
@@ -16,63 +27,71 @@ The current Sprint 3 receipt slice is a safe demo of candidate-first review, not
 - `src/app/app/receipts/page.tsx`
 - `src/app/app/receipts/actions.ts`
 - `src/lib/receipts/demo-receipts.ts`
-- `src/lib/feature-flags/config.ts`
-- `src/lib/operations/release-safety.ts`
-- `docs/implementation/sprint-3-explainability-receipt-intake-and-operator-safety.md`
+- `test/sprint-3-explainability-operator-safety.test.mjs`
+- `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 
 ## What the repo actually does today
 
-### 1. No real file upload path
-The receipt page currently asks for:
-- merchant label,
-- parsed amount,
-- draft category.
+### 1. A bounded upload path now exists
+The receipt page now accepts an optional file upload (`receiptFile`).
 
-It does **not** collect a file upload, image blob, or storage handle.
+`startReceiptReviewAction(...)` reads the uploaded file and passes its bytes into `captureReceiptCandidate(...)`.
 
-### 2. No real OCR provider call
-`startReceiptReviewAction` forwards user-entered values directly into `captureReceiptCandidate(...)`.
+### 2. Stored asset metadata now exists
+The runtime now writes a `receipt_artifact` record before creating the candidate. That record includes:
+- `artifactId`
+- `storageMode`
+- `storagePath`
+- `fileName`
+- `mimeType`
+- `sizeBytes`
+- `parserProvider`
+- `parserModel`
+- `providerReference`
 
-There is no provider request, provider response object, retry path, timeout handling, or provider-specific error surface.
+That closes the earlier gap where `artifactId` existed only as an unattached lineage token.
 
-### 3. No real stored asset metadata
-`captureReceiptCandidate(...)` generates an `artifactId`, which helps preserve lineage inside the demo records.
+### 3. Parser/provider origin is now recorded
+Candidate provenance is no longer just a static starter-corpus string.
 
-But that `artifactId` is not linked to:
-- an uploaded asset record,
-- storage metadata,
-- checksum/hash,
-- MIME type,
-- or a provider job/result object.
+It now carries a lineage hint such as:
+- `demo-ocr-upload-gateway • receipt-lineage-v1 • uploaded`
 
-### 4. No real provider origin record
-The current candidate stores a static:
-- `sourceHint = "Receipt OCR candidate — Denmark-first starter corpus"`
+That is still demo-grade, but it is honest and inspectable.
 
-That is useful demo provenance, but it is **not** real OCR/provider origin evidence.
+## What still does **not** exist
 
-## What safe fallback exists today
+### 1. No real external OCR provider call
+There is still no network OCR request, provider response payload, retry/backoff logic, or timeout/error object.
 
-The repo does at least preserve the safer operating posture:
-- manual entry remains enabled,
-- receipt capture is feature-flagged explicitly,
-- the candidate-first review rule prevents silent auto-posting.
+### 2. No hosted durability proof
+Artifact metadata and uploaded files still land in local runtime paths under `.prosperpals-runtime/`.
 
-That makes the demo trust posture better than fake automation, but it is still not a hosted-ready receipt rail.
+That means the current lane is still vulnerable to redeploy/reset loss and cannot yet claim hosted durability.
+
+### 3. No provider-specific failure handling
+The app still does not distinguish:
+- unreadable image,
+- provider timeout,
+- provider rate-limit,
+- malformed provider payload,
+- or storage write failure.
+
+### 4. No user-facing failed-upload recovery UX
+The upload path exists, but there is not yet an explicit safe recovery surface for failed upload/provider states beyond the existing manual review posture.
 
 ## Practical alpha readout
 
-This note keeps the following checklist items as **open blockers**:
-- **Real upload path exists**
-- **Stored asset metadata links to parse candidate**
-- **OCR/provider origin is recorded**
-- **OCR failure degrades honestly and safely**
+This note now changes the checklist posture as follows:
+- **Real upload path exists** → now real enough for the demo/runtime lane, but still not hosted-closure proof.
+- **Stored asset metadata links to parse candidate** → now present in the repo.
+- **OCR/provider origin is recorded** → now present in the repo.
+- **OCR failure degrades honestly and safely** → still an open blocker.
 
-## What would close these blockers
+## What still needs to happen before hosted alpha can soften
 
-At minimum, ProsperPals needs repo-native evidence for:
-1. uploaded receipt asset creation,
-2. storage metadata linked to candidate + confirmation,
-3. provider/source metadata recorded on the parse,
-4. explicit failure handling for provider timeout/error/unreadable input,
-5. and a user-visible safe fallback when OCR fails.
+At minimum, ProsperPals still needs repo-native proof for:
+1. hosted durability beyond local runtime files,
+2. explicit OCR/upload/provider error-state handling,
+3. user-visible failure recovery when receipt parsing/upload breaks,
+4. and ideally an authoritative storage/provider record instead of demo-only provider labels.

@@ -8,6 +8,16 @@ Store trust-critical receipt-path traces here.
 - 1 failure-path trace
 - explicit idempotency / no-auto-post confirmation
 
+## Current posture
+The repo now has a bounded **real upload + artifact-lineage** lane inside the demo runtime:
+- optional file upload from `/app/receipts`,
+- stored artifact metadata,
+- parser/provider lineage labels,
+- candidate-first review,
+- candidate-scoped confirmation idempotency.
+
+But hosted alpha is still **NO-GO** because durability remains local-runtime and provider/error handling is still demo-grade.
+
 ## Example filenames
 - `receipt-lineage-happy-path.md`
 - `receipt-lineage-ambiguous-path.md`

@@ -213,6 +213,35 @@ These are not polishing issues. They are re-decision blockers.
 
 ---
 
+## Current execution readout (updated 2026-03-22)
+
+The lane has now moved beyond a purely typed receipt simulation.
+
+The repo currently proves:
+- candidate-first review with explicit confirmation before money truth changes,
+- candidate-scoped receipt confirmation idempotency,
+- a bounded real upload path from `/app/receipts`,
+- stored receipt artifact metadata (`fileName`, `mimeType`, `sizeBytes`, `storagePath`),
+- parser/provider lineage fields tied to the same `artifactId` used by candidate + confirmation.
+
+This is meaningful progress because it converts the earlier receipt-lineage gap from “artifact ID with no real attachment” into an inspectable upload/artifact chain.
+
+But the step is still **not complete** because:
+- artifact files and metadata still land in local runtime storage,
+- there is still no external OCR/provider call,
+- provider/upload failure handling is not yet modeled as a user-visible safe recovery lane,
+- interview evidence, operator-readiness evidence, and re-decision roll-up artifacts are still largely unpopulated.
+
+So the outcome stays the same:
+
+> **NO-GO remains locked.**
+
+What changed is the next exact move:
+
+> finish the hosted-hardening and receipt-failure side of the trust proof, then populate the human evidence pack.
+
+---
+
 ## Elicitation methods applied
 
 ### First Principles
@@ -240,9 +269,15 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/evidence/receipts/README.md`
 - `docs/alpha-readiness/evidence/operator-readiness/README.md`
 - `docs/alpha-readiness/evidence/redecision/README.md`
+- `docs/alpha-readiness/evidence/receipts/receipt-lineage-happy-path.md`
+- `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
+- `src/app/app/receipts/page.tsx`
+- `src/app/app/receipts/actions.ts`
+- `src/lib/receipts/demo-receipts.ts`
+- `test/sprint-3-explainability-operator-safety.test.mjs`
 
 ## Outcome
 
-ProsperPals now has a real execution operating pack for the locked alpha NO-GO closure path.
+ProsperPals now has a stronger receipt-realism operating pack and a materially better proof trail for asset lineage.
 
-The lane is no longer “we know what evidence we need.” It is now “we have a concrete place and format to collect it, review it, and return to a disciplined re-decision later without wedge drift.”
+The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain. But hosted alpha remains **NO-GO** until that chain is durable, failure-aware, and surrounded by the remaining missing evidence.

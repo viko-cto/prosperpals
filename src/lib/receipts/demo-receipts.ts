@@ -9,7 +9,27 @@ import { moneyEventSchema } from "../../modules/finance/contracts.ts";
 
 const DEFAULT_RUNTIME_DIR = path.join(process.cwd(), ".prosperpals-runtime");
 const DEFAULT_RECEIPT_PATH = path.join(DEFAULT_RUNTIME_DIR, "demo-receipts.jsonl");
+const DEFAULT_RECEIPT_ARTIFACTS_PATH = path.join(DEFAULT_RUNTIME_DIR, "demo-receipt-artifacts.jsonl");
+const DEFAULT_RECEIPT_UPLOAD_DIR = path.join(DEFAULT_RUNTIME_DIR, "receipt-uploads");
 const REVIEW_THRESHOLD = 0.85;
+
+const receiptArtifactRecordSchema = z.object({
+  kind: z.literal("receipt_artifact"),
+  artifactId: z.string().uuid(),
+  userId: z.string().uuid(),
+  occurredAt: z.string().datetime(),
+  requestId: z.string().min(6),
+  traceId: z.string().uuid(),
+  storageMode: z.enum(["uploaded", "simulated"]),
+  storagePath: z.string().min(1),
+  fileName: z.string().min(1).max(180),
+  mimeType: z.string().min(3).max(120),
+  sizeBytes: z.number().int().nonnegative(),
+  parserProvider: z.string().min(2).max(120),
+  parserModel: z.string().min(2).max(120),
+  providerReference: z.string().min(4).max(180),
+  sourceHint: z.string().min(2).max(160)
+});
 
 const receiptCandidateRecordSchema = z.object({
   kind: z.literal("receipt_candidate"),
@@ -27,7 +47,7 @@ const receiptCandidateRecordSchema = z.object({
   confidenceLabel: z.string().min(2).max(80),
   parseStatus: z.enum(["parsed", "confirmed"]),
   reviewStatus: z.enum(["needs_review", "ready_to_confirm", "confirmed"]),
-  sourceHint: z.string().min(2).max(120),
+  sourceHint: z.string().min(2).max(160),
   reviewMessage: z.string().min(1).max(240)
 });
 
@@ -55,13 +75,16 @@ const receiptRecordSchema = z.discriminatedUnion("kind", [
   receiptConfirmationRecordSchema
 ]);
 
+export type ReceiptArtifactRecord = z.infer<typeof receiptArtifactRecordSchema>;
 export type ReceiptCandidateRecord = z.infer<typeof receiptCandidateRecordSchema>;
 export type ReceiptConfirmationRecord = z.infer<typeof receiptConfirmationRecordSchema>;
 export type ReceiptRecord = z.infer<typeof receiptRecordSchema>;
 
 export type ReceiptReviewState = {
   sinkPath: string;
+  artifactSinkPath: string;
   pendingCandidate?: ReceiptCandidateRecord;
+  latestArtifact?: ReceiptArtifactRecord;
   latestConfirmed?: ReceiptConfirmationRecord & {
     dailySpendingPowerMinor: number;
     headline: string;
@@ -86,8 +109,21 @@ function getReceiptPath() {
   return process.env.PROSPERPALS_DEMO_RECEIPT_PATH ?? DEFAULT_RECEIPT_PATH;
 }
 
+function getReceiptArtifactsPath() {
+  return process.env.PROSPERPALS_DEMO_RECEIPT_ARTIFACTS_PATH ?? DEFAULT_RECEIPT_ARTIFACTS_PATH;
+}
+
+function getReceiptUploadDir() {
+  return process.env.PROSPERPALS_DEMO_RECEIPT_UPLOAD_DIR ?? DEFAULT_RECEIPT_UPLOAD_DIR;
+}
+
 async function ensureReceiptDir() {
   await fs.mkdir(path.dirname(getReceiptPath()), { recursive: true });
+}
+
+async function ensureReceiptArtifactDir() {
+  await fs.mkdir(path.dirname(getReceiptArtifactsPath()), { recursive: true });
+  await fs.mkdir(getReceiptUploadDir(), { recursive: true });
 }
 
 function getConfidenceScore(merchantLabel: string, amountMinor: number) {
@@ -145,6 +181,19 @@ async function appendReceiptRecords(records: ReceiptRecord[]) {
   await ensureReceiptDir();
   await fs.appendFile(
     getReceiptPath(),
+    `${records.map((record) => JSON.stringify(record)).join("\n")}\n`,
+    "utf8"
+  );
+}
+
+async function appendReceiptArtifactRecords(records: ReceiptArtifactRecord[]) {
+  if (!records.length) {
+    return;
+  }
+
+  await ensureReceiptArtifactDir();
+  await fs.appendFile(
+    getReceiptArtifactsPath(),
     `${records.map((record) => JSON.stringify(record)).join("\n")}\n`,
     "utf8"
   );
@@ -241,6 +290,79 @@ export async function readDemoReceiptRecords(userId?: string): Promise<ReceiptRe
   }
 }
 
+export async function readDemoReceiptArtifactRecords(userId?: string): Promise<ReceiptArtifactRecord[]> {
+  try {
+    const raw = await fs.readFile(getReceiptArtifactsPath(), "utf8");
+    return raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        try {
+          return receiptArtifactRecordSchema.parse(JSON.parse(line));
+        } catch {
+          return null;
+        }
+      })
+      .filter(
+        (record): record is ReceiptArtifactRecord => Boolean(record && (!userId || record.userId === userId))
+      );
+  } catch {
+    return [];
+  }
+}
+
+async function persistReceiptArtifact(input: {
+  userId: string;
+  requestId: string;
+  traceId: string;
+  occurredAt: string;
+  artifactId: string;
+  upload?: {
+    fileName: string;
+    mimeType: string;
+    bytes: Buffer;
+  };
+}): Promise<ReceiptArtifactRecord> {
+  await ensureReceiptArtifactDir();
+
+  const rawExtension = input.upload?.fileName.includes(".")
+    ? input.upload.fileName.slice(input.upload.fileName.lastIndexOf("."))
+    : ".txt";
+  const sanitizedExtension = rawExtension.replace(/[^a-zA-Z0-9.]/g, "") || ".txt";
+  const storageMode = input.upload ? "uploaded" : "simulated";
+  const storagePath = input.upload
+    ? path.join(getReceiptUploadDir(), `${input.artifactId}${sanitizedExtension}`)
+    : path.join(getReceiptUploadDir(), `${input.artifactId}-simulated.txt`);
+
+  const fileBuffer = input.upload?.bytes ?? Buffer.from("simulated receipt payload", "utf8");
+  await fs.writeFile(storagePath, fileBuffer);
+
+  const artifact = receiptArtifactRecordSchema.parse({
+    kind: "receipt_artifact",
+    artifactId: input.artifactId,
+    userId: input.userId,
+    occurredAt: input.occurredAt,
+    requestId: input.requestId,
+    traceId: input.traceId,
+    storageMode,
+    storagePath,
+    fileName: input.upload?.fileName ?? "simulated-receipt.txt",
+    mimeType: input.upload?.mimeType || "text/plain",
+    sizeBytes: fileBuffer.byteLength,
+    parserProvider: storageMode === "uploaded" ? "demo-ocr-upload-gateway" : "demo-ocr-simulator",
+    parserModel: storageMode === "uploaded" ? "receipt-lineage-v1" : "receipt-simulator-v1",
+    providerReference: `${storageMode}:${input.artifactId}`,
+    sourceHint:
+      storageMode === "uploaded"
+        ? "User uploaded a real receipt asset into the demo runtime before parse review"
+        : "No file uploaded; seeded simulated receipt artifact for prototype review loop"
+  });
+
+  await appendReceiptArtifactRecords([artifact]);
+  return artifact;
+}
+
 export async function captureReceiptCandidate(input: {
   userId: string;
   requestId: string;
@@ -249,15 +371,29 @@ export async function captureReceiptCandidate(input: {
   amountMajor: number;
   categoryId: string;
   occurredAt?: string;
+  upload?: {
+    fileName: string;
+    mimeType: string;
+    bytes: Buffer;
+  };
 }) {
   const occurredAt = input.occurredAt ?? new Date().toISOString();
   const amountMinor = Math.max(1, Math.round(input.amountMajor * 100));
   const confidenceScore = getConfidenceScore(input.merchantLabel, amountMinor);
+  const artifactId = crypto.randomUUID();
+  const artifact = await persistReceiptArtifact({
+    userId: input.userId,
+    requestId: input.requestId,
+    traceId: input.traceId,
+    occurredAt,
+    artifactId,
+    upload: input.upload
+  });
 
   const candidate = receiptCandidateRecordSchema.parse({
     kind: "receipt_candidate",
     candidateId: crypto.randomUUID(),
-    artifactId: crypto.randomUUID(),
+    artifactId,
     userId: input.userId,
     occurredAt,
     requestId: input.requestId,
@@ -270,7 +406,7 @@ export async function captureReceiptCandidate(input: {
     confidenceLabel: getConfidenceLabel(confidenceScore),
     parseStatus: "parsed",
     reviewStatus: getReviewStatus(confidenceScore),
-    sourceHint: "Receipt OCR candidate — Denmark-first starter corpus",
+    sourceHint: `${artifact.parserProvider} • ${artifact.parserModel} • ${artifact.storageMode}`,
     reviewMessage: buildReviewMessage(confidenceScore)
   });
 
@@ -334,7 +470,7 @@ export async function confirmReceiptCandidate(input: {
     categoryId !== candidate.categoryId;
 
   const moneyEventId = crypto.randomUUID();
-  const moneyEvent = buildReviewedMoneyEvent({
+  buildReviewedMoneyEvent({
     userId: input.userId,
     candidateId: candidate.candidateId,
     artifactId: candidate.artifactId,
@@ -393,6 +529,7 @@ export async function confirmReceiptCandidate(input: {
 
 export async function getDemoReceiptReviewState(userId: string): Promise<ReceiptReviewState> {
   const records = await readDemoReceiptRecords(userId);
+  const artifacts = await readDemoReceiptArtifactRecords(userId);
   const candidates = records.filter(
     (record): record is ReceiptCandidateRecord => record.kind === "receipt_candidate"
   );
@@ -421,7 +558,9 @@ export async function getDemoReceiptReviewState(userId: string): Promise<Receipt
 
   return {
     sinkPath: getReceiptPath(),
+    artifactSinkPath: getReceiptArtifactsPath(),
     pendingCandidate,
+    latestArtifact: artifacts.at(-1),
     latestConfirmed,
     recentCandidates: [...candidates].reverse().slice(0, 4),
     confirmationCount: confirmations.length

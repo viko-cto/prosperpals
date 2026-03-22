@@ -23,6 +23,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
     pending_candidate: candidate?.candidateId ?? null,
     candidate_query: resolved.candidateId ?? null,
     latest_confirmation: receiptState.latestConfirmed?.candidateId ?? null,
+    latest_artifact: receiptState.latestArtifact?.artifactId ?? null,
     confirmation_count: receiptState.confirmationCount
   });
 
@@ -50,13 +51,32 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
               <span className="badge">Signed in as {session.email}</span>
               <p>
                 Sprint 3 hardens the launch path against OCR magic-thinking. Receipt intake now
-                creates a reviewable candidate first, then only posts money truth after explicit
-                confirmation.
+                supports a bounded real upload path, records artifact metadata plus parser lineage,
+                and still only posts money truth after explicit confirmation.
               </p>
             </div>
 
-            <form action={startReceiptReviewAction}>
-              <div className="grid cols-3" style={{ alignItems: "start" }}>
+            <form action={startReceiptReviewAction} encType="multipart/form-data">
+              <div className="grid cols-2" style={{ alignItems: "start" }}>
+                <label>
+                  <span className="field-label">Receipt image or PDF</span>
+                  <input type="file" name="receiptFile" accept="image/*,application/pdf,text/plain" />
+                  <span className="muted-line">
+                    Optional for now. Uploading creates stored artifact metadata; skipping it keeps a
+                    simulated artifact so the review loop still works.
+                  </span>
+                </label>
+                <div className="card compact-card">
+                  <span className="eyebrow">Current posture</span>
+                  <strong>Real upload, demo durability</strong>
+                  <span className="muted-line">
+                    This proves asset lineage better, but runtime storage is still local-file based,
+                    so hosted alpha remains NO-GO.
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid cols-3" style={{ alignItems: "start", marginTop: 14 }}>
                 <label>
                   <span className="field-label">Receipt merchant hint</span>
                   <input type="text" name="merchantLabel" defaultValue="Føtex City" />
@@ -71,7 +91,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
                 </label>
               </div>
               <div className="actions">
-                <button className="primary" type="submit">Simulate OCR parse</button>
+                <button className="primary" type="submit">Create receipt candidate</button>
                 <Link className="button secondary" href="/app/support">Open operator timeline</Link>
               </div>
             </form>
@@ -84,6 +104,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
               <li>Confidence and review state stay visible on the user-facing sheet.</li>
               <li>Confirmed receipts are explainable back to candidate, artifact, and trace IDs.</li>
               <li>Support can inspect the capture path without raw-database archaeology.</li>
+              <li>Uploaded assets now record storage metadata plus parser/provider lineage.</li>
             </ul>
           </article>
         </section>
@@ -138,8 +159,8 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
               </form>
             ) : (
               <p>
-                No pending receipt candidate right now. Run the OCR simulation once and this review
-                sheet will hold the parse in a human-checkable state instead of auto-committing it.
+                No pending receipt candidate right now. Create one and this review sheet will hold
+                the parse in a human-checkable state instead of auto-committing it.
               </p>
             )}
           </article>
@@ -183,18 +204,39 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
 
         <section className="grid cols-2" style={{ marginTop: 24 }}>
           <article className="panel">
-            <h2>Receipt runtime sink</h2>
+            <h2>Receipt runtime sinks</h2>
             <div className="meta">
-              <div><strong>Sink path</strong>: <code>{receiptState.sinkPath}</code></div>
+              <div><strong>Candidate sink path</strong>: <code>{receiptState.sinkPath}</code></div>
+              <div><strong>Artifact sink path</strong>: <code>{receiptState.artifactSinkPath}</code></div>
               <div><strong>Pending candidate</strong>: {candidate ? candidate.candidateId : "none"}</div>
               <div><strong>Confirmation count</strong>: {receiptState.confirmationCount}</div>
             </div>
           </article>
 
           <article className="panel">
-            <h2>Structured log preview</h2>
-            <pre>{JSON.stringify(logPreview, null, 2)}</pre>
+            <h2>Latest artifact metadata</h2>
+            {receiptState.latestArtifact ? (
+              <div className="meta">
+                <div><strong>Artifact ID</strong>: {receiptState.latestArtifact.artifactId}</div>
+                <div><strong>Storage mode</strong>: {receiptState.latestArtifact.storageMode}</div>
+                <div><strong>File</strong>: {receiptState.latestArtifact.fileName}</div>
+                <div><strong>MIME type</strong>: {receiptState.latestArtifact.mimeType}</div>
+                <div><strong>Bytes</strong>: {receiptState.latestArtifact.sizeBytes}</div>
+                <div><strong>Stored at</strong>: <code>{receiptState.latestArtifact.storagePath}</code></div>
+                <div><strong>Parser provider</strong>: {receiptState.latestArtifact.parserProvider}</div>
+                <div><strong>Parser model</strong>: {receiptState.latestArtifact.parserModel}</div>
+                <div><strong>Provider ref</strong>: {receiptState.latestArtifact.providerReference}</div>
+                <div><strong>Source hint</strong>: {receiptState.latestArtifact.sourceHint}</div>
+              </div>
+            ) : (
+              <p>No artifact metadata yet. Upload a receipt or create a simulated candidate first.</p>
+            )}
           </article>
+        </section>
+
+        <section className="panel" style={{ marginTop: 24 }}>
+          <h2>Structured log preview</h2>
+          <pre>{JSON.stringify(logPreview, null, 2)}</pre>
         </section>
       </div>
     </main>

@@ -11,11 +11,15 @@ async function withTempRuntime(run) {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pp-sprint3-'));
   const previous = {
     receipts: process.env.PROSPERPALS_DEMO_RECEIPT_PATH,
+    receiptArtifacts: process.env.PROSPERPALS_DEMO_RECEIPT_ARTIFACTS_PATH,
+    receiptUploads: process.env.PROSPERPALS_DEMO_RECEIPT_UPLOAD_DIR,
     ledger: process.env.PROSPERPALS_DEMO_LEDGER_PATH,
     analytics: process.env.PROSPERPALS_DEMO_ANALYTICS_PATH
   };
 
   process.env.PROSPERPALS_DEMO_RECEIPT_PATH = path.join(tempDir, 'demo-receipts.jsonl');
+  process.env.PROSPERPALS_DEMO_RECEIPT_ARTIFACTS_PATH = path.join(tempDir, 'demo-receipt-artifacts.jsonl');
+  process.env.PROSPERPALS_DEMO_RECEIPT_UPLOAD_DIR = path.join(tempDir, 'receipt-uploads');
   process.env.PROSPERPALS_DEMO_LEDGER_PATH = path.join(tempDir, 'demo-ledger.jsonl');
   process.env.PROSPERPALS_DEMO_ANALYTICS_PATH = path.join(tempDir, 'demo-analytics.jsonl');
 
@@ -24,6 +28,12 @@ async function withTempRuntime(run) {
   } finally {
     if (previous.receipts) process.env.PROSPERPALS_DEMO_RECEIPT_PATH = previous.receipts;
     else delete process.env.PROSPERPALS_DEMO_RECEIPT_PATH;
+
+    if (previous.receiptArtifacts) process.env.PROSPERPALS_DEMO_RECEIPT_ARTIFACTS_PATH = previous.receiptArtifacts;
+    else delete process.env.PROSPERPALS_DEMO_RECEIPT_ARTIFACTS_PATH;
+
+    if (previous.receiptUploads) process.env.PROSPERPALS_DEMO_RECEIPT_UPLOAD_DIR = previous.receiptUploads;
+    else delete process.env.PROSPERPALS_DEMO_RECEIPT_UPLOAD_DIR;
 
     if (previous.ledger) process.env.PROSPERPALS_DEMO_LEDGER_PATH = previous.ledger;
     else delete process.env.PROSPERPALS_DEMO_LEDGER_PATH;
@@ -52,6 +62,8 @@ test('receipt OCR candidates stay reviewable until explicit confirmation', async
     assert.equal(beforeConfirm.pendingCandidate.candidateId, candidate.candidateId);
     assert.equal(beforeConfirm.latestConfirmed, undefined);
     assert.match(beforeConfirm.pendingCandidate.reviewMessage, /review/i);
+    assert.equal(beforeConfirm.latestArtifact.storageMode, 'simulated');
+    assert.match(beforeConfirm.latestArtifact.providerReference, /^simulated:/);
 
     const confirmed = await receipts.confirmReceiptCandidate({
       userId,
@@ -71,6 +83,38 @@ test('receipt OCR candidates stay reviewable until explicit confirmation', async
     assert.equal(confirmed.moneyEvent.verificationState, 'parsed_reviewed');
     assert.equal(confirmed.confirmation.correctionApplied, true);
     assert.equal(confirmed.alreadyConfirmed, false);
+  });
+});
+
+test('uploaded receipt artifacts persist metadata and stay linked to candidate lineage', async () => {
+  await withTempRuntime(async ({ tempDir }) => {
+    const receipts = await import('../src/lib/receipts/demo-receipts.ts');
+
+    const candidate = await receipts.captureReceiptCandidate({
+      userId,
+      requestId: 'receipt-req-020',
+      traceId,
+      merchantLabel: 'Netto Nørreport',
+      amountMajor: 98.5,
+      categoryId: 'groceries',
+      upload: {
+        fileName: 'receipt-netto.jpg',
+        mimeType: 'image/jpeg',
+        bytes: Buffer.from('fake-jpeg-binary')
+      }
+    });
+
+    const artifacts = await receipts.readDemoReceiptArtifactRecords(userId);
+    assert.equal(artifacts.length, 1);
+    assert.equal(artifacts[0].artifactId, candidate.artifactId);
+    assert.equal(artifacts[0].storageMode, 'uploaded');
+    assert.equal(artifacts[0].mimeType, 'image/jpeg');
+    assert.equal(artifacts[0].parserProvider, 'demo-ocr-upload-gateway');
+    assert.match(candidate.sourceHint, /demo-ocr-upload-gateway/);
+
+    const stored = await fs.readFile(artifacts[0].storagePath, 'utf8');
+    assert.equal(stored, 'fake-jpeg-binary');
+    assert.ok(artifacts[0].storagePath.startsWith(path.join(tempDir, 'receipt-uploads')));
   });
 });
 

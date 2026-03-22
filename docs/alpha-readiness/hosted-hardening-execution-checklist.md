@@ -66,15 +66,15 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note:
 
 ## C. Receipt realism
-- [ ] Real upload path exists  
-  - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
-- [ ] Stored asset metadata links to parse candidate  
-  - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
-- [ ] OCR/provider origin is recorded  
-  - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-failure-path.md`
+- [x] Real upload path exists  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-happy-path.md`
+- [x] Stored asset metadata links to parse candidate  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-happy-path.md`
+- [x] OCR/provider origin is recorded  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-happy-path.md`
 - [x] Low-confidence parses are visibly flagged  
   - status: complete
   - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-ambiguous-path.md`
@@ -118,10 +118,10 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note:
 
 ## Current blockers
-1. The receipt path is still a typed demo parse; there is no real file upload/storage/provider chain yet (`receipt-lineage-failure-path.md`).
-2. `artifactId` lineage exists inside demo records, but it is not yet linked to stored asset metadata or provider output (`receipt-lineage-failure-path.md`).
+1. The upload/artifact path is now real enough for the demo runtime, but OCR/provider failure handling is still not modeled (`receipt-lineage-failure-path.md`).
+2. Artifact metadata and uploaded files still live in local runtime storage, so hosted durability is still not proven (`receipt-lineage-failure-path.md`).
 
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
-- Why the NO-GO remains locked: receipt realism is still demo-only even though duplicate confirmation is now suppressed; real upload/provider evidence and hosted durability are still absent.
-- What exact artifacts would change that answer next: a real upload/provider happy/ambiguous/failure evidence set plus hosted durability proof beyond local runtime file sinks.
+- Why the NO-GO remains locked: receipt realism is materially better, but hosted durability and honest failure/recovery handling are still absent.
+- What exact artifacts would change that answer next: hosted durability proof beyond local sinks, plus an explicit upload/provider failure-path evidence set with safe user recovery behavior.

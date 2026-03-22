@@ -10,6 +10,20 @@ import {
 import { appendDemoAnalyticsEvent } from "@/lib/telemetry/demo-event-store";
 import { getRequestContext } from "@/lib/telemetry/request-context";
 
+async function readUploadedReceipt(formData: FormData) {
+  const raw = formData.get("receiptFile");
+
+  if (!(raw instanceof File) || raw.size === 0) {
+    return undefined;
+  }
+
+  return {
+    fileName: raw.name || "receipt-upload",
+    mimeType: raw.type || "application/octet-stream",
+    bytes: Buffer.from(await raw.arrayBuffer())
+  };
+}
+
 export async function startReceiptReviewAction(formData: FormData) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
@@ -17,6 +31,7 @@ export async function startReceiptReviewAction(formData: FormData) {
   const merchantLabel = String(formData.get("merchantLabel") ?? "").trim() || "Føtex City";
   const amountMajor = Number(formData.get("amountMajor") ?? 0) || 226.45;
   const categoryId = String(formData.get("categoryId") ?? "groceries").trim() || "groceries";
+  const receiptUpload = await readUploadedReceipt(formData);
   const occurredAt = new Date().toISOString();
 
   const candidate = await captureReceiptCandidate({
@@ -26,7 +41,8 @@ export async function startReceiptReviewAction(formData: FormData) {
     merchantLabel,
     amountMajor,
     categoryId,
-    occurredAt
+    occurredAt,
+    upload: receiptUpload
   });
 
   await appendDemoAnalyticsEvent({
