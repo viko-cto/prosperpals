@@ -1,6 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import {
+  SupportInterventionBlockedError,
+  assertReceiptCaptureAllowed
+} from "@/lib/audit/demo-audit";
 import { requireViewerSession } from "@/lib/auth/session";
 import { getDemoOnboardingState } from "@/lib/onboarding/demo-state";
 import {
@@ -33,6 +37,16 @@ export async function startReceiptReviewAction(formData: FormData) {
   const categoryId = String(formData.get("categoryId") ?? "groceries").trim() || "groceries";
   const receiptUpload = await readUploadedReceipt(formData);
   const occurredAt = new Date().toISOString();
+
+  try {
+    await assertReceiptCaptureAllowed(session.userId);
+  } catch (error) {
+    if (error instanceof SupportInterventionBlockedError && error.code === "receipt_capture_paused") {
+      redirect("/app/receipts?blocked=receipt_capture_paused");
+    }
+
+    throw error;
+  }
 
   const result = await captureReceiptCandidate({
     userId: session.userId,

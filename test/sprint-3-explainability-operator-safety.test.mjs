@@ -320,3 +320,49 @@ test('support console aggregates safe timeline data and release checks', async (
     assert.match(consoleState.redactionPolicy.join(' '), /Notification contracts forbid merchant names/i);
   });
 });
+
+test('receipt capture pause interventions are actor-audited and enforce a live intake hold until cleared', async () => {
+  await withTempRuntime(async () => {
+    const audit = await import('../src/lib/audit/demo-audit.ts');
+
+    await audit.recordSupportInterventionAudit({
+      actorUserId: '22222222-2222-4222-8222-222222222222',
+      subjectUserId: userId,
+      requestId: 'audit-req-010',
+      traceId,
+      path: '/app/support',
+      reason: 'receipt lineage review in progress',
+      supportTraceView: true,
+      interventionCode: 'receipt_capture_paused',
+      action: 'applied',
+      occurredAt: new Date().toISOString()
+    });
+
+    const activeAfterPause = await audit.getActiveSupportInterventions(userId);
+    assert.equal(activeAfterPause.length, 1);
+    assert.equal(activeAfterPause[0].code, 'receipt_capture_paused');
+    assert.match(activeAfterPause[0].reason, /lineage review/i);
+
+    await assert.rejects(
+      () => audit.assertReceiptCaptureAllowed(userId),
+      /Support intervention active: receipt_capture_paused/
+    );
+
+    await audit.recordSupportInterventionAudit({
+      actorUserId: '22222222-2222-4222-8222-222222222222',
+      subjectUserId: userId,
+      requestId: 'audit-req-011',
+      traceId,
+      path: '/app/support',
+      reason: 'receipt capture reopened after support review',
+      supportTraceView: true,
+      interventionCode: 'receipt_capture_paused',
+      action: 'cleared',
+      occurredAt: new Date().toISOString()
+    });
+
+    const activeAfterClear = await audit.getActiveSupportInterventions(userId);
+    assert.equal(activeAfterClear.length, 0);
+    await assert.doesNotReject(() => audit.assertReceiptCaptureAllowed(userId));
+  });
+});

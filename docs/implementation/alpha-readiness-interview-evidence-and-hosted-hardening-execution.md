@@ -225,6 +225,7 @@ The repo currently proves:
 - parser/provider lineage fields tied to the same `artifactId` used by candidate + confirmation,
 - explicit role/access documentation for user vs founder/operator vs missing support/admin roles,
 - actor-scoped support-surface audit events with timestamp/request/trace/subject context persisted to the demo audit sink,
+- actor-scoped receipt-intake pause / clear interventions that are visible in `/app/support` and enforced on `/app/receipts`,
 - manual but repo-documented help/export/deletion fallback paths,
 - and explicit incident pause criteria tied to current flag and support surfaces.
 
@@ -233,8 +234,8 @@ This is meaningful progress because the operator/access lane is no longer hand-w
 But the step is still **not complete** because:
 - artifact files and metadata still land in local runtime storage,
 - there is still no external OCR/provider call,
-- the new operator audit trail is still local-runtime and does not yet cover feature-flag changes or future interventions,
-- support-only/admin-only boundaries and account-intervention controls are still absent,
+- the new operator audit trail is still local-runtime and does not yet cover feature-flag or safety-toggle changes,
+- support-only/admin-only boundaries and broader cross-account intervention controls are still absent,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
 
@@ -244,7 +245,7 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> move the new operator audit path onto hosted durability, extend it to flag/intervention actions, then populate the human evidence pack.
+> move the new operator audit path onto hosted durability, extend it to feature-flag / safety-toggle changes, then populate the human evidence pack.
 
 ---
 
@@ -280,6 +281,10 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/evidence/receipts/receipt-provider-failure-recovery-proof.md`
 - `src/app/app/receipts/page.tsx`
 - `src/app/app/receipts/actions.ts`
+- `src/app/app/support/page.tsx`
+- `src/app/app/support/actions.ts`
+- `src/lib/audit/demo-audit.ts`
+- `src/lib/support/demo-support.ts`
 - `src/lib/receipts/demo-receipts.ts`
 - `test/sprint-3-explainability-operator-safety.test.mjs`
 

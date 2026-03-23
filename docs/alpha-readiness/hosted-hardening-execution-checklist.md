@@ -119,11 +119,11 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## Current blockers
 1. Trust-critical user state still depends on cookie/local-runtime sinks instead of authoritative hosted durability.
-2. Operator support-view access is now actor-audited in the local demo runtime, but durable hosted audit storage and flag/intervention audit coverage are still missing.
-3. Support-only/admin-only roles and account-intervention controls are still absent.
+2. Operator support-view access plus the narrow receipt-capture pause/clear intervention are now actor-audited in the local demo runtime, but durable hosted audit storage and feature-flag / safety-toggle audit coverage are still missing.
+3. Support-only/admin-only roles and broader cross-account intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
-- Why the NO-GO remains locked: the receipt lane is materially stronger and support-view access is now actor-audited, but hosted durability, broader operator audit coverage, and real support/admin boundaries are still missing.
-- What exact artifacts would change that answer next: hosted durability proof beyond local sinks, audit coverage for flag/intervention actions, support/admin role boundaries, and populated interview/redecision evidence.
+- Why the NO-GO remains locked: the receipt lane is materially stronger and support-view plus receipt-intake intervention access are now actor-audited, but hosted durability, feature-flag audit coverage, and real support/admin boundaries are still missing.
+- What exact artifacts would change that answer next: hosted durability proof beyond local sinks, audit coverage for feature-flag / safety-toggle changes, support/admin role boundaries, and populated interview/redecision evidence.

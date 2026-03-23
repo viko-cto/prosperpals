@@ -1,4 +1,10 @@
-import { readDemoAuditEvents } from "../audit/demo-audit.ts";
+import {
+  SUPPORT_INTERVENTION_APPLIED_EVENT,
+  SUPPORT_INTERVENTION_CLEARED_EVENT,
+  SUPPORT_TIMELINE_VIEWED_EVENT,
+  getActiveSupportInterventions,
+  readDemoAuditEvents
+} from "../audit/demo-audit.ts";
 import { getReleaseSafetySummary } from "../operations/release-safety.ts";
 import { readDemoReceiptRecords } from "../receipts/demo-receipts.ts";
 import { readDemoLedgerRecords } from "../simulator/demo-simulator.ts";
@@ -40,11 +46,12 @@ export async function getDemoSupportConsole(userId: string, context: {
   countryCode?: string;
   internalUser?: boolean;
 } = {}) {
-  const [analyticsEvents, ledgerRecords, receiptRecords, auditEvents, releaseSafety] = await Promise.all([
+  const [analyticsEvents, ledgerRecords, receiptRecords, auditEvents, activeInterventions, releaseSafety] = await Promise.all([
     readDemoAnalyticsEvents(userId, 12),
     readDemoLedgerRecords(userId),
     readDemoReceiptRecords(userId),
-    readDemoAuditEvents({ subjectUserId: userId, limit: 6 }),
+    readDemoAuditEvents({ subjectUserId: userId, limit: 12 }),
+    getActiveSupportInterventions(userId),
     getReleaseSafetySummary(context)
   ]);
 
@@ -132,26 +139,53 @@ export async function getDemoSupportConsole(userId: string, context: {
             ]
   }));
 
-  const auditTimeline: SupportTimelineItem[] = auditEvents.map((event) => ({
-    id: event.id ?? `${event.eventCode}-${event.requestId}`,
-    occurredAt: event.occurredAt,
-    type: "audit",
-    title:
-      event.eventCode === "support.timeline.viewed"
+  const auditTimeline: SupportTimelineItem[] = auditEvents.map((event) => {
+    const interventionCode = String(event.payload.interventionCode ?? "unknown");
+    const supportTraceState = event.payload.supportTraceView === true ? "enabled" : "disabled";
+
+    const title =
+      event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
         ? "Operator support timeline viewed"
-        : event.eventCode,
-    subtitle:
-      event.actorUserId && event.subjectUserId
-        ? `Actor ${event.actorUserId} accessed support context for ${event.subjectUserId}`
-        : "Operator audit event recorded",
-    traceId: event.traceId,
-    requestId: event.requestId,
-    details: [
-      `Reason: ${String(event.payload.reason ?? "unspecified")}`,
-      `Path: ${String(event.payload.path ?? "unknown")}`,
-      `Support trace flag: ${event.payload.supportTraceView === true ? "enabled" : "disabled"}`
-    ]
-  }));
+        : event.eventCode === SUPPORT_INTERVENTION_APPLIED_EVENT && interventionCode === "receipt_capture_paused"
+          ? "Receipt capture paused"
+          : event.eventCode === SUPPORT_INTERVENTION_CLEARED_EVENT && interventionCode === "receipt_capture_paused"
+            ? "Receipt capture pause cleared"
+            : event.eventCode;
+
+    const subtitle =
+      event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
+        ? event.actorUserId && event.subjectUserId
+          ? `Actor ${event.actorUserId} accessed support context for ${event.subjectUserId}`
+          : "Operator audit event recorded"
+        : event.actorUserId && event.subjectUserId
+          ? `Actor ${event.actorUserId} changed ${interventionCode} for ${event.subjectUserId}`
+          : `Operator changed ${interventionCode}`;
+
+    const details =
+      event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
+        ? [
+            `Reason: ${String(event.payload.reason ?? "unspecified")}`,
+            `Path: ${String(event.payload.path ?? "unknown")}`,
+            `Support trace flag: ${supportTraceState}`
+          ]
+        : [
+            `Intervention: ${interventionCode}`,
+            `Reason: ${String(event.payload.reason ?? "unspecified")}`,
+            `Path: ${String(event.payload.path ?? "unknown")}`,
+            `Support trace flag: ${supportTraceState}`
+          ];
+
+    return {
+      id: event.id ?? `${event.eventCode}-${event.requestId}`,
+      occurredAt: event.occurredAt,
+      type: "audit",
+      title,
+      subtitle,
+      traceId: event.traceId,
+      requestId: event.requestId,
+      details
+    };
+  });
 
   const timeline = [...auditTimeline, ...analyticsTimeline, ...ledgerTimeline, ...receiptTimeline]
     .sort((left, right) => new Date(right.occurredAt).getTime() - new Date(left.occurredAt).getTime())
@@ -159,6 +193,7 @@ export async function getDemoSupportConsole(userId: string, context: {
 
   return {
     timeline,
+    activeInterventions,
     releaseSafety,
     redactionPolicy: [
       "Support timeline keeps request IDs, trace IDs, and object references — not raw secrets.",

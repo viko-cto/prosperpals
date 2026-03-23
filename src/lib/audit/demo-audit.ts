@@ -3,6 +3,35 @@ import path from "node:path";
 import { auditEventSchema } from "../../modules/finance/contracts.ts";
 
 export type DemoAuditEvent = ReturnType<typeof auditEventSchema.parse>;
+export type SupportInterventionCode = "receipt_capture_paused";
+
+export const SUPPORT_TIMELINE_VIEWED_EVENT = "support.timeline.viewed";
+export const SUPPORT_INTERVENTION_APPLIED_EVENT = "support.intervention.applied";
+export const SUPPORT_INTERVENTION_CLEARED_EVENT = "support.intervention.cleared";
+
+export type ActiveSupportIntervention = {
+  code: SupportInterventionCode;
+  actorUserId?: string;
+  subjectUserId?: string;
+  occurredAt: string;
+  requestId: string;
+  traceId?: string;
+  reason: string;
+  path: string;
+  supportTraceView: boolean;
+};
+
+export class SupportInterventionBlockedError extends Error {
+  readonly code: SupportInterventionCode;
+  readonly intervention: ActiveSupportIntervention;
+
+  constructor(intervention: ActiveSupportIntervention) {
+    super(`Support intervention active: ${intervention.code}`);
+    this.name = "SupportInterventionBlockedError";
+    this.code = intervention.code;
+    this.intervention = intervention;
+  }
+}
 
 const DEFAULT_RUNTIME_DIR = path.join(process.cwd(), ".prosperpals-runtime");
 const DEFAULT_SINK_PATH = path.join(DEFAULT_RUNTIME_DIR, "demo-operator-audit.jsonl");
@@ -18,9 +47,10 @@ async function ensureSinkDir() {
 export async function readDemoAuditEvents(filters: {
   actorUserId?: string;
   subjectUserId?: string;
+  eventCodes?: string[];
   limit?: number;
 } = {}): Promise<DemoAuditEvent[]> {
-  const { actorUserId, subjectUserId, limit = 8 } = filters;
+  const { actorUserId, subjectUserId, eventCodes, limit = 8 } = filters;
 
   try {
     const raw = await fs.readFile(getSinkPath(), "utf8");
@@ -46,6 +76,10 @@ export async function readDemoAuditEvents(filters: {
         }
 
         if (subjectUserId && event.subjectUserId !== subjectUserId) {
+          return false;
+        }
+
+        if (eventCodes?.length && !eventCodes.includes(event.eventCode)) {
           return false;
         }
 
@@ -87,6 +121,10 @@ export async function appendDemoAuditEvent(event: DemoAuditEvent) {
   return parsed;
 }
 
+function toSupportInterventionCode(value: unknown): SupportInterventionCode | null {
+  return value === "receipt_capture_paused" ? value : null;
+}
+
 export async function recordSupportTimelineViewAudit(input: {
   actorUserId: string;
   subjectUserId: string;
@@ -101,7 +139,7 @@ export async function recordSupportTimelineViewAudit(input: {
     occurredAt: input.occurredAt ?? new Date().toISOString(),
     actorUserId: input.actorUserId,
     subjectUserId: input.subjectUserId,
-    eventCode: "support.timeline.viewed",
+    eventCode: SUPPORT_TIMELINE_VIEWED_EVENT,
     traceId: input.traceId,
     requestId: input.requestId,
     payload: {
@@ -110,4 +148,80 @@ export async function recordSupportTimelineViewAudit(input: {
       supportTraceView: input.supportTraceView
     }
   });
+}
+
+export async function recordSupportInterventionAudit(input: {
+  actorUserId: string;
+  subjectUserId: string;
+  requestId: string;
+  traceId: string;
+  occurredAt?: string;
+  path: string;
+  reason: string;
+  supportTraceView: boolean;
+  interventionCode: SupportInterventionCode;
+  action: "applied" | "cleared";
+}) {
+  return appendDemoAuditEvent({
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    actorUserId: input.actorUserId,
+    subjectUserId: input.subjectUserId,
+    eventCode:
+      input.action === "applied"
+        ? SUPPORT_INTERVENTION_APPLIED_EVENT
+        : SUPPORT_INTERVENTION_CLEARED_EVENT,
+    traceId: input.traceId,
+    requestId: input.requestId,
+    payload: {
+      interventionCode: input.interventionCode,
+      path: input.path,
+      reason: input.reason,
+      supportTraceView: input.supportTraceView
+    }
+  });
+}
+
+export async function getActiveSupportInterventions(subjectUserId: string) {
+  const events = await readDemoAuditEvents({
+    subjectUserId,
+    eventCodes: [SUPPORT_INTERVENTION_APPLIED_EVENT, SUPPORT_INTERVENTION_CLEARED_EVENT],
+    limit: 128
+  });
+
+  const latestByCode = new Map<SupportInterventionCode, DemoAuditEvent>();
+
+  for (const event of events) {
+    const interventionCode = toSupportInterventionCode(event.payload.interventionCode);
+
+    if (!interventionCode || latestByCode.has(interventionCode)) {
+      continue;
+    }
+
+    latestByCode.set(interventionCode, event);
+  }
+
+  return [...latestByCode.entries()]
+    .filter(([, event]) => event.eventCode === SUPPORT_INTERVENTION_APPLIED_EVENT)
+    .map(([code, event]): ActiveSupportIntervention => ({
+      code,
+      actorUserId: event.actorUserId ?? undefined,
+      subjectUserId: event.subjectUserId ?? undefined,
+      occurredAt: event.occurredAt,
+      requestId: event.requestId,
+      traceId: event.traceId,
+      reason: String(event.payload.reason ?? "unspecified"),
+      path: String(event.payload.path ?? "unknown"),
+      supportTraceView: event.payload.supportTraceView === true
+    }));
+}
+
+export async function assertReceiptCaptureAllowed(subjectUserId: string) {
+  const interventions = await getActiveSupportInterventions(subjectUserId);
+  const receiptCapturePause = interventions.find(
+    (intervention) => intervention.code === "receipt_capture_paused"
+  );
+
+  if (receiptCapturePause) {
+    throw new SupportInterventionBlockedError(receiptCapturePause);
+  }
 }
