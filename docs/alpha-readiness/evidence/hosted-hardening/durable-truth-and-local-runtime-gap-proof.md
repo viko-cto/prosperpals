@@ -52,15 +52,15 @@ That is real progress, but it is still only **manual fallback** until a real pre
 
 Even before the upload/provider gap, the receipt review path is still demo-local persistence, not a hosted artifact + parse + review chain.
 
-### 4. Support/audit traces are partially migrated, but analytics still are not
-Operator audit events now have their own hosted-capable path in `src/lib/audit/demo-audit.ts`, while analytics in `src/lib/telemetry/demo-event-store.ts` still write to local JSONL.
+### 4. Support/audit traces and founder-visible analytics now have hosted-capable paths, but preview proof is still missing
+Operator audit events now have their own hosted-capable path in `src/lib/audit/demo-audit.ts`, and analytics in `src/lib/telemetry/demo-event-store.ts` can now also write through PostgREST to `public.demo_analytics_events` with a strict `hosted-only` mode.
 
-That means support/audit evidence is materially stronger than before, but founder-visible cohort reporting and broader learning telemetry still are not hosted-durable.
+That is meaningful progress because support/audit evidence and founder-visible cohort reporting no longer have to stay local-only. But both lanes are still only **manual fallback** until a real preview/alpha environment is wired and a smoke artifact proves the hosted tables are live in deployment.
 
-### 5. Critical alpha learning paths still depend on local file sinks
-The repo currently uses local file sinks for the user-visible alpha learning loop, support timeline evidence, and receipt review evidence.
+### 5. Critical alpha continuity still depends on local sinks in key user-state lanes
+The repo still relies on local sinks for receipt review state and receipt-upload artifacts, while onboarding continuity still lives in cookies.
 
-That keeps the hosted-alpha NO-GO locked.
+That keeps the hosted-alpha NO-GO locked even though the analytics, audit, and ledger lanes are now hosted-capable.
 
 ## Manual fallbacks currently available
 
@@ -78,6 +78,7 @@ These are valid development aids, not hosted alpha closure.
 - Simulator trades are hosted and durable -> **manual fallback**
 - Receipt candidates survive redeploys -> **open blocker**
 - Support and audit traces survive redeploys -> **manual fallback**
+- Founder-visible cohort telemetry is hosted-capable -> **manual fallback**
 - No critical path depends on local runtime file sinks -> **open blocker**
 
 ## Why this is not yet safe for CONDITIONAL GO
@@ -88,8 +89,7 @@ Because the current surfaced experience still stores trust-critical alpha eviden
 
 Move the surfaced alpha path off cookie/JSONL persistence for:
 1. onboarding progress,
-2. analytics and cohort-health reporting,
-3. receipt candidates/confirmations,
-4. deployed preview/alpha rollout proof for the new audit + ledger hosted paths.
+2. receipt candidates/confirmations plus receipt-upload artifacts,
+3. deployed preview/alpha rollout proof for the audit, ledger, and analytics hosted paths.
 
 Until that happens, hosted truth remains partly architectural intent and partly demo-local behavior.

@@ -51,10 +51,10 @@ For every line marked complete or manual fallback, link the proof note under `do
 ## B3. Observability for learning
 - [ ] First aha is trackable  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`
 - [ ] Return behavior is trackable  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`
 - [ ] Trust-critical failures are visible  
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
@@ -62,8 +62,8 @@ For every line marked complete or manual fallback, link the proof note under `do
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/support-help-path.md`
 - [ ] Founder-visible cohort-health reporting exists  
-  - status: open blocker
-  - proof note: `docs/alpha-readiness/redecision-dashboard-inputs.md`
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`, `docs/alpha-readiness/redecision-dashboard-inputs.md`
 
 ## C. Receipt realism
 - [x] Real upload path exists  
