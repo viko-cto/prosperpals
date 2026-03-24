@@ -16,11 +16,11 @@ For every line marked complete or manual fallback, link the proof note under `do
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] Reward ledger is hosted and durable  
-  - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-ledger-postgrest-durability-path.md`
 - [ ] Simulator trades are hosted and durable  
-  - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-ledger-postgrest-durability-path.md`
 - [ ] Receipt candidates survive redeploys  
   - status: open blocker
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
@@ -119,11 +119,11 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## Current blockers
 1. Trust-critical user state still depends on cookie/local-runtime sinks instead of authoritative hosted durability.
-2. Operator support-view access, the narrow receipt-capture pause/clear intervention, and release overrides for receipt capture plus simulator starter now have a hosted-capable PostgREST durability path in the repo, but preview/alpha environment rollout proof is still missing.
+2. Operator support-view access, the narrow receipt-capture pause/clear intervention, release overrides for receipt capture plus simulator starter, and the reward/trade ledger loop now have hosted-capable PostgREST durability paths in the repo, but preview/alpha environment rollout proof is still missing.
 3. Support-only/admin-only roles and broader cross-account intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
-- Why the NO-GO remains locked: the receipt lane is materially stronger and the operator-audit lane now has a hosted-capable durability path, but deployed rollout proof, broader state durability, and real support/admin boundaries are still missing.
-- What exact artifacts would change that answer next: hosted env smoke proof for the audit path, broader durability proof beyond local sinks, support/admin role boundaries, and populated interview/redecision evidence.
+- Why the NO-GO remains locked: the receipt lane is materially stronger and both the operator-audit lane plus reward/trade ledger loop now have hosted-capable durability paths, but deployed rollout proof, broader state durability, and real support/admin boundaries are still missing.
+- What exact artifacts would change that answer next: hosted env smoke proof for the audit + ledger paths, broader durability proof beyond local sinks, support/admin role boundaries, and populated interview/redecision evidence.

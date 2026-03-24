@@ -122,3 +122,80 @@ test('stale launch assets are blocked honestly before a trade is written', async
     assert.equal(result.summary.availableCoins, 40);
   });
 });
+
+
+test('reward and trade records can use the hosted PostgREST durability path when configured', async () => {
+  await withTempLedger(async ({ mod, ledgerPath }) => {
+    const previousUrl = process.env.PROSPERPALS_SUPABASE_URL;
+    const previousKey = process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY;
+    const previousMode = process.env.PROSPERPALS_LEDGER_DURABILITY_MODE;
+    const previousTable = process.env.PROSPERPALS_LEDGER_TABLE;
+    const originalFetch = global.fetch;
+    const storedRows = [];
+
+    process.env.PROSPERPALS_SUPABASE_URL = 'https://prosperpals.supabase.test';
+    process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+    process.env.PROSPERPALS_LEDGER_DURABILITY_MODE = 'hosted-only';
+    process.env.PROSPERPALS_LEDGER_TABLE = 'demo_ledger_records';
+
+    global.fetch = async (_url, init = {}) => {
+      if (init.method === 'POST') {
+        const payload = JSON.parse(init.body);
+        storedRows.push(...payload);
+        return new Response(JSON.stringify(payload), {
+          status: 201,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify(storedRows), {
+        status: 200,
+        headers: { 'content-type': 'application/json' }
+      });
+    };
+
+    try {
+      await mod.awardProsperCoins({
+        userId,
+        idempotencyKey: 'invest-first-starter:test-user:hosted',
+        requestId: 'reward-req-hosted-001',
+        traceId,
+        reasonCode: 'INVEST_FIRST_STARTER',
+        coins: 40,
+        referenceType: 'onboarding_intent'
+      });
+
+      const trade = await mod.executeStarterTrade({
+        userId,
+        assetId: 'NOVO-B',
+        idempotencyKey: 'starter-trade:test-user:hosted:novo',
+        requestId: 'trade-req-hosted-001',
+        traceId
+      });
+
+      const records = await mod.readDemoLedgerRecords(userId);
+      const summary = await mod.getDemoRewardLoopSummary(userId);
+
+      assert.equal(trade.status, 'executed');
+      assert.equal(records.length, 3);
+      assert.equal(records[0].kind, 'prospercoin_ledger');
+      assert.equal(records[1].kind, 'virtual_trade_execution');
+      assert.equal(records[2].kind, 'prospercoin_ledger');
+      assert.equal(summary.availableCoins, 15);
+      assert.equal(summary.totalEarnedCoins, 40);
+      assert.equal(summary.totalDebitedCoins, 25);
+      assert.match(summary.ledgerPath, /^supabase:demo_ledger_records$/);
+      await assert.rejects(fs.readFile(ledgerPath, 'utf8'), /ENOENT/);
+    } finally {
+      global.fetch = originalFetch;
+      if (previousUrl) process.env.PROSPERPALS_SUPABASE_URL = previousUrl;
+      else delete process.env.PROSPERPALS_SUPABASE_URL;
+      if (previousKey) process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY = previousKey;
+      else delete process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY;
+      if (previousMode) process.env.PROSPERPALS_LEDGER_DURABILITY_MODE = previousMode;
+      else delete process.env.PROSPERPALS_LEDGER_DURABILITY_MODE;
+      if (previousTable) process.env.PROSPERPALS_LEDGER_TABLE = previousTable;
+      else delete process.env.PROSPERPALS_LEDGER_TABLE;
+    }
+  });
+});

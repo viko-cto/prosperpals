@@ -4,9 +4,17 @@ import { z } from "zod";
 
 const DEFAULT_RUNTIME_DIR = path.join(process.cwd(), ".prosperpals-runtime");
 const DEFAULT_LEDGER_PATH = path.join(DEFAULT_RUNTIME_DIR, "demo-ledger.jsonl");
+const DEFAULT_HOSTED_TABLE = "demo_ledger_records";
 const STALE_QUOTE_THRESHOLD_SECONDS = 60 * 60 * 4;
 const COIN_VALUE_MINOR = 1_000;
 const DEMO_PORTFOLIO_ID = "44444444-4444-4444-8444-444444444444";
+
+type HostedLedgerConfig = {
+  url: string;
+  serviceKey: string;
+  table: string;
+  mode: "prefer-hosted" | "hosted-only";
+};
 
 type DemoAssetSeed = {
   assetId: string;
@@ -169,11 +177,91 @@ function getLedgerPath() {
   return process.env.PROSPERPALS_DEMO_LEDGER_PATH ?? DEFAULT_LEDGER_PATH;
 }
 
+function getHostedLedgerConfig(): HostedLedgerConfig | null {
+  const url =
+    process.env.PROSPERPALS_SUPABASE_URL
+    ?? process.env.NEXT_PUBLIC_SUPABASE_URL
+    ?? process.env.SUPABASE_URL;
+  const serviceKey =
+    process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY
+    ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    return null;
+  }
+
+  return {
+    url: url.replace(/\/$/, ""),
+    serviceKey,
+    table: process.env.PROSPERPALS_LEDGER_TABLE ?? DEFAULT_HOSTED_TABLE,
+    mode:
+      process.env.PROSPERPALS_LEDGER_DURABILITY_MODE === "hosted-only"
+        ? "hosted-only"
+        : "prefer-hosted"
+  };
+}
+
+function getHostedLedgerUrl(config: HostedLedgerConfig, query = "") {
+  return `${config.url}/rest/v1/${config.table}${query}`;
+}
+
+function getLedgerLocation() {
+  const hostedConfig = getHostedLedgerConfig();
+  return hostedConfig ? `supabase:${hostedConfig.table}` : getLedgerPath();
+}
+
 async function ensureLedgerDir() {
   await fs.mkdir(path.dirname(getLedgerPath()), { recursive: true });
 }
 
-async function readLedgerRecords(): Promise<DemoLedgerRecord[]> {
+function parseHostedLedgerRows(payload: unknown) {
+  if (!Array.isArray(payload)) {
+    throw new Error("Hosted ledger read returned a non-array payload");
+  }
+
+  return payload
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const record = "record" in entry ? entry.record : entry;
+
+      try {
+        return demoLedgerRecordSchema.parse(record);
+      } catch {
+        return null;
+      }
+    })
+    .filter((record): record is DemoLedgerRecord => Boolean(record));
+}
+
+async function readHostedLedgerRecords(): Promise<DemoLedgerRecord[]> {
+  const config = getHostedLedgerConfig();
+
+  if (!config) {
+    return [];
+  }
+
+  const response = await fetch(
+    getHostedLedgerUrl(config, "?select=record&order=occurredAt.asc,inserted_at.asc&limit=512"),
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`
+      },
+      cache: "no-store"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Hosted ledger read failed: ${response.status} ${response.statusText}`);
+  }
+
+  return parseHostedLedgerRows(await response.json());
+}
+
+async function readLocalLedgerRecords(): Promise<DemoLedgerRecord[]> {
   try {
     const raw = await fs.readFile(getLedgerPath(), "utf8");
     return raw
@@ -193,14 +281,85 @@ async function readLedgerRecords(): Promise<DemoLedgerRecord[]> {
   }
 }
 
+async function getStoredLedgerRecords(): Promise<DemoLedgerRecord[]> {
+  const config = getHostedLedgerConfig();
+
+  if (!config) {
+    return readLocalLedgerRecords();
+  }
+
+  try {
+    return await readHostedLedgerRecords();
+  } catch (error) {
+    if (config.mode === "hosted-only") {
+      throw error;
+    }
+
+    return readLocalLedgerRecords();
+  }
+}
+
+async function readLedgerRecords(): Promise<DemoLedgerRecord[]> {
+  return getStoredLedgerRecords();
+}
+
 export async function readDemoLedgerRecords(userId?: string) {
   const records = await readLedgerRecords();
   return userId ? records.filter((record) => record.userId === userId) : records;
 }
 
+async function appendHostedLedgerRecords(records: DemoLedgerRecord[]) {
+  const config = getHostedLedgerConfig();
+
+  if (!config) {
+    throw new Error("Hosted ledger config is not available");
+  }
+
+  const rows = records.map((record) => ({
+    id: record.id,
+    userId: record.userId,
+    recordKind: record.kind,
+    idempotencyKey: record.idempotencyKey,
+    occurredAt: record.occurredAt,
+    requestId: record.requestId,
+    traceId: record.traceId,
+    record
+  }));
+
+  const response = await fetch(getHostedLedgerUrl(config), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      apikey: config.serviceKey,
+      Authorization: `Bearer ${config.serviceKey}`,
+      Prefer: "return=representation"
+    },
+    body: JSON.stringify(rows)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Hosted ledger write failed: ${response.status} ${response.statusText}`);
+  }
+
+  return parseHostedLedgerRows(await response.json());
+}
+
 async function appendLedgerRecords(records: DemoLedgerRecord[]) {
   if (!records.length) {
     return;
+  }
+
+  const hostedConfig = getHostedLedgerConfig();
+
+  if (hostedConfig) {
+    try {
+      await appendHostedLedgerRecords(records);
+      return;
+    } catch (error) {
+      if (hostedConfig.mode === "hosted-only") {
+        throw error;
+      }
+    }
   }
 
   await ensureLedgerDir();
@@ -333,7 +492,7 @@ function buildSummaryFromRecords(userId: string, records: DemoLedgerRecord[]): D
   });
 
   return {
-    ledgerPath: getLedgerPath(),
+    ledgerPath: getLedgerLocation(),
     availableCoins,
     totalEarnedCoins,
     totalDebitedCoins,
