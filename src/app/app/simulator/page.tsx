@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireViewerSession } from "@/lib/auth/session";
+import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
 import { formatCurrency } from "@/lib/finance/first-value";
 import { getDemoOnboardingState } from "@/lib/onboarding/demo-state";
 import {
@@ -16,13 +17,20 @@ type SimulatorPageProps = {
 export default async function SimulatorPage({ searchParams }: SimulatorPageProps) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
+  const internalUser = session.email.endsWith("@prosperpals.local");
+  const flags = await getEffectiveFeatureFlags({
+    countryCode: "DK",
+    internalUser
+  });
   const onboardingState = await getDemoOnboardingState();
   const rewardLoop = await getDemoRewardLoopSummary(session.userId);
   const resolved = (await searchParams) ?? {};
+  const simulatorDisabled = !flags.simulatorStarter;
 
   const logPreview = toStructuredLog("fin.simulator.rendered", requestContext, {
     selected_intent: onboardingState.selectedIntent,
     selected_mode: onboardingState.mode,
+    simulator_starter_enabled: flags.simulatorStarter,
     available_coins: rewardLoop.availableCoins,
     position_count: rewardLoop.portfolio.positionCount,
     latest_trade_asset: rewardLoop.latestTrade?.assetId ?? null,
@@ -49,6 +57,25 @@ export default async function SimulatorPage({ searchParams }: SimulatorPageProps
             </Link>
           </div>
         </div>
+
+        {resolved.trade === "feature_disabled" ? (
+          <section className="panel" style={{ marginBottom: 24 }}>
+            <h2>Fin simulator starter is globally disabled</h2>
+            <div className="grid cols-2" style={{ alignItems: "start" }}>
+              <div className="card compact-card">
+                <strong>Hosted-alpha kill switch is active</strong>
+                <span className="muted-line">
+                  An actor-audited release override forced the starter simulator loop off while trust hardening stays open.
+                </span>
+              </div>
+              <div className="meta">
+                <div><strong>Current state</strong>: simulator starter disabled</div>
+                <div><strong>Why it matters</strong>: no new trade attempts should land until the override is cleared.</div>
+                <div><strong>Next step</strong>: clear the audited override from <Link href="/app/support">/app/support</Link>.</div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section className="grid cols-2" style={{ alignItems: "start" }}>
           <article className="hero">
@@ -87,6 +114,14 @@ export default async function SimulatorPage({ searchParams }: SimulatorPageProps
           <article className="panel">
             <h2>Goldie → Fin handoff</h2>
             <p>{onboardingState.finHandoff?.handoffBody ?? "Fin stays quiet until Goldie has enough signal to make the trade educational instead of gimmicky."}</p>
+            <div className="card compact-card" style={{ marginTop: 16 }}>
+              <strong>{simulatorDisabled ? "Global starter-trade kill switch active" : "Starter trade loop enabled"}</strong>
+              <span className="muted-line">
+                {simulatorDisabled
+                  ? "An actor-audited release override forced the simulator starter flag off. Hosted alpha remains NO-GO while that hardening control stays engaged."
+                  : "The reward-to-simulator loop is available for this Denmark-first demo path."}
+              </span>
+            </div>
             {resolved.trade ? (
               <div className="card compact-card" style={{ marginTop: 16 }}>
                 <strong>Latest action</strong>
@@ -117,8 +152,12 @@ export default async function SimulatorPage({ searchParams }: SimulatorPageProps
 
                   <form action={submitStarterTradeAction}>
                     <input type="hidden" name="assetId" value={asset.assetId} />
-                    <button className={asset.tradeable && !asset.blockedReason ? "primary" : "secondary"} type="submit" disabled={!asset.tradeable || Boolean(asset.blockedReason)}>
-                      {asset.tradeable && !asset.blockedReason ? `Buy starter slice for ${asset.starterTradeCoins} coins` : asset.blockedReason ?? "Trade unavailable"}
+                    <button className={asset.tradeable && !asset.blockedReason && !simulatorDisabled ? "primary" : "secondary"} type="submit" disabled={!asset.tradeable || Boolean(asset.blockedReason) || simulatorDisabled}>
+                      {simulatorDisabled
+                        ? "Starter trade disabled by audited override"
+                        : asset.tradeable && !asset.blockedReason
+                          ? `Buy starter slice for ${asset.starterTradeCoins} coins`
+                          : asset.blockedReason ?? "Trade unavailable"}
                     </button>
                   </form>
                 </div>

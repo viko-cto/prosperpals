@@ -6,6 +6,7 @@ import {
   assertReceiptCaptureAllowed
 } from "@/lib/audit/demo-audit";
 import { requireViewerSession } from "@/lib/auth/session";
+import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
 import { getDemoOnboardingState } from "@/lib/onboarding/demo-state";
 import {
   captureReceiptCandidate,
@@ -31,12 +32,21 @@ async function readUploadedReceipt(formData: FormData) {
 export async function startReceiptReviewAction(formData: FormData) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
+  const internalUser = session.email.endsWith("@prosperpals.local");
+  const flags = await getEffectiveFeatureFlags({
+    countryCode: "DK",
+    internalUser
+  });
   const onboardingState = await getDemoOnboardingState();
   const merchantLabel = String(formData.get("merchantLabel") ?? "").trim() || "Føtex City";
   const amountMajor = Number(formData.get("amountMajor") ?? 0) || 226.45;
   const categoryId = String(formData.get("categoryId") ?? "groceries").trim() || "groceries";
   const receiptUpload = await readUploadedReceipt(formData);
   const occurredAt = new Date().toISOString();
+
+  if (!flags.receiptCapture) {
+    redirect("/app/receipts?blocked=receipt_capture_disabled");
+  }
 
   try {
     await assertReceiptCaptureAllowed(session.userId);

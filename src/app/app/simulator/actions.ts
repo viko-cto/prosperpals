@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { requireViewerSession } from "@/lib/auth/session";
+import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
 import { getDemoOnboardingState } from "@/lib/onboarding/demo-state";
 import { executeStarterTrade } from "@/lib/simulator/demo-simulator";
 import { appendDemoAnalyticsEvent } from "@/lib/telemetry/demo-event-store";
@@ -10,11 +11,20 @@ import { getRequestContext } from "@/lib/telemetry/request-context";
 export async function submitStarterTradeAction(formData: FormData) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
+  const internalUser = session.email.endsWith("@prosperpals.local");
+  const flags = await getEffectiveFeatureFlags({
+    countryCode: "DK",
+    internalUser
+  });
   const onboardingState = await getDemoOnboardingState();
   const assetId = String(formData.get("assetId") ?? "").trim().toUpperCase();
   const occurredAt = new Date().toISOString();
   const mode = onboardingState.mode;
   const selectedIntent = onboardingState.selectedIntent;
+
+  if (!flags.simulatorStarter) {
+    redirect(`/app/simulator?trade=feature_disabled&asset=${assetId}`);
+  }
 
   const result = await executeStarterTrade({
     userId: session.userId,

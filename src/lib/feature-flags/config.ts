@@ -1,3 +1,5 @@
+import { getActiveReleaseFlagOverrides } from "../audit/demo-audit.ts";
+
 export type FeatureFlagName =
   | "manualEntry"
   | "receiptCapture"
@@ -48,4 +50,14 @@ export function evaluateFeatureFlags(context: FeatureFlagContext = {}) {
     psd2Beta: merged.psd2Beta && context.internalUser === true,
     supportTraceView: merged.supportTraceView && context.internalUser === true
   } satisfies Record<FeatureFlagName, boolean>;
+}
+
+export async function getEffectiveFeatureFlags(context: FeatureFlagContext = {}) {
+  const base = evaluateFeatureFlags(context);
+  const auditedOverrides = await getActiveReleaseFlagOverrides();
+
+  return auditedOverrides.reduce<Record<FeatureFlagName, boolean>>((acc, override) => {
+    acc[override.flagName] = override.enabled;
+    return acc;
+  }, { ...base });
 }

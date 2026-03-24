@@ -1,6 +1,6 @@
 # Alpha Environment and Release Safety Baseline
 
-**Date:** 2026-03-22 09:15 UTC  
+**Date:** 2026-03-24 08:55 UTC  
 **Lane:** hosted hardening  
 **Prepared by:** BMAD catch-up worker
 
@@ -31,8 +31,8 @@ This is good alpha hygiene because the Denmark-first slice is not relying on imp
 ### 2. Safety evaluation logic exists
 `src/lib/operations/release-safety.ts` verifies:
 - manual capture remains enabled,
-- receipt capture flag remains enabled,
-- simulator starter flow remains enabled,
+- receipt capture flag remains enabled or explicitly disabled by an actor-audited override,
+- simulator starter flow remains enabled or explicitly disabled by an actor-audited override,
 - stale-quote blocking still exists,
 - notification payloads respect privacy constraints,
 - SQL migration presence is detectable.
@@ -51,8 +51,13 @@ The code reads env inputs such as `PROSPERPALS_FEATURE_FLAGS_JSON` and demo sink
 ### 3. Release safety exists as code, but not yet as a deploy gate
 The release-safety summary is callable and test-covered, but there is no proof yet that deploys must pass it before alpha rollout.
 
-### 4. Rollback / kill-switch procedure is still implicit
-Feature flags suggest a possible kill-switch pattern, but there is no explicit runbook proving who can flip what, when, and how rollback is communicated.
+### 4. Rollback / kill-switch procedure is now partially repo-native, but still not operator-complete
+`/app/support` now exposes actor-audited release overrides for `receiptCapture` and `simulatorStarter`, and the running product path enforces those overrides.
+
+That materially improves the kill-switch story, but the procedure is still only **manual fallback** because the repo still lacks:
+- a full operator ownership matrix,
+- hosted durability for the audit sink,
+- and a formal outward communication/escalation runbook for when a kill switch is used during alpha.
 
 ## Verdict by checklist line
 
@@ -61,7 +66,7 @@ Feature flags suggest a possible kill-switch pattern, but there is no explicit r
 - Required secrets/config are documented -> **open blocker**
 - Feature flags/defaults are explicit -> **complete**
 - Release-safety checks exist for the alpha path -> **manual fallback**
-- Rollback / kill-switch procedure exists -> **open blocker**
+- Rollback / kill-switch procedure exists -> **manual fallback**
 
 ## Why this is not yet safe for CONDITIONAL GO
 
@@ -73,3 +78,4 @@ ProsperPals has the beginnings of a release-safety spine, but not yet the operat
 2. Document who owns feature-flag and rollback actions.
 3. Prove preview and alpha-hosted separation explicitly.
 4. Promote release-safety from tested helper logic into a real deployment gate.
+5. Move the audited override trail onto hosted durability so rollback evidence survives redeploys.

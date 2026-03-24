@@ -1,7 +1,11 @@
 import {
+  RELEASE_FLAG_OVERRIDE_APPLIED_EVENT,
+  RELEASE_FLAG_OVERRIDE_CLEARED_EVENT,
   SUPPORT_INTERVENTION_APPLIED_EVENT,
   SUPPORT_INTERVENTION_CLEARED_EVENT,
   SUPPORT_TIMELINE_VIEWED_EVENT,
+  describeReleaseFlagOverride,
+  getActiveReleaseFlagOverrides,
   getActiveSupportInterventions,
   readDemoAuditEvents
 } from "../audit/demo-audit.ts";
@@ -46,12 +50,13 @@ export async function getDemoSupportConsole(userId: string, context: {
   countryCode?: string;
   internalUser?: boolean;
 } = {}) {
-  const [analyticsEvents, ledgerRecords, receiptRecords, auditEvents, activeInterventions, releaseSafety] = await Promise.all([
+  const [analyticsEvents, ledgerRecords, receiptRecords, auditEvents, activeInterventions, activeReleaseOverrides, releaseSafety] = await Promise.all([
     readDemoAnalyticsEvents(userId, 12),
     readDemoLedgerRecords(userId),
     readDemoReceiptRecords(userId),
-    readDemoAuditEvents({ subjectUserId: userId, limit: 12 }),
+    readDemoAuditEvents({ limit: 24 }),
     getActiveSupportInterventions(userId),
+    getActiveReleaseFlagOverrides(),
     getReleaseSafetySummary(context)
   ]);
 
@@ -141,6 +146,11 @@ export async function getDemoSupportConsole(userId: string, context: {
 
   const auditTimeline: SupportTimelineItem[] = auditEvents.map((event) => {
     const interventionCode = String(event.payload.interventionCode ?? "unknown");
+    const flagName = String(event.payload.flagName ?? "unknown");
+    const flagLabel =
+      flagName === "receiptCapture" || flagName === "simulatorStarter"
+        ? describeReleaseFlagOverride(flagName)
+        : flagName;
     const supportTraceState = event.payload.supportTraceView === true ? "enabled" : "disabled";
 
     const title =
@@ -150,16 +160,24 @@ export async function getDemoSupportConsole(userId: string, context: {
           ? "Receipt capture paused"
           : event.eventCode === SUPPORT_INTERVENTION_CLEARED_EVENT && interventionCode === "receipt_capture_paused"
             ? "Receipt capture pause cleared"
-            : event.eventCode;
+            : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT
+              ? `${flagLabel} override applied`
+              : event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+                ? `${flagLabel} override cleared`
+                : event.eventCode;
 
     const subtitle =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
         ? event.actorUserId && event.subjectUserId
           ? `Actor ${event.actorUserId} accessed support context for ${event.subjectUserId}`
           : "Operator audit event recorded"
-        : event.actorUserId && event.subjectUserId
-          ? `Actor ${event.actorUserId} changed ${interventionCode} for ${event.subjectUserId}`
-          : `Operator changed ${interventionCode}`;
+        : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT || event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+          ? event.actorUserId
+            ? `Actor ${event.actorUserId} changed ${flagName} for ${String(event.payload.scope ?? "alpha-hosted")}`
+            : `Operator changed ${flagName}`
+          : event.actorUserId && event.subjectUserId
+            ? `Actor ${event.actorUserId} changed ${interventionCode} for ${event.subjectUserId}`
+            : `Operator changed ${interventionCode}`;
 
     const details =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
@@ -168,12 +186,21 @@ export async function getDemoSupportConsole(userId: string, context: {
             `Path: ${String(event.payload.path ?? "unknown")}`,
             `Support trace flag: ${supportTraceState}`
           ]
-        : [
-            `Intervention: ${interventionCode}`,
-            `Reason: ${String(event.payload.reason ?? "unspecified")}`,
-            `Path: ${String(event.payload.path ?? "unknown")}`,
-            `Support trace flag: ${supportTraceState}`
-          ];
+        : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT || event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+          ? [
+              `Flag: ${flagName}`,
+              `Enabled: ${String(event.payload.enabled ?? "n/a")}`,
+              `Scope: ${String(event.payload.scope ?? "alpha-hosted")}`,
+              `Reason: ${String(event.payload.reason ?? "unspecified")}`,
+              `Path: ${String(event.payload.path ?? "unknown")}`,
+              `Support trace flag: ${supportTraceState}`
+            ]
+          : [
+              `Intervention: ${interventionCode}`,
+              `Reason: ${String(event.payload.reason ?? "unspecified")}`,
+              `Path: ${String(event.payload.path ?? "unknown")}`,
+              `Support trace flag: ${supportTraceState}`
+            ];
 
     return {
       id: event.id ?? `${event.eventCode}-${event.requestId}`,
@@ -194,6 +221,7 @@ export async function getDemoSupportConsole(userId: string, context: {
   return {
     timeline,
     activeInterventions,
+    activeReleaseOverrides,
     releaseSafety,
     redactionPolicy: [
       "Support timeline keeps request IDs, trace IDs, and object references — not raw secrets.",

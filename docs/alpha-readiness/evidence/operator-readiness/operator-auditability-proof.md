@@ -1,6 +1,6 @@
 # Operator Auditability Proof
 
-**Date:** 2026-03-23 23:55 UTC  
+**Date:** 2026-03-24 08:55 UTC  
 **Lane:** operator/access readiness  
 **Prepared by:** BMAD catch-up worker
 
@@ -82,12 +82,31 @@ The operator audit path is more useful now, but the sink still lands in `.prospe
 
 So this is stronger proof of operator behavior, not closure of hosted durability.
 
-### 2. Feature-flag and safety-toggle changes are still not actor-logged
-Feature flags are still evaluated from defaults plus `PROSPERPALS_FEATURE_FLAGS_JSON`, but the repo still does not persist:
-- who changed a flag,
-- when it changed,
-- why it changed,
-- or what cohort it affected.
+### 2. Feature-flag and safety-toggle changes are now actor-logged in the repo demo path
+The support surface now exposes actor-audited release overrides for:
+- `receiptCapture`
+- `simulatorStarter`
+
+Each override write captures:
+- `occurredAt`
+- `actorUserId`
+- `requestId`
+- `traceId`
+- `flagName`
+- `enabled`
+- `scope`
+- `path`
+- `reason`
+- `supportTraceView`
+
+Event codes now include:
+- `release.flag.override.applied`
+- `release.flag.override.cleared`
+
+The running product path now folds those overrides into effective flag evaluation, so this is not just a note-taking rail:
+- `/app/receipts` blocks new candidate creation when `receiptCapture` is forced off,
+- `/app/simulator` blocks new starter trades when `simulatorStarter` is forced off,
+- and `/app/support` surfaces both the override state and the matching audit history.
 
 ### 3. Cross-account intervention and role separation are still absent
 The new intervention rail is intentionally narrow and bound to the current support subject.
@@ -112,17 +131,17 @@ So the current rail improves operator correctness inside the repo demo, but it d
 - Corrections / overrides are auditable -> **manual fallback**
 - Narrow receipt-intake interventions are auditable -> **manual fallback**
 - Account-access interventions are auditable -> **open blocker**
-- Feature-flag / safety-toggle changes are auditable -> **open blocker**
+- Feature-flag / safety-toggle changes are auditable -> **manual fallback**
 
 ## Why the NO-GO remains locked
 
-This step materially improves the operator-readiness lane because the repo now has actor-scoped audit proof for both:
-- support-surface access, and
-- a live receipt-intake pause / clear intervention.
+This step materially improves the operator-readiness lane because the repo now has actor-scoped audit proof for:
+- support-surface access,
+- a live receipt-intake pause / clear intervention,
+- and release-override changes for receipt capture plus the simulator starter rail.
 
 But hosted alpha remains **NO-GO** because:
 - audit durability is still local-runtime,
-- feature-flag and safety-toggle changes are still unaudited,
 - support-only/admin-only role separation is still absent,
 - cross-account intervention is still unproven,
 - and interview evidence is still unpopulated.
@@ -130,6 +149,5 @@ But hosted alpha remains **NO-GO** because:
 ## Exact next hardening move this points to
 
 1. Move the audit sink onto authoritative hosted durability.
-2. Extend the same audit rail to feature-flag / kill-switch changes.
-3. Add explicit support/admin boundaries before any cross-account intervention exists.
-4. Keep the alpha **NO-GO** locked while the interview evidence pack is populated.
+2. Add explicit support/admin boundaries before any cross-account intervention exists.
+3. Keep the alpha **NO-GO** locked while the interview evidence pack is populated.

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getActiveSupportInterventions } from "@/lib/audit/demo-audit";
 import { requireViewerSession } from "@/lib/auth/session";
+import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
 import { formatCurrency } from "@/lib/finance/first-value";
 import { getDemoReceiptReviewState } from "@/lib/receipts/demo-receipts";
 import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-context";
@@ -16,6 +17,11 @@ type ReceiptPageProps = {
 export default async function ReceiptReviewPage({ searchParams }: ReceiptPageProps) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
+  const internalUser = session.email.endsWith("@prosperpals.local");
+  const flags = await getEffectiveFeatureFlags({
+    countryCode: "DK",
+    internalUser
+  });
   const receiptState = await getDemoReceiptReviewState(session.userId);
   const activeInterventions = await getActiveSupportInterventions(session.userId);
   const activeReceiptCapturePause = activeInterventions.find(
@@ -24,6 +30,8 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
   const resolved = (await searchParams) ?? {};
   const candidate = receiptState.pendingCandidate;
   const receiptCapturePaused = Boolean(activeReceiptCapturePause);
+  const receiptCaptureDisabled = !flags.receiptCapture;
+  const receiptCaptureBlocked = receiptCapturePaused || receiptCaptureDisabled;
 
   const logPreview = toStructuredLog("receipt.review.rendered", requestContext, {
     pending_candidate: candidate?.candidateId ?? null,
@@ -31,6 +39,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
     failure_query: resolved.failure ?? null,
     blocked_query: resolved.blocked ?? null,
     receipt_capture_paused: receiptCapturePaused,
+    receipt_capture_enabled: flags.receiptCapture,
     latest_confirmation: receiptState.latestConfirmed?.candidateId ?? null,
     latest_artifact: receiptState.latestArtifact?.artifactId ?? null,
     latest_failure: receiptState.latestFailure?.id ?? null,
@@ -55,6 +64,25 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
             </Link>
           </div>
         </div>
+
+        {resolved.blocked === "receipt_capture_disabled" ? (
+          <section className="panel" style={{ marginBottom: 24 }}>
+            <h2>Receipt capture is globally disabled</h2>
+            <div className="grid cols-2" style={{ alignItems: "start" }}>
+              <div className="card compact-card">
+                <strong>Hosted-alpha kill switch is active</strong>
+                <span className="muted-line">
+                  An actor-audited release override forced receipt capture off while trust hardening stays in progress.
+                </span>
+              </div>
+              <div className="meta">
+                <div><strong>Current state</strong>: receipt capture disabled</div>
+                <div><strong>Why it matters</strong>: no new OCR candidates should enter the lane until review clears.</div>
+                <div><strong>Next step</strong>: clear the audited override from <Link href="/app/support">/app/support</Link>.</div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {resolved.blocked === "receipt_capture_paused" && activeReceiptCapturePause ? (
           <section className="panel" style={{ marginBottom: 24 }}>
@@ -115,7 +143,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
                     type="file"
                     name="receiptFile"
                     accept="image/*,application/pdf,text/plain"
-                    disabled={receiptCapturePaused}
+                    disabled={receiptCaptureBlocked}
                   />
                   <span className="muted-line">
                     Optional for now. Uploading creates stored artifact metadata; skipping it keeps a
@@ -124,11 +152,19 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
                 </label>
                 <div className="card compact-card">
                   <span className="eyebrow">Current posture</span>
-                  <strong>{receiptCapturePaused ? "Receipt capture paused" : "Real upload, demo durability"}</strong>
+                  <strong>
+                    {receiptCaptureDisabled
+                      ? "Global receipt capture kill switch active"
+                      : receiptCapturePaused
+                        ? "Receipt capture paused"
+                        : "Real upload, demo durability"}
+                  </strong>
                   <span className="muted-line">
-                    {receiptCapturePaused
-                      ? "Support has paused new receipt intake pending review. Existing evidence stays visible, but new candidates are blocked."
-                      : "This proves asset lineage better, but runtime storage is still local-file based, so hosted alpha remains NO-GO."}
+                    {receiptCaptureDisabled
+                      ? "An actor-audited release override forced the feature flag off. Hosted alpha remains NO-GO until the trust review clears it."
+                      : receiptCapturePaused
+                        ? "Support has paused new receipt intake pending review. Existing evidence stays visible, but new candidates are blocked."
+                        : "This proves asset lineage better, but runtime storage is still local-file based, so hosted alpha remains NO-GO."}
                   </span>
                 </div>
               </div>
@@ -136,7 +172,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
               <div className="grid cols-3" style={{ alignItems: "start", marginTop: 14 }}>
                 <label>
                   <span className="field-label">Receipt merchant hint</span>
-                  <input type="text" name="merchantLabel" defaultValue="Føtex City" disabled={receiptCapturePaused} />
+                  <input type="text" name="merchantLabel" defaultValue="Føtex City" disabled={receiptCaptureBlocked} />
                 </label>
                 <label>
                   <span className="field-label">Parsed total (DKK)</span>
@@ -146,16 +182,16 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
                     step="0.01"
                     min="1"
                     defaultValue="226.45"
-                    disabled={receiptCapturePaused}
+                    disabled={receiptCaptureBlocked}
                   />
                 </label>
                 <label>
                   <span className="field-label">Draft category</span>
-                  <input type="text" name="categoryId" defaultValue="groceries" disabled={receiptCapturePaused} />
+                  <input type="text" name="categoryId" defaultValue="groceries" disabled={receiptCaptureBlocked} />
                 </label>
               </div>
               <div className="actions">
-                <button className="primary" type="submit" disabled={receiptCapturePaused}>Create receipt candidate</button>
+                <button className="primary" type="submit" disabled={receiptCaptureBlocked}>Create receipt candidate</button>
                 <Link className="button secondary" href="/app/support">Open operator timeline</Link>
               </div>
             </form>
@@ -171,6 +207,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
               <li>Uploaded assets now record storage metadata plus parser/provider lineage.</li>
               <li>Failed uploads/OCR parses surface a safe recovery lane instead of silently faking a candidate.</li>
               <li>Support can now pause new receipt intake with an audited intervention when trust review is still open.</li>
+              <li>Receipt capture can also be forced off globally through an actor-audited release override.</li>
             </ul>
           </article>
         </section>
@@ -275,6 +312,7 @@ export default async function ReceiptReviewPage({ searchParams }: ReceiptPagePro
               <div><strong>Candidate sink path</strong>: <code>{receiptState.sinkPath}</code></div>
               <div><strong>Artifact sink path</strong>: <code>{receiptState.artifactSinkPath}</code></div>
               <div><strong>Pending candidate</strong>: {candidate ? candidate.candidateId : "none"}</div>
+              <div><strong>Receipt capture feature flag</strong>: {flags.receiptCapture ? "enabled" : "disabled"}</div>
               <div><strong>Receipt capture paused</strong>: {receiptCapturePaused ? "yes" : "no"}</div>
               <div><strong>Confirmation count</strong>: {receiptState.confirmationCount}</div>
               <div><strong>Failure count</strong>: {receiptState.failureCount}</div>

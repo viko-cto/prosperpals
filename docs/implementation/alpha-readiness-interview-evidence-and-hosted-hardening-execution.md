@@ -213,7 +213,7 @@ These are not polishing issues. They are re-decision blockers.
 
 ---
 
-## Current execution readout (updated 2026-03-22 21:25 UTC)
+## Current execution readout (updated 2026-03-24 08:55 UTC)
 
 The lane has now moved beyond a purely typed receipt simulation **and** beyond a placeholder operator runbook.
 
@@ -226,6 +226,7 @@ The repo currently proves:
 - explicit role/access documentation for user vs founder/operator vs missing support/admin roles,
 - actor-scoped support-surface audit events with timestamp/request/trace/subject context persisted to the demo audit sink,
 - actor-scoped receipt-intake pause / clear interventions that are visible in `/app/support` and enforced on `/app/receipts`,
+- actor-scoped audited release overrides for `receiptCapture` and `simulatorStarter` that are visible in `/app/support` and enforced on `/app/receipts` plus `/app/simulator`,
 - manual but repo-documented help/export/deletion fallback paths,
 - and explicit incident pause criteria tied to current flag and support surfaces.
 
@@ -234,7 +235,7 @@ This is meaningful progress because the operator/access lane is no longer hand-w
 But the step is still **not complete** because:
 - artifact files and metadata still land in local runtime storage,
 - there is still no external OCR/provider call,
-- the new operator audit trail is still local-runtime and does not yet cover feature-flag or safety-toggle changes,
+- the new operator audit trail is still local-runtime rather than hosted durable,
 - support-only/admin-only boundaries and broader cross-account intervention controls are still absent,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
@@ -245,7 +246,7 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> move the new operator audit path onto hosted durability, extend it to feature-flag / safety-toggle changes, then populate the human evidence pack.
+> move the new operator audit path onto hosted durability, then populate the human evidence pack behind the still-locked NO-GO.
 
 ---
 

@@ -1,23 +1,40 @@
 import Link from "next/link";
 import { requireViewerSession } from "@/lib/auth/session";
 import { recordSupportTimelineViewAudit } from "@/lib/audit/demo-audit";
-import { evaluateFeatureFlags } from "@/lib/feature-flags/config";
+import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
 import { getDemoSupportConsole } from "@/lib/support/demo-support";
 import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-context";
 import {
   applyReceiptCapturePauseAction,
-  clearReceiptCapturePauseAction
+  applyReleaseFlagOverrideAction,
+  clearReceiptCapturePauseAction,
+  clearReleaseFlagOverrideAction
 } from "./actions";
 
 type SupportPageProps = {
-  searchParams?: Promise<{ intervention?: string }>;
+  searchParams?: Promise<{ intervention?: string; releaseOverride?: string }>;
 };
+
+const releaseFlagMeta = {
+  receiptCapture: {
+    title: "Receipt capture",
+    summary: "Global kill switch for new receipt candidate creation during hosted-alpha trust review.",
+    fallbackDisableReason: "receipt capture kill switch engaged during hosted-alpha hardening review",
+    fallbackClearReason: "receipt capture audited override cleared after hosted-alpha review"
+  },
+  simulatorStarter: {
+    title: "Fin simulator starter",
+    summary: "Global kill switch for the ProsperCoins-to-simulator starter trade loop.",
+    fallbackDisableReason: "simulator starter kill switch engaged during hosted-alpha hardening review",
+    fallbackClearReason: "simulator starter audited override cleared after hosted-alpha review"
+  }
+} as const;
 
 export default async function SupportPage({ searchParams }: SupportPageProps) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
   const internalUser = session.email.endsWith("@prosperpals.local");
-  const flags = evaluateFeatureFlags({
+  const flags = await getEffectiveFeatureFlags({
     countryCode: "DK",
     internalUser
   });
@@ -59,11 +76,15 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
   const activeReceiptCapturePause = supportConsole.activeInterventions.find(
     (intervention) => intervention.code === "receipt_capture_paused"
   );
+  const activeReleaseOverrideByFlag = new Map(
+    supportConsole.activeReleaseOverrides.map((override) => [override.flagName, override])
+  );
 
   const logPreview = toStructuredLog("support.timeline.rendered", requestContext, {
     support_trace_view: flags.supportTraceView,
     timeline_count: supportConsole.timeline.length,
     active_intervention_count: supportConsole.activeInterventions.length,
+    active_release_override_count: supportConsole.activeReleaseOverrides.length,
     receipt_capture_paused: Boolean(activeReceiptCapturePause),
     release_checks: supportConsole.releaseSafety.checks.length
   });
@@ -89,6 +110,17 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               {resolved.intervention === "receipt-capture-paused"
                 ? "Receipt capture is now paused for this subject until an internal reviewer clears it."
                 : "Receipt capture pause was cleared, so the intake lane is open again."}
+            </p>
+          </section>
+        ) : null}
+
+        {resolved.releaseOverride ? (
+          <section className="panel" style={{ marginBottom: 24 }}>
+            <h2>Latest release override update</h2>
+            <p>
+              {resolved.releaseOverride.endsWith("-disabled")
+                ? `${resolved.releaseOverride.replace(/-disabled$/, "")} is now forced off through an actor-audited release override.`
+                : `${resolved.releaseOverride.replace(/-cleared$/, "")} returned to baseline flag evaluation after the override was cleared.`}
             </p>
           </section>
         ) : null}
@@ -176,6 +208,64 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
 
         <section className="panel" style={{ marginTop: 24 }}>
           <div className="panel-header-row">
+            <h2>Audited release overrides</h2>
+            <span className="eyebrow">Global safety toggles</span>
+          </div>
+          <div className="grid cols-2" style={{ marginTop: 16, alignItems: "start" }}>
+            {(Object.keys(releaseFlagMeta) as Array<keyof typeof releaseFlagMeta>).map((flagName) => {
+              const meta = releaseFlagMeta[flagName];
+              const activeOverride = activeReleaseOverrideByFlag.get(flagName);
+              const flagEnabled = flags[flagName];
+
+              return (
+                <div key={flagName} className="card compact-card" style={{ gap: 12 }}>
+                  <div className="panel-header-row">
+                    <strong>{meta.title}</strong>
+                    <span className={flagEnabled ? "status-pill status-pill--verified" : "status-pill status-pill--stale"}>
+                      {flagEnabled ? "Enabled" : activeOverride ? "Forced off" : "Disabled"}
+                    </span>
+                  </div>
+                  <span className="muted-line">{meta.summary}</span>
+                  {activeOverride ? (
+                    <div className="meta">
+                      <div><strong>Reason</strong>: {activeOverride.reason}</div>
+                      <div><strong>Applied at</strong>: {activeOverride.occurredAt}</div>
+                      <div><strong>Actor</strong>: {activeOverride.actorUserId ?? "unknown"}</div>
+                      <div><strong>Scope</strong>: {activeOverride.scope}</div>
+                    </div>
+                  ) : (
+                    <div className="meta">
+                      <div><strong>Baseline state</strong>: {flagEnabled ? "enabled" : "disabled by default/env"}</div>
+                      <div><strong>Current source</strong>: audited override not active</div>
+                    </div>
+                  )}
+                  {activeOverride ? (
+                    <form action={clearReleaseFlagOverrideAction} className="grid" style={{ gap: 12 }}>
+                      <input type="hidden" name="flagName" value={flagName} />
+                      <label>
+                        <span className="field-label">Clear reason</span>
+                        <input type="text" name="reason" defaultValue={meta.fallbackClearReason} />
+                      </label>
+                      <button className="primary" type="submit">Clear audited override</button>
+                    </form>
+                  ) : (
+                    <form action={applyReleaseFlagOverrideAction} className="grid" style={{ gap: 12 }}>
+                      <input type="hidden" name="flagName" value={flagName} />
+                      <label>
+                        <span className="field-label">Disable reason</span>
+                        <input type="text" name="reason" defaultValue={meta.fallbackDisableReason} />
+                      </label>
+                      <button className="primary" type="submit">Force off with audit trail</button>
+                    </form>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="panel" style={{ marginTop: 24 }}>
+          <div className="panel-header-row">
             <h2>Support timeline</h2>
             <span className="eyebrow">{supportConsole.timeline.length} recent items</span>
           </div>
@@ -224,6 +314,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               <div><strong>Migration dir</strong>: <code>{supportConsole.releaseSafety.migrationDir}</code></div>
               <div><strong>Latest migration</strong>: {supportConsole.releaseSafety.latestMigration ?? "none"}</div>
               <div><strong>Monotonic filenames</strong>: {supportConsole.releaseSafety.monotonic ? "yes" : "no"}</div>
+              <div><strong>Active audited overrides</strong>: {supportConsole.releaseSafety.activeOverrides.length}</div>
             </div>
           </article>
 

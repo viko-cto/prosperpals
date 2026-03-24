@@ -366,3 +366,89 @@ test('receipt capture pause interventions are actor-audited and enforce a live i
     await assert.doesNotReject(() => audit.assertReceiptCaptureAllowed(userId));
   });
 });
+
+test('actor-audited release overrides can force off receipt capture and simulator starter until cleared', async () => {
+  await withTempRuntime(async () => {
+    const audit = await import('../src/lib/audit/demo-audit.ts');
+    const flags = await import('../src/lib/feature-flags/config.ts');
+    const releaseSafety = await import('../src/lib/operations/release-safety.ts');
+
+    const baseFlags = await flags.getEffectiveFeatureFlags({
+      countryCode: 'DK',
+      internalUser: true
+    });
+    assert.equal(baseFlags.receiptCapture, true);
+    assert.equal(baseFlags.simulatorStarter, true);
+
+    await audit.recordReleaseFlagOverrideAudit({
+      actorUserId: '22222222-2222-4222-8222-222222222222',
+      requestId: 'audit-req-020',
+      traceId,
+      path: '/app/support',
+      reason: 'receipt trust hardening review still open',
+      scope: 'denmark-alpha-hosted',
+      supportTraceView: true,
+      flagName: 'receiptCapture',
+      enabled: false,
+      action: 'applied',
+      occurredAt: new Date().toISOString()
+    });
+
+    await audit.recordReleaseFlagOverrideAudit({
+      actorUserId: '22222222-2222-4222-8222-222222222222',
+      requestId: 'audit-req-021',
+      traceId,
+      path: '/app/support',
+      reason: 'simulator trust review still open',
+      scope: 'denmark-alpha-hosted',
+      supportTraceView: true,
+      flagName: 'simulatorStarter',
+      enabled: false,
+      action: 'applied',
+      occurredAt: new Date().toISOString()
+    });
+
+    const activeOverrides = await audit.getActiveReleaseFlagOverrides();
+    assert.equal(activeOverrides.length, 2);
+    assert.equal(activeOverrides.every((override) => override.enabled === false), true);
+
+    const forcedOffFlags = await flags.getEffectiveFeatureFlags({
+      countryCode: 'DK',
+      internalUser: true
+    });
+    assert.equal(forcedOffFlags.receiptCapture, false);
+    assert.equal(forcedOffFlags.simulatorStarter, false);
+
+    const summaryWhileForcedOff = await releaseSafety.getReleaseSafetySummary({
+      countryCode: 'DK',
+      internalUser: true
+    });
+    assert.equal(summaryWhileForcedOff.activeOverrides.length, 2);
+    assert.equal(summaryWhileForcedOff.checks.find((check) => check.id === 'receipt-capture-flag')?.ok, false);
+    assert.match(
+      summaryWhileForcedOff.checks.find((check) => check.id === 'receipt-capture-flag')?.detail ?? '',
+      /actor-audited release override/i
+    );
+
+    await audit.recordReleaseFlagOverrideAudit({
+      actorUserId: '22222222-2222-4222-8222-222222222222',
+      requestId: 'audit-req-022',
+      traceId,
+      path: '/app/support',
+      reason: 'receipt review closed',
+      scope: 'denmark-alpha-hosted',
+      supportTraceView: true,
+      flagName: 'receiptCapture',
+      enabled: false,
+      action: 'cleared',
+      occurredAt: new Date().toISOString()
+    });
+
+    const partiallyClearedFlags = await flags.getEffectiveFeatureFlags({
+      countryCode: 'DK',
+      internalUser: true
+    });
+    assert.equal(partiallyClearedFlags.receiptCapture, true);
+    assert.equal(partiallyClearedFlags.simulatorStarter, false);
+  });
+});

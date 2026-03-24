@@ -4,10 +4,13 @@ import { auditEventSchema } from "../../modules/finance/contracts.ts";
 
 export type DemoAuditEvent = ReturnType<typeof auditEventSchema.parse>;
 export type SupportInterventionCode = "receipt_capture_paused";
+export type ReleaseFlagOverrideName = "receiptCapture" | "simulatorStarter";
 
 export const SUPPORT_TIMELINE_VIEWED_EVENT = "support.timeline.viewed";
 export const SUPPORT_INTERVENTION_APPLIED_EVENT = "support.intervention.applied";
 export const SUPPORT_INTERVENTION_CLEARED_EVENT = "support.intervention.cleared";
+export const RELEASE_FLAG_OVERRIDE_APPLIED_EVENT = "release.flag.override.applied";
+export const RELEASE_FLAG_OVERRIDE_CLEARED_EVENT = "release.flag.override.cleared";
 
 export type ActiveSupportIntervention = {
   code: SupportInterventionCode;
@@ -18,6 +21,19 @@ export type ActiveSupportIntervention = {
   traceId?: string;
   reason: string;
   path: string;
+  supportTraceView: boolean;
+};
+
+export type ActiveReleaseFlagOverride = {
+  flagName: ReleaseFlagOverrideName;
+  enabled: boolean;
+  actorUserId?: string;
+  occurredAt: string;
+  requestId: string;
+  traceId?: string;
+  reason: string;
+  path: string;
+  scope: string;
   supportTraceView: boolean;
 };
 
@@ -125,6 +141,25 @@ function toSupportInterventionCode(value: unknown): SupportInterventionCode | nu
   return value === "receipt_capture_paused" ? value : null;
 }
 
+function toReleaseFlagOverrideName(value: unknown): ReleaseFlagOverrideName | null {
+  return value === "receiptCapture" || value === "simulatorStarter" ? value : null;
+}
+
+function toBoolean(value: unknown) {
+  return typeof value === "boolean" ? value : null;
+}
+
+export function describeReleaseFlagOverride(flagName: ReleaseFlagOverrideName) {
+  switch (flagName) {
+    case "receiptCapture":
+      return "Receipt capture";
+    case "simulatorStarter":
+      return "Fin simulator starter";
+    default:
+      return flagName;
+  }
+}
+
 export async function recordSupportTimelineViewAudit(input: {
   actorUserId: string;
   subjectUserId: string;
@@ -181,6 +216,39 @@ export async function recordSupportInterventionAudit(input: {
   });
 }
 
+export async function recordReleaseFlagOverrideAudit(input: {
+  actorUserId: string;
+  requestId: string;
+  traceId: string;
+  occurredAt?: string;
+  path: string;
+  reason: string;
+  scope: string;
+  supportTraceView: boolean;
+  flagName: ReleaseFlagOverrideName;
+  enabled: boolean;
+  action: "applied" | "cleared";
+}) {
+  return appendDemoAuditEvent({
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    actorUserId: input.actorUserId,
+    eventCode:
+      input.action === "applied"
+        ? RELEASE_FLAG_OVERRIDE_APPLIED_EVENT
+        : RELEASE_FLAG_OVERRIDE_CLEARED_EVENT,
+    traceId: input.traceId,
+    requestId: input.requestId,
+    payload: {
+      flagName: input.flagName,
+      enabled: input.enabled,
+      path: input.path,
+      reason: input.reason,
+      scope: input.scope,
+      supportTraceView: input.supportTraceView
+    }
+  });
+}
+
 export async function getActiveSupportInterventions(subjectUserId: string) {
   const events = await readDemoAuditEvents({
     subjectUserId,
@@ -213,6 +281,48 @@ export async function getActiveSupportInterventions(subjectUserId: string) {
       path: String(event.payload.path ?? "unknown"),
       supportTraceView: event.payload.supportTraceView === true
     }));
+}
+
+export async function getActiveReleaseFlagOverrides() {
+  const events = await readDemoAuditEvents({
+    eventCodes: [RELEASE_FLAG_OVERRIDE_APPLIED_EVENT, RELEASE_FLAG_OVERRIDE_CLEARED_EVENT],
+    limit: 128
+  });
+
+  const latestByFlag = new Map<ReleaseFlagOverrideName, DemoAuditEvent>();
+
+  for (const event of events) {
+    const flagName = toReleaseFlagOverrideName(event.payload.flagName);
+
+    if (!flagName || latestByFlag.has(flagName)) {
+      continue;
+    }
+
+    latestByFlag.set(flagName, event);
+  }
+
+  return [...latestByFlag.entries()]
+    .filter(([, event]) => event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT)
+    .flatMap(([flagName, event]): ActiveReleaseFlagOverride[] => {
+      const enabled = toBoolean(event.payload.enabled);
+
+      if (enabled == null) {
+        return [];
+      }
+
+      return [{
+        flagName,
+        enabled,
+        actorUserId: event.actorUserId ?? undefined,
+        occurredAt: event.occurredAt,
+        requestId: event.requestId,
+        traceId: event.traceId,
+        reason: String(event.payload.reason ?? "unspecified"),
+        path: String(event.payload.path ?? "unknown"),
+        scope: String(event.payload.scope ?? "alpha-hosted"),
+        supportTraceView: event.payload.supportTraceView === true
+      }];
+    });
 }
 
 export async function assertReceiptCaptureAllowed(subjectUserId: string) {

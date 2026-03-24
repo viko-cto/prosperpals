@@ -45,7 +45,7 @@ For every line marked complete or manual fallback, link the proof note under `do
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
 - [ ] Rollback / kill-switch procedure exists  
-  - status: open blocker
+  - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
 
 ## B3. Observability for learning
@@ -105,7 +105,7 @@ For every line marked complete or manual fallback, link the proof note under `do
   - status: open blocker
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Feature-flag / safety-toggle changes are auditable  
-  - status: open blocker
+  - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Least-privilege support path exists  
   - status: manual fallback
@@ -119,11 +119,11 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## Current blockers
 1. Trust-critical user state still depends on cookie/local-runtime sinks instead of authoritative hosted durability.
-2. Operator support-view access plus the narrow receipt-capture pause/clear intervention are now actor-audited in the local demo runtime, but durable hosted audit storage and feature-flag / safety-toggle audit coverage are still missing.
+2. Operator support-view access, the narrow receipt-capture pause/clear intervention, and release overrides for receipt capture plus simulator starter are now actor-audited in the local demo runtime, but durable hosted audit storage is still missing.
 3. Support-only/admin-only roles and broader cross-account intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
-- Why the NO-GO remains locked: the receipt lane is materially stronger and support-view plus receipt-intake intervention access are now actor-audited, but hosted durability, feature-flag audit coverage, and real support/admin boundaries are still missing.
-- What exact artifacts would change that answer next: hosted durability proof beyond local sinks, audit coverage for feature-flag / safety-toggle changes, support/admin role boundaries, and populated interview/redecision evidence.
+- Why the NO-GO remains locked: the receipt lane is materially stronger and support-view, receipt-intake intervention access, and audited release overrides are now repo-native, but hosted durability and real support/admin boundaries are still missing.
+- What exact artifacts would change that answer next: hosted durability proof beyond local sinks, support/admin role boundaries, and populated interview/redecision evidence.

@@ -1,7 +1,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { describeReleaseFlagOverride, getActiveReleaseFlagOverrides } from "../audit/demo-audit.ts";
+import { getEffectiveFeatureFlags } from "../feature-flags/config.ts";
 import { buildSafeNotificationPayload } from "../notifications/contracts.ts";
-import { evaluateFeatureFlags } from "../feature-flags/config.ts";
 import { getDemoLaunchAssetUniverse } from "../simulator/demo-simulator.ts";
 
 export type ReleaseSafetyCheck = {
@@ -10,6 +11,10 @@ export type ReleaseSafetyCheck = {
   ok: boolean;
   detail: string;
 };
+
+function describeAuditedOverride(flagName: "receiptCapture" | "simulatorStarter", detail: string) {
+  return `${describeReleaseFlagOverride(flagName)} is currently forced off by an actor-audited release override. ${detail}`;
+}
 
 export async function getReleaseSafetySummary(context: {
   countryCode?: string;
@@ -21,10 +26,17 @@ export async function getReleaseSafetySummary(context: {
     .then((files) => files.filter((file) => file.endsWith(".sql")).sort())
     .catch(() => [] as string[]);
 
-  const flags = evaluateFeatureFlags(context);
+  const [flags, activeOverrides] = await Promise.all([
+    getEffectiveFeatureFlags(context),
+    getActiveReleaseFlagOverrides()
+  ]);
+  const overrideByFlag = new Map(activeOverrides.map((override) => [override.flagName, override]));
   const assets = getDemoLaunchAssetUniverse();
   const staleQuoteBlocked = assets.some((asset) => !asset.tradeable && Boolean(asset.blockedReason));
   const notificationPayload = buildSafeNotificationPayload("portfolio-check-in");
+
+  const receiptCaptureOverride = overrideByFlag.get("receiptCapture");
+  const simulatorStarterOverride = overrideByFlag.get("simulatorStarter");
 
   const checks: ReleaseSafetyCheck[] = [
     {
@@ -41,7 +53,12 @@ export async function getReleaseSafetySummary(context: {
       ok: flags.receiptCapture,
       detail: flags.receiptCapture
         ? "Receipt review flow is allowed for the Denmark-first implementation slice."
-        : "Receipt capture is unexpectedly disabled."
+        : receiptCaptureOverride
+          ? describeAuditedOverride(
+              "receiptCapture",
+              `Applied by ${receiptCaptureOverride.actorUserId ?? "unknown"} at ${receiptCaptureOverride.occurredAt} for ${receiptCaptureOverride.scope}.`
+            )
+          : "Receipt capture is unexpectedly disabled."
     },
     {
       id: "simulator-starter-flag",
@@ -49,7 +66,12 @@ export async function getReleaseSafetySummary(context: {
       ok: flags.simulatorStarter,
       detail: flags.simulatorStarter
         ? "The reward-to-simulator loop can still be smoke-tested end to end."
-        : "Simulator starter flow is unexpectedly disabled."
+        : simulatorStarterOverride
+          ? describeAuditedOverride(
+              "simulatorStarter",
+              `Applied by ${simulatorStarterOverride.actorUserId ?? "unknown"} at ${simulatorStarterOverride.occurredAt} for ${simulatorStarterOverride.scope}.`
+            )
+          : "Simulator starter flow is unexpectedly disabled."
     },
     {
       id: "stale-quote-block",
@@ -80,6 +102,7 @@ export async function getReleaseSafetySummary(context: {
     migrationFiles,
     checks,
     latestMigration: migrationFiles.at(-1) ?? null,
-    monotonic: migrationFiles.every((file, index) => index === 0 || file >= migrationFiles[index - 1])
+    monotonic: migrationFiles.every((file, index) => index === 0 || file >= migrationFiles[index - 1]),
+    activeOverrides
   };
 }

@@ -2,16 +2,18 @@
 
 import { redirect } from "next/navigation";
 import {
+  type ReleaseFlagOverrideName,
+  recordReleaseFlagOverrideAudit,
   recordSupportInterventionAudit
 } from "@/lib/audit/demo-audit";
 import { requireViewerSession } from "@/lib/auth/session";
-import { evaluateFeatureFlags } from "@/lib/feature-flags/config";
+import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
 import { getRequestContext } from "@/lib/telemetry/request-context";
 
 async function requireInternalSupportViewer() {
   const session = await requireViewerSession();
   const internalUser = session.email.endsWith("@prosperpals.local");
-  const flags = evaluateFeatureFlags({
+  const flags = await getEffectiveFeatureFlags({
     countryCode: "DK",
     internalUser
   });
@@ -25,6 +27,16 @@ async function requireInternalSupportViewer() {
 
 function readReason(formData: FormData, fallback: string) {
   return String(formData.get("reason") ?? "").trim() || fallback;
+}
+
+function readReleaseFlagName(formData: FormData): ReleaseFlagOverrideName {
+  const value = String(formData.get("flagName") ?? "").trim();
+
+  if (value === "receiptCapture" || value === "simulatorStarter") {
+    return value;
+  }
+
+  throw new Error(`Unsupported audited release flag: ${value || "missing"}`);
 }
 
 export async function applyReceiptCapturePauseAction(formData: FormData) {
@@ -65,4 +77,46 @@ export async function clearReceiptCapturePauseAction(formData: FormData) {
   });
 
   redirect("/app/support?intervention=receipt-capture-resumed");
+}
+
+export async function applyReleaseFlagOverrideAction(formData: FormData) {
+  const { session, flags } = await requireInternalSupportViewer();
+  const requestContext = await getRequestContext();
+  const flagName = readReleaseFlagName(formData);
+
+  await recordReleaseFlagOverrideAudit({
+    actorUserId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: "/app/support",
+    reason: readReason(formData, `${flagName} kill switch engaged during hosted-alpha hardening review`),
+    scope: "denmark-alpha-hosted",
+    supportTraceView: flags.supportTraceView,
+    flagName,
+    enabled: false,
+    action: "applied"
+  });
+
+  redirect(`/app/support?releaseOverride=${flagName}-disabled`);
+}
+
+export async function clearReleaseFlagOverrideAction(formData: FormData) {
+  const { session, flags } = await requireInternalSupportViewer();
+  const requestContext = await getRequestContext();
+  const flagName = readReleaseFlagName(formData);
+
+  await recordReleaseFlagOverrideAudit({
+    actorUserId: session.userId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: "/app/support",
+    reason: readReason(formData, `${flagName} audited override cleared after hosted-alpha review`),
+    scope: "denmark-alpha-hosted",
+    supportTraceView: flags.supportTraceView,
+    flagName,
+    enabled: false,
+    action: "cleared"
+  });
+
+  redirect(`/app/support?releaseOverride=${flagName}-cleared`);
 }
