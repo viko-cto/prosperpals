@@ -17,10 +17,10 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
 - [ ] Reward ledger is hosted and durable  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-ledger-postgrest-durability-path.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-ledger-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
 - [ ] Simulator trades are hosted and durable  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-ledger-postgrest-durability-path.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-ledger-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
 - [ ] Receipt candidates survive redeploys  
   - status: open blocker
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`

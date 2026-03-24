@@ -292,6 +292,8 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `test/sprint-3-explainability-operator-safety.test.mjs`
 - `supabase/migrations/20260324091500_demo_operator_audit_events.sql`
 - `docs/alpha-readiness/evidence/hosted-hardening/hosted-audit-postgrest-durability-path.md`
+- `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
+- `scripts/hosted-durability-smoke.mjs`
 
 ## Outcome
 

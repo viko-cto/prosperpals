@@ -41,6 +41,19 @@ npm test
 
 This verifies that repeated writes to the core trust-critical tables remain idempotent.
 
+## Prove hosted audit + ledger durability in preview/alpha
+```bash
+PROSPERPALS_ENV=preview \
+PROSPERPALS_SUPABASE_URL=https://<project>.supabase.co \
+PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY=<service-role-key> \
+PROSPERPALS_AUDIT_DURABILITY_MODE=hosted-only \
+PROSPERPALS_LEDGER_DURABILITY_MODE=hosted-only \
+PROSPERPALS_HOSTED_SMOKE_REPORT_PATH=docs/alpha-readiness/evidence/hosted-hardening/generated/preview-hosted-durability-smoke-latest.md \
+npm run smoke:hosted-durability
+```
+
+This is the honest smoke gate for the current alpha-readiness blocker: it proves the hosted audit + reward/trade ledger paths round-trip through PostgREST and fail if the app tries to fall back to local runtime JSONL sinks.
+
 ## BMAD sequence completed
 1. Analyst → Product Brief
 2. PM → PRD
