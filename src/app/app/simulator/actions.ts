@@ -16,7 +16,7 @@ export async function submitStarterTradeAction(formData: FormData) {
     countryCode: "DK",
     internalUser
   });
-  const onboardingState = await getDemoOnboardingState();
+  const onboardingState = await getDemoOnboardingState(session.userId);
   const assetId = String(formData.get("assetId") ?? "").trim().toUpperCase();
   const occurredAt = new Date().toISOString();
   const mode = onboardingState.mode;

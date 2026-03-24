@@ -75,4 +75,4 @@ This is the honest smoke gate for the current alpha-readiness blocker: it proves
 17. Alpha readiness → interview evidence and hosted hardening execution operating pack
 
 ## Immediate next step
-Populate the interview/evidence/checklist artifacts in `docs/alpha-readiness/`, prove the hosted audit + ledger + analytics paths in deployment, keep the NO-GO locked, and re-enter decision review only after the required evidence exists.
+Populate the interview/evidence/checklist artifacts in `docs/alpha-readiness/`, prove the hosted audit + ledger + analytics paths in deployment, migrate the remaining receipt state off local-runtime sinks, keep the NO-GO locked, and re-enter decision review only after the required evidence exists.

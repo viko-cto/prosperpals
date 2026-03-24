@@ -125,5 +125,7 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
-- Why the NO-GO remains locked: the receipt lane is materially stronger and the operator-audit lane, reward/trade ledger loop, plus founder-visible cohort analytics now have hosted-capable durability paths, but deployed rollout proof, broader state durability, and real support/admin boundaries are still missing.
-- What exact artifacts would change that answer next: hosted env smoke proof for the audit + ledger + analytics paths, broader durability proof beyond local sinks, support/admin role boundaries, and populated interview/redecision evidence.
+- Why the NO-GO remains locked: the receipt lane is materially stronger and the operator-audit lane, reward/trade ledger loop, founder-visible cohort analytics, plus onboarding continuity now have hosted-capable durability paths, but deployed rollout proof, receipt-state durability, and real support/admin boundaries are still missing.
+- What exact artifacts would change that answer next: hosted env smoke proof for the audit + ledger + analytics paths, hosted receipt-state durability proof beyond local sinks, support/admin role boundaries, and populated interview/redecision evidence.
+lated interview/redecision evidence.
+ew/redecision evidence.

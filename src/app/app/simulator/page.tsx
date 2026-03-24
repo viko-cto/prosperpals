@@ -22,7 +22,7 @@ export default async function SimulatorPage({ searchParams }: SimulatorPageProps
     countryCode: "DK",
     internalUser
   });
-  const onboardingState = await getDemoOnboardingState();
+  const onboardingState = await getDemoOnboardingState(session.userId);
   const rewardLoop = await getDemoRewardLoopSummary(session.userId);
   const resolved = (await searchParams) ?? {};
   const simulatorDisabled = !flags.simulatorStarter;

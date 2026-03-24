@@ -37,7 +37,7 @@ export async function startReceiptReviewAction(formData: FormData) {
     countryCode: "DK",
     internalUser
   });
-  const onboardingState = await getDemoOnboardingState();
+  const onboardingState = await getDemoOnboardingState(session.userId);
   const merchantLabel = String(formData.get("merchantLabel") ?? "").trim() || "Føtex City";
   const amountMajor = Number(formData.get("amountMajor") ?? 0) || 226.45;
   const categoryId = String(formData.get("categoryId") ?? "groceries").trim() || "groceries";
@@ -115,7 +115,7 @@ export async function startReceiptReviewAction(formData: FormData) {
 export async function confirmReceiptReviewAction(formData: FormData) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
-  const onboardingState = await getDemoOnboardingState();
+  const onboardingState = await getDemoOnboardingState(session.userId);
   const candidateId = String(formData.get("candidateId") ?? "").trim();
   const merchantLabel = String(formData.get("merchantLabel") ?? "").trim();
   const amountMajor = Number(formData.get("amountMajor") ?? 0);

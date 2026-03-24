@@ -39,7 +39,7 @@ function getStatusLabel(status: ExplainabilityStatus) {
 
 export async function getDemoExplainabilityCards(userId: string): Promise<ExplainabilityCard[]> {
   const [onboardingState, rewardLoop, receiptState] = await Promise.all([
-    getDemoOnboardingState(),
+    getDemoOnboardingState(userId),
     getDemoRewardLoopSummary(userId),
     getDemoReceiptReviewState(userId)
   ]);

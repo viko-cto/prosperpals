@@ -39,8 +39,10 @@ That honesty matters because it prevents a false alpha-readiness claim.
 
 ## What does NOT pass yet
 
-### 1. Onboarding state is not hosted durable
-`src/lib/onboarding/demo-state.ts` stores onboarding progress in a cookie. That can persist for a returning browser, but it is not an authoritative hosted user-state system and is not enough for a real alpha trust claim.
+### 1. Onboarding state now has a hosted-capable durability path, but not deployed proof
+`src/lib/onboarding/demo-state.ts` can now read/write onboarding progress through PostgREST to `public.demo_onboarding_states`, with a `hosted-only` fail-closed mode and test proof in `test/demo-onboarding-durability.test.mjs`.
+
+That is real progress because first-value continuity no longer has to remain cookie-only. But it is still only **manual fallback** until a real preview/alpha environment is wired and a smoke artifact proves the hosted table is live in deployment.
 
 ### 2. Reward ledger and simulator trades now have a hosted-capable durability path, but not deployed proof
 `src/lib/simulator/demo-simulator.ts` can now write ProsperCoin and virtual trade records through PostgREST to `public.demo_ledger_records`, with a `hosted-only` fail-closed mode and test proof in `test/demo-reward-loop.test.mjs`.
@@ -87,9 +89,10 @@ Because the current surfaced experience still stores trust-critical alpha eviden
 
 ## Exact next hardening move this proof points to
 
-Move the surfaced alpha path off cookie/JSONL persistence for:
-1. onboarding progress,
-2. receipt candidates/confirmations plus receipt-upload artifacts,
-3. deployed preview/alpha rollout proof for the audit, ledger, and analytics hosted paths.
+Move the surfaced alpha path off remaining local-runtime persistence for:
+1. receipt candidates/confirmations plus receipt-upload artifacts,
+2. deployed preview/alpha rollout proof for the audit, ledger, and analytics hosted paths,
+3. preview/alpha rollout proof for the new hosted onboarding path.
 
 Until that happens, hosted truth remains partly architectural intent and partly demo-local behavior.
+ocal behavior.

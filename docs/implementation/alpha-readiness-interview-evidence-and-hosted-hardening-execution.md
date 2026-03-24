@@ -236,6 +236,8 @@ A new repo-native hosted durability path also now exists for operator audit even
 
 Founder-visible cohort telemetry now has the same hosted-capable pattern: when the same hosted credentials are configured, analytics events can write to `demo_analytics_events`, and `hosted-only` mode can fail closed instead of pretending first-value/reward/receipt learning telemetry is durable when it is still local-only.
 
+Onboarding continuity now also has a hosted-capable path: when the same hosted credentials are configured, first-value progress can persist through `demo_onboarding_states`, and `hosted-only` mode can fail closed instead of quietly dropping back to the cookie-backed onboarding state.
+
 The hosted preview smoke harness is now wired to all three lanes together — audit, ledger, and analytics — so preview/alpha can require `hosted-only` on every surfaced trust-reporting path, round-trip them through PostgREST, and fail if any of them silently recreate a local runtime sink.
 
 But the step is still **not complete** because:

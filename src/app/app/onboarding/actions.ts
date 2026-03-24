@@ -22,7 +22,7 @@ import { getRequestContext } from "@/lib/telemetry/request-context";
 export async function saveOnboardingPreferencesAction(formData: FormData) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
-  const current = await getDemoOnboardingState();
+  const current = await getDemoOnboardingState(session.userId);
   const selectedIntent = normalizeIntent(formData.get("intent"));
   const mode = normalizeMode(formData.get("mode"));
   const occurredAt = new Date().toISOString();
@@ -31,7 +31,7 @@ export async function saveOnboardingPreferencesAction(formData: FormData) {
       ? occurredAt
       : current.onboardingStartedAt;
 
-  await setDemoOnboardingState({
+  await setDemoOnboardingState(session.userId, {
     ...current,
     selectedIntent,
     mode,
@@ -86,7 +86,7 @@ export async function saveOnboardingPreferencesAction(formData: FormData) {
 export async function submitBudgetFirstAction(formData: FormData) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
-  const current = await getDemoOnboardingState();
+  const current = await getDemoOnboardingState(session.userId);
   const merchantLabel = String(formData.get("merchantLabel") ?? "").trim() || "Recent expense";
   const amountMajor = Number(formData.get("amountMajor") ?? 0);
   const categoryId = String(formData.get("categoryId") ?? "everyday-spend");
@@ -114,7 +114,7 @@ export async function submitBudgetFirstAction(formData: FormData) {
   const firstValueCompletedAt = new Date().toISOString();
   const firstValueSeconds = getFirstValueDurationSeconds(onboardingStartedAt, firstValueCompletedAt);
 
-  await setDemoOnboardingState({
+  await setDemoOnboardingState(session.userId, {
     ...current,
     selectedIntent: "budget-first",
     mode,

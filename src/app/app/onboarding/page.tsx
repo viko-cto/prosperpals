@@ -22,7 +22,7 @@ type OnboardingPageProps = {
 
 export default async function OnboardingPage({ searchParams }: OnboardingPageProps) {
   const session = await requireViewerSession();
-  const state = await getDemoOnboardingState();
+  const state = await getDemoOnboardingState(session.userId);
   const requestContext = await getRequestContext();
   const resolved = (await searchParams) ?? {};
   const selectedIntent = normalizeIntent(resolved.intent ?? state.selectedIntent);

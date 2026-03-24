@@ -2,7 +2,11 @@ import Link from "next/link";
 import { requireViewerSession } from "@/lib/auth/session";
 import { evaluateFeatureFlags } from "@/lib/feature-flags/config";
 import { formatCurrency, getFirstValueDurationSeconds } from "@/lib/finance/first-value";
-import { getDemoOnboardingState, getIntentLabel } from "@/lib/onboarding/demo-state";
+import {
+  getDemoOnboardingState,
+  getDemoOnboardingStateLocation,
+  getIntentLabel
+} from "@/lib/onboarding/demo-state";
 import { getDemoReceiptReviewState } from "@/lib/receipts/demo-receipts";
 import { formatProsperCoins, getDemoRewardLoopSummary } from "@/lib/simulator/demo-simulator";
 import { getDemoAnalyticsSummary } from "@/lib/telemetry/demo-event-store";
@@ -11,7 +15,7 @@ import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-cont
 export default async function AppHomePage() {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
-  const onboardingState = await getDemoOnboardingState();
+  const onboardingState = await getDemoOnboardingState(session.userId);
   const analytics = await getDemoAnalyticsSummary(session.userId);
   const rewardLoop = await getDemoRewardLoopSummary(session.userId);
   const receiptState = await getDemoReceiptReviewState(session.userId);
@@ -262,6 +266,7 @@ export default async function AppHomePage() {
             <h2>Runtime sinks</h2>
             <div className="meta">
               <div><strong>Analytics path</strong>: <code>{analytics.sinkPath}</code></div>
+              <div><strong>Onboarding path</strong>: <code>{getDemoOnboardingStateLocation()}</code></div>
               <div><strong>Ledger path</strong>: <code>{rewardLoop.ledgerPath}</code></div>
               <div><strong>Recent event count</strong>: {analytics.eventCount}</div>
               <div><strong>Latest target verdict</strong>: {analytics.targetMet == null ? "Not measured yet" : analytics.targetMet ? "Met" : "Missed"}</div>
