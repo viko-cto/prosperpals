@@ -37,6 +37,13 @@ export type ActiveReleaseFlagOverride = {
   supportTraceView: boolean;
 };
 
+type HostedAuditConfig = {
+  url: string;
+  serviceKey: string;
+  table: string;
+  mode: "prefer-hosted" | "hosted-only";
+};
+
 export class SupportInterventionBlockedError extends Error {
   readonly code: SupportInterventionCode;
   readonly intervention: ActiveSupportIntervention;
@@ -51,13 +58,142 @@ export class SupportInterventionBlockedError extends Error {
 
 const DEFAULT_RUNTIME_DIR = path.join(process.cwd(), ".prosperpals-runtime");
 const DEFAULT_SINK_PATH = path.join(DEFAULT_RUNTIME_DIR, "demo-operator-audit.jsonl");
+const DEFAULT_HOSTED_TABLE = "demo_operator_audit_events";
 
 function getSinkPath() {
   return process.env.PROSPERPALS_DEMO_AUDIT_PATH ?? DEFAULT_SINK_PATH;
 }
 
+function getHostedAuditConfig(): HostedAuditConfig | null {
+  const url =
+    process.env.PROSPERPALS_SUPABASE_URL
+    ?? process.env.NEXT_PUBLIC_SUPABASE_URL
+    ?? process.env.SUPABASE_URL;
+  const serviceKey =
+    process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY
+    ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    return null;
+  }
+
+  return {
+    url: url.replace(/\/$/, ""),
+    serviceKey,
+    table: process.env.PROSPERPALS_AUDIT_TABLE ?? DEFAULT_HOSTED_TABLE,
+    mode:
+      process.env.PROSPERPALS_AUDIT_DURABILITY_MODE === "hosted-only"
+        ? "hosted-only"
+        : "prefer-hosted"
+  };
+}
+
+function getHostedAuditUrl(config: HostedAuditConfig, query = "") {
+  return `${config.url}/rest/v1/${config.table}${query}`;
+}
+
 async function ensureSinkDir() {
   await fs.mkdir(path.dirname(getSinkPath()), { recursive: true });
+}
+
+async function readHostedAuditEvents(): Promise<DemoAuditEvent[]> {
+  const config = getHostedAuditConfig();
+
+  if (!config) {
+    return [];
+  }
+
+  const response = await fetch(
+    getHostedAuditUrl(config, "?select=*&order=occurredAt.desc,id.desc&limit=256"),
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`
+      },
+      cache: "no-store"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Hosted audit read failed: ${response.status} ${response.statusText}`);
+  }
+
+  const payload = await response.json();
+
+  if (!Array.isArray(payload)) {
+    throw new Error("Hosted audit read returned a non-array payload");
+  }
+
+  return payload
+    .map((entry) => {
+      try {
+        return auditEventSchema.parse(entry);
+      } catch {
+        return null;
+      }
+    })
+    .filter((event): event is DemoAuditEvent => Boolean(event));
+}
+
+async function appendHostedAuditEvent(event: DemoAuditEvent) {
+  const config = getHostedAuditConfig();
+
+  if (!config) {
+    throw new Error("Hosted audit config is not available");
+  }
+
+  const response = await fetch(getHostedAuditUrl(config), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      apikey: config.serviceKey,
+      Authorization: `Bearer ${config.serviceKey}`,
+      Prefer: "return=representation"
+    },
+    body: JSON.stringify([event])
+  });
+
+  if (!response.ok) {
+    throw new Error(`Hosted audit write failed: ${response.status} ${response.statusText}`);
+  }
+
+  const payload = await response.json();
+  const inserted = Array.isArray(payload) ? payload[0] : payload;
+  return auditEventSchema.parse(inserted);
+}
+
+async function readLocalAuditEvents(): Promise<DemoAuditEvent[]> {
+  const raw = await fs.readFile(getSinkPath(), "utf8");
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      try {
+        return auditEventSchema.parse(JSON.parse(line));
+      } catch {
+        return null;
+      }
+    })
+    .filter((event): event is DemoAuditEvent => Boolean(event));
+}
+
+async function getStoredAuditEvents(): Promise<DemoAuditEvent[]> {
+  const config = getHostedAuditConfig();
+
+  if (!config) {
+    return readLocalAuditEvents();
+  }
+
+  try {
+    return await readHostedAuditEvents();
+  } catch (error) {
+    if (config.mode === "hosted-only") {
+      throw error;
+    }
+
+    return readLocalAuditEvents();
+  }
 }
 
 export async function readDemoAuditEvents(filters: {
@@ -69,19 +205,7 @@ export async function readDemoAuditEvents(filters: {
   const { actorUserId, subjectUserId, eventCodes, limit = 8 } = filters;
 
   try {
-    const raw = await fs.readFile(getSinkPath(), "utf8");
-
-    return raw
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        try {
-          return auditEventSchema.parse(JSON.parse(line));
-        } catch {
-          return null;
-        }
-      })
+    return (await getStoredAuditEvents())
       .filter((event): event is DemoAuditEvent => {
         if (!event) {
           return false;
@@ -130,6 +254,18 @@ export async function appendDemoAuditEvent(event: DemoAuditEvent) {
 
   if (duplicate) {
     return duplicate;
+  }
+
+  const hostedConfig = getHostedAuditConfig();
+
+  if (hostedConfig) {
+    try {
+      return await appendHostedAuditEvent(parsed);
+    } catch (error) {
+      if (hostedConfig.mode === "hosted-only") {
+        throw error;
+      }
+    }
   }
 
   await ensureSinkDir();

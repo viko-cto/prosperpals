@@ -232,10 +232,12 @@ The repo currently proves:
 
 This is meaningful progress because the operator/access lane is no longer hand-wavy: the repo now says exactly what exists, what is still manual fallback, and what is still an open blocker.
 
+A new repo-native hosted durability path also now exists for operator audit events: when Supabase/PostgREST credentials are configured, the audit trail can write to `demo_operator_audit_events`, and `hosted-only` mode can fail closed instead of silently dropping back to local JSONL.
+
 But the step is still **not complete** because:
 - artifact files and metadata still land in local runtime storage,
 - there is still no external OCR/provider call,
-- the new operator audit trail is still local-runtime rather than hosted durable,
+- the hosted audit path is not yet proven in a real preview/alpha environment smoke note,
 - support-only/admin-only boundaries and broader cross-account intervention controls are still absent,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
@@ -246,7 +248,7 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> move the new operator audit path onto hosted durability, then populate the human evidence pack behind the still-locked NO-GO.
+> prove the new hosted audit path in a real preview/alpha environment, then reuse that durability pattern for more trust-critical state while the human evidence pack gets populated behind the still-locked NO-GO.
 
 ---
 
@@ -288,9 +290,11 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `src/lib/support/demo-support.ts`
 - `src/lib/receipts/demo-receipts.ts`
 - `test/sprint-3-explainability-operator-safety.test.mjs`
+- `supabase/migrations/20260324091500_demo_operator_audit_events.sql`
+- `docs/alpha-readiness/evidence/hosted-hardening/hosted-audit-postgrest-durability-path.md`
 
 ## Outcome
 
 ProsperPals now has a stronger receipt-realism operating pack and a materially better proof trail for asset lineage.
 
-The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain. But hosted alpha remains **NO-GO** until that chain is durable, failure-aware, and surrounded by the remaining missing evidence.
+The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus a hosted-capable operator-audit durability path. But hosted alpha remains **NO-GO** until that capability is actually rolled out, the rest of the trust-critical state is hardened, and the missing interview evidence lands.

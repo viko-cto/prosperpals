@@ -452,3 +452,61 @@ test('actor-audited release overrides can force off receipt capture and simulato
     assert.equal(partiallyClearedFlags.simulatorStarter, false);
   });
 });
+
+test('audit events can use the hosted PostgREST durability path when configured', async () => {
+  await withTempRuntime(async () => {
+    const previousUrl = process.env.PROSPERPALS_SUPABASE_URL;
+    const previousKey = process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY;
+    const previousMode = process.env.PROSPERPALS_AUDIT_DURABILITY_MODE;
+    const originalFetch = global.fetch;
+    const storedEvents = [];
+
+    process.env.PROSPERPALS_SUPABASE_URL = 'https://prosperpals.supabase.test';
+    process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+    process.env.PROSPERPALS_AUDIT_DURABILITY_MODE = 'hosted-only';
+
+    global.fetch = async (url, init = {}) => {
+      if (init.method === 'POST') {
+        const payload = JSON.parse(init.body);
+        storedEvents.push(...payload);
+        return new Response(JSON.stringify(payload), {
+          status: 201,
+          headers: { 'content-type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify(storedEvents), {
+        status: 200,
+        headers: { 'content-type': 'application/json' }
+      });
+    };
+
+    try {
+      const audit = await import('../src/lib/audit/demo-audit.ts');
+
+      await audit.recordSupportTimelineViewAudit({
+        actorUserId: '22222222-2222-4222-8222-222222222222',
+        subjectUserId: userId,
+        requestId: 'audit-req-hosted-001',
+        traceId,
+        path: '/app/support',
+        reason: 'hosted durability smoke test',
+        supportTraceView: true,
+        occurredAt: new Date().toISOString()
+      });
+
+      const events = await audit.readDemoAuditEvents({ subjectUserId: userId, limit: 8 });
+      assert.equal(events.length, 1);
+      assert.equal(events[0].eventCode, 'support.timeline.viewed');
+      await assert.rejects(fs.readFile(process.env.PROSPERPALS_DEMO_AUDIT_PATH, 'utf8'), /ENOENT/);
+    } finally {
+      global.fetch = originalFetch;
+      if (previousUrl) process.env.PROSPERPALS_SUPABASE_URL = previousUrl;
+      else delete process.env.PROSPERPALS_SUPABASE_URL;
+      if (previousKey) process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY = previousKey;
+      else delete process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY;
+      if (previousMode) process.env.PROSPERPALS_AUDIT_DURABILITY_MODE = previousMode;
+      else delete process.env.PROSPERPALS_AUDIT_DURABILITY_MODE;
+    }
+  });
+});
