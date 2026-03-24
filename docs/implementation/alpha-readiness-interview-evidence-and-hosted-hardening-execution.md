@@ -236,10 +236,12 @@ A new repo-native hosted durability path also now exists for operator audit even
 
 Founder-visible cohort telemetry now has the same hosted-capable pattern: when the same hosted credentials are configured, analytics events can write to `demo_analytics_events`, and `hosted-only` mode can fail closed instead of pretending first-value/reward/receipt learning telemetry is durable when it is still local-only.
 
+The hosted preview smoke harness is now wired to all three lanes together — audit, ledger, and analytics — so preview/alpha can require `hosted-only` on every surfaced trust-reporting path, round-trip them through PostgREST, and fail if any of them silently recreate a local runtime sink.
+
 But the step is still **not complete** because:
 - artifact files and metadata still land in local runtime storage,
 - there is still no external OCR/provider call,
-- the hosted audit path is not yet proven in a real preview/alpha environment smoke note,
+- the hosted audit + ledger + analytics paths are not yet proven in a real preview/alpha environment smoke note,
 - support-only/admin-only boundaries and broader cross-account intervention controls are still absent,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
@@ -250,7 +252,7 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> prove the new hosted audit path in a real preview/alpha environment, then reuse that durability pattern for more trust-critical state while the human evidence pack gets populated behind the still-locked NO-GO.
+> prove the new hosted audit + ledger + analytics paths in a real preview/alpha environment, then reuse that durability pattern for more trust-critical state while the human evidence pack gets populated behind the still-locked NO-GO.
 
 ---
 
@@ -306,4 +308,4 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 
 ProsperPals now has a stronger receipt-realism operating pack and a materially better proof trail for asset lineage, operator auditability, and founder-visible cohort telemetry.
 
-The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus hosted-capable operator-audit, ledger, and analytics durability paths. But hosted alpha remains **NO-GO** until those capabilities are actually rolled out, the rest of the trust-critical state is hardened, and the missing interview evidence lands.
+The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus hosted-capable operator-audit, ledger, and analytics durability paths, with one smoke harness wired to prove all three lanes together in preview/alpha. But hosted alpha remains **NO-GO** until that capability is actually rolled out, the rest of the trust-critical state is hardened, and the missing interview evidence lands.

@@ -9,7 +9,7 @@ ProsperPals has completed the BMAD planning pipeline, the current implementation
 
 **Decision posture:** `NO-GO remains locked until interview evidence, hosted hardening, receipt realism, and operator readiness are captured in durable artifacts`
 
-**Next recommended step:** keep the NO-GO locked while proving the new hosted audit + reward/trade ledger paths in a real preview/alpha environment, then migrate the remaining onboarding/analytics/receipt state and populate the remaining interview evidence in `docs/alpha-readiness/`. Return to a formal GO / CONDITIONAL GO / NO-GO re-decision only after that evidence exists.
+**Next recommended step:** keep the NO-GO locked while proving the new hosted audit + reward/trade ledger + analytics paths in a real preview/alpha environment, then migrate the remaining onboarding/receipt state and populate the remaining interview evidence in `docs/alpha-readiness/`. Return to a formal GO / CONDITIONAL GO / NO-GO re-decision only after that evidence exists.
 
 ## What exists now
 - BMAD planning artifacts in `_bmad/_bmad-output/planning-artifacts/`
@@ -41,18 +41,19 @@ npm test
 
 This verifies that repeated writes to the core trust-critical tables remain idempotent.
 
-## Prove hosted audit + ledger durability in preview/alpha
+## Prove hosted audit + ledger + analytics durability in preview/alpha
 ```bash
 PROSPERPALS_ENV=preview \
 PROSPERPALS_SUPABASE_URL=https://<project>.supabase.co \
 PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY=<service-role-key> \
 PROSPERPALS_AUDIT_DURABILITY_MODE=hosted-only \
 PROSPERPALS_LEDGER_DURABILITY_MODE=hosted-only \
+PROSPERPALS_ANALYTICS_DURABILITY_MODE=hosted-only \
 PROSPERPALS_HOSTED_SMOKE_REPORT_PATH=docs/alpha-readiness/evidence/hosted-hardening/generated/preview-hosted-durability-smoke-latest.md \
 npm run smoke:hosted-durability
 ```
 
-This is the honest smoke gate for the current alpha-readiness blocker: it proves the hosted audit + reward/trade ledger paths round-trip through PostgREST and fail if the app tries to fall back to local runtime JSONL sinks.
+This is the honest smoke gate for the current alpha-readiness blocker: it proves the hosted audit + reward/trade ledger + founder-visible analytics paths round-trip through PostgREST and fail if the app tries to fall back to local runtime JSONL sinks.
 
 ## BMAD sequence completed
 1. Analyst → Product Brief
@@ -74,4 +75,4 @@ This is the honest smoke gate for the current alpha-readiness blocker: it proves
 17. Alpha readiness → interview evidence and hosted hardening execution operating pack
 
 ## Immediate next step
-Populate the interview/evidence/checklist artifacts in `docs/alpha-readiness/`, prove the hosted audit + ledger paths in deployment, keep the NO-GO locked, and re-enter decision review only after the required evidence exists.
+Populate the interview/evidence/checklist artifacts in `docs/alpha-readiness/`, prove the hosted audit + ledger + analytics paths in deployment, keep the NO-GO locked, and re-enter decision review only after the required evidence exists.

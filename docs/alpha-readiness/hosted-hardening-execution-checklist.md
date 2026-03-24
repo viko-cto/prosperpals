@@ -51,10 +51,10 @@ For every line marked complete or manual fallback, link the proof note under `do
 ## B3. Observability for learning
 - [ ] First aha is trackable  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
 - [ ] Return behavior is trackable  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
 - [ ] Trust-critical failures are visible  
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
@@ -63,7 +63,7 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/support-help-path.md`
 - [ ] Founder-visible cohort-health reporting exists  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`, `docs/alpha-readiness/redecision-dashboard-inputs.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-analytics-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`, `docs/alpha-readiness/redecision-dashboard-inputs.md`
 
 ## C. Receipt realism
 - [x] Real upload path exists  
@@ -119,11 +119,11 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## Current blockers
 1. Trust-critical user state still depends on cookie/local-runtime sinks instead of authoritative hosted durability.
-2. Operator support-view access, the narrow receipt-capture pause/clear intervention, release overrides for receipt capture plus simulator starter, and the reward/trade ledger loop now have hosted-capable PostgREST durability paths in the repo, but preview/alpha environment rollout proof is still missing.
+2. Operator support-view access, the narrow receipt-capture pause/clear intervention, release overrides for receipt capture plus simulator starter, the reward/trade ledger loop, and founder-visible cohort analytics now have hosted-capable PostgREST durability paths in the repo, but preview/alpha environment rollout proof is still missing.
 3. Support-only/admin-only roles and broader cross-account intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
-- Why the NO-GO remains locked: the receipt lane is materially stronger and both the operator-audit lane plus reward/trade ledger loop now have hosted-capable durability paths, but deployed rollout proof, broader state durability, and real support/admin boundaries are still missing.
-- What exact artifacts would change that answer next: hosted env smoke proof for the audit + ledger paths, broader durability proof beyond local sinks, support/admin role boundaries, and populated interview/redecision evidence.
+- Why the NO-GO remains locked: the receipt lane is materially stronger and the operator-audit lane, reward/trade ledger loop, plus founder-visible cohort analytics now have hosted-capable durability paths, but deployed rollout proof, broader state durability, and real support/admin boundaries are still missing.
+- What exact artifacts would change that answer next: hosted env smoke proof for the audit + ledger + analytics paths, broader durability proof beyond local sinks, support/admin role boundaries, and populated interview/redecision evidence.
