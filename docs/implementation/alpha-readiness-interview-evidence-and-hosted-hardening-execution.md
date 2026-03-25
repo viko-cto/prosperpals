@@ -267,10 +267,10 @@ The repo also now includes a dedicated interview operating tracker for the paral
 And the operator/access blocker is now pinned to an explicit closure artifact instead of a vague TODO:
 - `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 
-That manifest makes the deployment blocker operational by defining:
+That manifest now works together with a repo-native checker/sync helper at `scripts/vercel-env-contract.mjs`, which makes the deployment blocker operational by defining and enforcing:
 - the minimum preview + alpha variable contract,
 - the `hosted-only` requirement for audit / ledger / analytics / onboarding / receipts,
-- the exact Vercel wiring pattern,
+- a repeatable Vercel check/sync flow instead of one-off manual CLI copy-paste,
 - and the proof bar required before any checklist line can honestly move to `complete`.
 
 ---

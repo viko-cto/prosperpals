@@ -115,7 +115,8 @@ So even after a PASS, the hosted-alpha **NO-GO remains locked** until those othe
 
 ## Exact next move after this artifact
 
-1. Wire preview/alpha env vars using `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`.
-2. Run the smoke in the real preview/alpha environment.
-3. Attach the generated markdown proof note under `docs/alpha-readiness/evidence/hosted-hardening/generated/`.
-4. Update the hosted-hardening checklist from `manual fallback` to `complete` only for the lines actually proven by that smoke note plus any separate role-boundary evidence.
+1. Load the target-specific source values and run `npm run vercel:env-contract -- --target <preview|production> --mode check` using `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`.
+2. If the check shows missing keys, run the same helper with `--mode sync` instead of hand-adding one variable at a time.
+3. Run the smoke in the real preview/alpha environment.
+4. Attach the generated markdown proof note under `docs/alpha-readiness/evidence/hosted-hardening/generated/`.
+5. Update the hosted-hardening checklist from `manual fallback` to `complete` only for the lines actually proven by that smoke note plus any separate role-boundary evidence.

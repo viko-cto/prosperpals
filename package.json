@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "test": "node --test test/*.test.mjs",
-    "smoke:hosted-durability": "node scripts/hosted-durability-smoke.mjs"
+    "smoke:hosted-durability": "node scripts/hosted-durability-smoke.mjs",
+    "vercel:env-contract": "node scripts/vercel-env-contract.mjs"
   },
   "dependencies": {
     "next": "15.2.9",

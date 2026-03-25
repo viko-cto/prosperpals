@@ -41,7 +41,22 @@ npm test
 
 This verifies that repeated writes to the core trust-critical tables remain idempotent.
 
-## Prove hosted audit + ledger + analytics durability in preview/alpha
+## Wire and prove hosted trust-lane durability in preview/alpha
+First audit or sync the exact Vercel env contract for the intended hosted target:
+
+```bash
+export PROSPERPALS_PREVIEW_APP_URL="https://<preview-project>.vercel.app"
+export PROSPERPALS_ALPHA_APP_URL="https://<alpha-project>.vercel.app"
+export PROSPERPALS_SUPABASE_URL="https://<project>.supabase.co"
+export PROSPERPALS_SUPABASE_ANON_KEY="<anon-key>"
+export PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
+
+npm run vercel:env-contract -- --target preview --mode check
+npm run vercel:env-contract -- --target preview --mode sync
+```
+
+Then run the bounded hosted smoke proof:
+
 ```bash
 PROSPERPALS_ENV=preview \
 PROSPERPALS_SUPABASE_URL=https://<project>.supabase.co \
@@ -49,11 +64,13 @@ PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY=<service-role-key> \
 PROSPERPALS_AUDIT_DURABILITY_MODE=hosted-only \
 PROSPERPALS_LEDGER_DURABILITY_MODE=hosted-only \
 PROSPERPALS_ANALYTICS_DURABILITY_MODE=hosted-only \
+PROSPERPALS_ONBOARDING_DURABILITY_MODE=hosted-only \
+PROSPERPALS_RECEIPT_DURABILITY_MODE=hosted-only \
 PROSPERPALS_HOSTED_SMOKE_REPORT_PATH=docs/alpha-readiness/evidence/hosted-hardening/generated/preview-hosted-durability-smoke-latest.md \
 npm run smoke:hosted-durability
 ```
 
-This is the honest smoke gate for the current alpha-readiness blocker: it proves the hosted audit + reward/trade ledger + founder-visible analytics paths round-trip through PostgREST and fail if the app tries to fall back to local runtime JSONL sinks.
+This is the honest smoke gate for the current alpha-readiness blocker: it proves the hosted audit + reward/trade ledger + founder-visible analytics + onboarding continuity + receipt durability paths round-trip through PostgREST and fail if the app tries to fall back to local runtime JSONL sinks.
 
 ## BMAD sequence completed
 1. Analyst → Product Brief

@@ -96,7 +96,34 @@ cd /tmp/prosperpals
 cat .vercel/project.json
 ```
 
-### 2. Add preview vars explicitly
+### 2. Prefer the repo-native env contract tool
+The repo now includes a repeatable checker/sync helper:
+- `scripts/vercel-env-contract.mjs`
+- `npm run vercel:env-contract -- --target <preview|production> --mode <check|sync>`
+
+Load the target-specific source values first:
+
+```bash
+export PROSPERPALS_PREVIEW_APP_URL="https://<preview-project>.vercel.app"
+export PROSPERPALS_ALPHA_APP_URL="https://<alpha-project>.vercel.app"
+export PROSPERPALS_SUPABASE_URL="https://<project>.supabase.co"
+export PROSPERPALS_SUPABASE_ANON_KEY="<anon-key>"
+export PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
+```
+
+Then audit or sync the exact contract instead of adding keys one by one by hand:
+
+```bash
+cd /tmp/prosperpals
+npm run vercel:env-contract -- --target preview --mode check
+npm run vercel:env-contract -- --target preview --mode sync
+npm run vercel:env-contract -- --target production --mode check
+npm run vercel:env-contract -- --target production --mode sync
+```
+
+Use `--target production` only if the Vercel production environment is the intended alpha surface.
+
+### 3. Manual fallback if the helper is unavailable
 Example pattern:
 
 ```bash
@@ -122,19 +149,20 @@ printf "%s" "<service-role-key>" | npx vercel env add PROSPERPALS_SUPABASE_SERVI
 printf "%s" "docs/alpha-readiness/evidence/hosted-hardening/generated/preview-hosted-proof-$(date -u +%F).md" | npx vercel env add PROSPERPALS_HOSTED_SMOKE_REPORT_PATH preview --token "$VERCEL_TOKEN"
 ```
 
-### 3. Repeat for alpha explicitly
+### 4. Repeat for alpha explicitly
 Use the same pattern but replace `preview` with `production` **only if** the Vercel production environment is the intended alpha target.
 
 If alpha is hosted elsewhere, write a dedicated proof note and do not pretend Vercel production automatically equals alpha.
 
-### 4. Verify what is present before running smoke
+### 5. Verify what is present before running smoke
 ```bash
-VERCEL_TOKEN=$(cat /home/node/.config/vercel/token)
-npx vercel env ls --token "$VERCEL_TOKEN"
+cd /tmp/prosperpals
+npm run vercel:env-contract -- --target preview --mode check
+npm run vercel:env-contract -- --target production --mode check
 ```
 
-### 5. Run hosted-only proof only after verification
-Run the hosted durability smoke only after the env listing clearly shows the required variables.
+### 6. Run hosted-only proof only after verification
+Run the hosted durability smoke only after the env contract check shows the required variables for the intended target.
 
 ## What counts as complete for this chunk
 
