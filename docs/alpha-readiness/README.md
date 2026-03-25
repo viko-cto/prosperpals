@@ -30,6 +30,7 @@ Use this folder to convert the alpha decision packet into durable proof:
 - `interview-session-log-template.md`
 - `interview-batch-synthesis-template.md`
 - `interview-final-synthesis-template.md`
+- `interview-evidence-tracker.md`
 - `hosted-hardening-execution-checklist.md`
 - `operator-readiness-runbook.md`
 - `redecision-dashboard-inputs.md`
@@ -44,12 +45,14 @@ Use this folder to convert the alpha decision packet into durable proof:
 ## Suggested operating rhythm
 
 ### Per interview
+- update `interview-evidence-tracker.md`
 - copy the session template into `evidence/interviews/`
 - fill it the same day
 - capture strongest quote and trust-drop moment
 
 ### Per batch of 3 interviews
 - create one batch synthesis in `evidence/interviews/`
+- mark the three sessions as `batched` in `interview-evidence-tracker.md`
 - record any wording/UI change before the next batch
 
 ### Per hardening closure item
@@ -66,6 +69,7 @@ This step is execution-credible only when the repo contains:
 - 12 session logs,
 - 4 batch syntheses,
 - 1 final interview synthesis,
+- one canonical interview tracker with cohort and threshold math,
 - hosted-hardening evidence,
 - receipt realism traces,
 - operator/access readiness evidence,

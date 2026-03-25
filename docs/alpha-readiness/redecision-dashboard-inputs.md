@@ -11,6 +11,7 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 - **Sessions completed:** 0/12
 - **Batch syntheses completed:** 0/4
 - **Final synthesis complete:** no
+- **Canonical interview tracker current:** no — `docs/alpha-readiness/interview-evidence-tracker.md` has now been created, but participant slots and threshold math are still unpopulated
 - **Goldie vs Fin threshold result:** not yet evidenced
 - **Daily Spending Power threshold result:** not yet evidenced
 - **Fin learning threshold result:** not yet evidenced
@@ -21,6 +22,7 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 - **Strongest caution quote:** none yet
 - **Canonical evidence links:**
   - `docs/alpha-readiness/evidence/interviews/README.md`
+  - `docs/alpha-readiness/interview-evidence-tracker.md`
 
 ## 2. Hosted hardening snapshot
 - **Durable truth status:** manual fallback — onboarding, analytics, reward/trade ledger, audit, and receipt state now have hosted-capable PostgREST paths in repo, but preview/alpha rollout proof is still missing and local fallbacks remain available outside strict hosted-only wiring

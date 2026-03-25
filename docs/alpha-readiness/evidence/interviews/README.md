@@ -6,6 +6,7 @@ Store durable participant-level and batch-level interview artifacts here.
 - 12 session logs
 - 4 batch syntheses
 - 1 final synthesis
+- 1 canonical tracker (`docs/alpha-readiness/interview-evidence-tracker.md`)
 
 ## Naming convention
 ### Session logs

@@ -76,6 +76,7 @@ The operating pack exists to test readiness for alpha, not to restart product st
 - `docs/alpha-readiness/interview-session-log-template.md`
 - `docs/alpha-readiness/interview-batch-synthesis-template.md`
 - `docs/alpha-readiness/interview-final-synthesis-template.md`
+- `docs/alpha-readiness/interview-evidence-tracker.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
 - `docs/alpha-readiness/redecision-dashboard-inputs.md`
@@ -89,6 +90,7 @@ Before more recruitment or hardening optimism, the team should use the repo stru
 
 That means:
 - every interview gets a durable note,
+- every interview is logged in one canonical tracker with cohort coverage and threshold math,
 - every 3-session batch gets a synthesis note,
 - every hardening lane records explicit proof or explicit manual fallback,
 - every operator-readiness claim is captured in a runbook or access note,
@@ -150,6 +152,7 @@ This current step should only be considered complete when the repo contains:
 - 12 durable session logs
 - 4 batch syntheses
 - 1 final synthesis with threshold pass/fail summary
+- 1 canonical tracker with cohort coverage, exclusion decisions, and running threshold math
 
 ### Hosted hardening
 - durable truth evidence or explicit safe manual fallback notes
@@ -258,6 +261,9 @@ What changed is the next exact move:
 The repo now includes a dedicated env-wiring manifest for that move:
 - `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`
 
+The repo also now includes a dedicated interview operating tracker for the parallel blocker:
+- `docs/alpha-readiness/interview-evidence-tracker.md`
+
 That manifest makes the deployment blocker operational by defining:
 - the minimum preview + alpha variable contract,
 - the `hosted-only` requirement for audit / ledger / analytics / onboarding / receipts,
@@ -285,6 +291,7 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/interview-session-log-template.md`
 - `docs/alpha-readiness/interview-batch-synthesis-template.md`
 - `docs/alpha-readiness/interview-final-synthesis-template.md`
+- `docs/alpha-readiness/interview-evidence-tracker.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
 - `docs/alpha-readiness/redecision-dashboard-inputs.md`
