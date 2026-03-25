@@ -101,15 +101,15 @@ The repo now includes a repeatable checker/sync helper:
 - `scripts/vercel-env-contract.mjs`
 - `npm run vercel:env-contract -- --target <preview|production> --mode <check|sync>`
 
-Load the target-specific source values first:
+Load the required Supabase source values first:
 
 ```bash
-export PROSPERPALS_PREVIEW_APP_URL="https://<preview-project>.vercel.app"
-export PROSPERPALS_ALPHA_APP_URL="https://<alpha-project>.vercel.app"
 export PROSPERPALS_SUPABASE_URL="https://<project>.supabase.co"
 export PROSPERPALS_SUPABASE_ANON_KEY="<anon-key>"
 export PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
 ```
+
+The helper now auto-resolves `NEXT_PUBLIC_APP_URL` from the linked Vercel preview/production target when that target already has a current deployment. Only export `PROSPERPALS_PREVIEW_APP_URL`, `PROSPERPALS_ALPHA_APP_URL`, or `NEXT_PUBLIC_APP_URL` when you need to override the linked target URL on purpose.
 
 Then audit or sync the exact contract instead of adding keys one by one by hand:
 

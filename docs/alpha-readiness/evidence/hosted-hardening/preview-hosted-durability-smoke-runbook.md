@@ -115,7 +115,7 @@ So even after a PASS, the hosted-alpha **NO-GO remains locked** until those othe
 
 ## Exact next move after this artifact
 
-1. Load the target-specific source values and run `npm run vercel:env-contract -- --target <preview|production> --mode check` using `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`.
+1. Load the real Supabase URL + anon/service credentials and run `npm run vercel:env-contract -- --target <preview|production> --mode check` using `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`. The helper now auto-resolves `NEXT_PUBLIC_APP_URL` from the linked Vercel target unless you intentionally override it.
 2. If the check shows missing keys, run the same helper with `--mode sync` instead of hand-adding one variable at a time.
 3. Run the smoke in the real preview/alpha environment.
 4. Attach the generated markdown proof note under `docs/alpha-readiness/evidence/hosted-hardening/generated/`.

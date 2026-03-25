@@ -45,8 +45,6 @@ This verifies that repeated writes to the core trust-critical tables remain idem
 First audit or sync the exact Vercel env contract for the intended hosted target:
 
 ```bash
-export PROSPERPALS_PREVIEW_APP_URL="https://<preview-project>.vercel.app"
-export PROSPERPALS_ALPHA_APP_URL="https://<alpha-project>.vercel.app"
 export PROSPERPALS_SUPABASE_URL="https://<project>.supabase.co"
 export PROSPERPALS_SUPABASE_ANON_KEY="<anon-key>"
 export PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
@@ -54,6 +52,8 @@ export PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"
 npm run vercel:env-contract -- --target preview --mode check
 npm run vercel:env-contract -- --target preview --mode sync
 ```
+
+`npm run vercel:env-contract` now auto-resolves `NEXT_PUBLIC_APP_URL` from the linked Vercel preview/production target when a current deployment exists, so explicit preview/alpha app URL exports are only needed when you want to override that linked target.
 
 Then run the bounded hosted smoke proof:
 

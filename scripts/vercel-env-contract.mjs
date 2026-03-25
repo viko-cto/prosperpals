@@ -43,11 +43,11 @@ function parseArgs(argv) {
   }
 
   if (!allowedTargets.has(target)) {
-    throw new Error(`Unsupported target \"${target}\". Use one of: ${Array.from(allowedTargets).join(', ')}`);
+    throw new Error(`Unsupported target "${target}". Use one of: ${Array.from(allowedTargets).join(', ')}`);
   }
 
   if (!allowedModes.has(mode)) {
-    throw new Error(`Unsupported mode \"${mode}\". Use one of: ${Array.from(allowedModes).join(', ')}`);
+    throw new Error(`Unsupported mode "${mode}". Use one of: ${Array.from(allowedModes).join(', ')}`);
   }
 
   return { target, mode };
@@ -62,11 +62,17 @@ Usage:
   node scripts/vercel-env-contract.mjs --target production --mode check
 
 Required source env vars for sync:
-  PROSPERPALS_PREVIEW_APP_URL or NEXT_PUBLIC_APP_URL   (preview target)
-  PROSPERPALS_ALPHA_APP_URL or NEXT_PUBLIC_APP_URL     (production target when it represents alpha)
   PROSPERPALS_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL
   PROSPERPALS_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY
   PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY
+
+Target URLs are resolved automatically from the linked Vercel project when possible:
+  preview    -> current linked preview alias / deployment URL
+  production -> current linked production alias / deployment URL
+
+Optional explicit URL overrides:
+  PROSPERPALS_PREVIEW_APP_URL or NEXT_PUBLIC_APP_URL   (preview target)
+  PROSPERPALS_ALPHA_APP_URL or NEXT_PUBLIC_APP_URL     (production target when it represents alpha)
 
 Optional:
   VERCEL_TOKEN (falls back to /home/node/.config/vercel/token)
@@ -98,6 +104,71 @@ function getProjectConfig() {
   };
 }
 
+async function fetchProjectMetadata(token, projectConfig) {
+  const response = await fetch(
+    `https://api.vercel.com/v9/projects/${projectConfig.projectId}?teamId=${projectConfig.orgId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to inspect linked Vercel project metadata: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+function normalizeDeploymentUrl(value) {
+  if (typeof value !== 'string' || !value.trim()) {
+    return null;
+  }
+
+  return value.startsWith('http://') || value.startsWith('https://')
+    ? value.trim()
+    : `https://${value.trim()}`;
+}
+
+function getDeploymentUrlCandidate(deployment) {
+  if (!deployment || typeof deployment !== 'object') {
+    return null;
+  }
+
+  if (Array.isArray(deployment.alias) && deployment.alias.length) {
+    return normalizeDeploymentUrl(deployment.alias[0]);
+  }
+
+  return normalizeDeploymentUrl(deployment.url);
+}
+
+function getLinkedTargetUrl(projectMetadata, target) {
+  const directTargetUrl = getDeploymentUrlCandidate(projectMetadata?.targets?.[target]);
+
+  if (directTargetUrl) {
+    return directTargetUrl;
+  }
+
+  const latestDeployments = Array.isArray(projectMetadata?.latestDeployments)
+    ? projectMetadata.latestDeployments
+    : [];
+
+  const fallbackDeployment = latestDeployments.find((deployment) => {
+    if (!deployment || typeof deployment !== 'object') {
+      return false;
+    }
+
+    if (target === 'production') {
+      return deployment.target === 'production';
+    }
+
+    return deployment.target !== 'production';
+  });
+
+  return getDeploymentUrlCandidate(fallbackDeployment);
+}
+
 function firstDefined(envNames) {
   for (const envName of envNames) {
     const value = process.env[envName];
@@ -112,12 +183,44 @@ function firstDefined(envNames) {
   return null;
 }
 
-function buildContract(target) {
-  const reportSuffix = target === 'preview' ? 'preview-hosted-proof' : 'alpha-hosted-proof';
-  const prosperpalsEnv = target === 'preview' ? 'preview' : 'alpha';
-  const appUrlSources = target === 'preview'
+function resolveAppUrlEntry(target, linkedTargetUrl) {
+  const envSources = target === 'preview'
     ? ['PROSPERPALS_PREVIEW_APP_URL', 'NEXT_PUBLIC_APP_URL']
     : ['PROSPERPALS_ALPHA_APP_URL', 'NEXT_PUBLIC_APP_URL'];
+  const resolved = firstDefined(envSources);
+
+  if (resolved) {
+    return {
+      key: 'NEXT_PUBLIC_APP_URL',
+      secret: false,
+      value: resolved.value,
+      resolvedFrom: resolved.envName,
+      missingSources: []
+    };
+  }
+
+  if (linkedTargetUrl) {
+    return {
+      key: 'NEXT_PUBLIC_APP_URL',
+      secret: false,
+      value: linkedTargetUrl,
+      resolvedFrom: `linked-vercel:${target}`,
+      missingSources: []
+    };
+  }
+
+  return {
+    key: 'NEXT_PUBLIC_APP_URL',
+    secret: false,
+    value: null,
+    resolvedFrom: null,
+    missingSources: [...envSources, `linked-vercel:${target}`]
+  };
+}
+
+function buildContract(target, { linkedTargetUrl } = {}) {
+  const reportSuffix = target === 'preview' ? 'preview-hosted-proof' : 'alpha-hosted-proof';
+  const prosperpalsEnv = target === 'preview' ? 'preview' : 'alpha';
 
   const literalEntries = [
     { key: 'PROSPERPALS_ENV', value: prosperpalsEnv },
@@ -140,11 +243,7 @@ function buildContract(target) {
   ];
 
   const sourcedEntries = [
-    {
-      key: 'NEXT_PUBLIC_APP_URL',
-      sources: appUrlSources,
-      secret: false
-    },
+    resolveAppUrlEntry(target, linkedTargetUrl),
     {
       key: 'NEXT_PUBLIC_SUPABASE_URL',
       sources: ['PROSPERPALS_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_URL'],
@@ -161,6 +260,10 @@ function buildContract(target) {
       secret: true
     }
   ].map((entry) => {
+    if (!('sources' in entry)) {
+      return entry;
+    }
+
     const resolved = firstDefined(entry.sources);
     return {
       ...entry,
@@ -272,11 +375,19 @@ function syncContract(token, target, summary) {
   }
 }
 
-function main() {
+async function main() {
   const { target, mode } = parseArgs(process.argv.slice(2));
   const token = getVercelToken();
   const projectConfig = getProjectConfig();
-  const contract = buildContract(target);
+  let linkedTargetUrl = null;
+
+  try {
+    linkedTargetUrl = getLinkedTargetUrl(await fetchProjectMetadata(token, projectConfig), target);
+  } catch (error) {
+    console.error(`Warning: ${error instanceof Error ? error.message : error}`);
+  }
+
+  const contract = buildContract(target, { linkedTargetUrl });
   const listResult = runVercelCommand(token, ['env', 'list', target]);
 
   if (listResult.code !== 0) {
@@ -311,7 +422,7 @@ function main() {
 }
 
 try {
-  main();
+  await main();
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   process.exitCode = 1;
