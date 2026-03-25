@@ -10,6 +10,8 @@ ProsperPals already has repo-native hosted durability adapters for:
 - operator audit events (`demo_operator_audit_events`)
 - reward + starter trade ledger records (`demo_ledger_records`)
 - founder-visible cohort telemetry (`demo_analytics_events`)
+- onboarding continuity (`demo_onboarding_states`)
+- receipt review + artifact durability (`demo_receipt_records`, `demo_receipt_artifacts`)
 
 What was still missing was an **honest, repeatable smoke procedure** that proves those hosted paths are actually wired in preview/alpha and that fail-closed `hosted-only` mode does not silently fall back to local runtime sinks.
 
@@ -90,16 +92,18 @@ Recommended location:
 This smoke run is intentionally narrow.
 
 It does **not** prove:
-- onboarding durability,
-- receipt candidate durability,
 - support/admin least-privilege maturity,
-- or interview evidence.
+- interview evidence,
+- or that preview and alpha are safely separated by release policy.
+
+It **does** define the deployment-proof bar for the now-hosted-capable trust lanes.
 
 So even after a PASS, the hosted-alpha **NO-GO remains locked** until those other blockers are closed.
 
 ## Exact next move after this artifact
 
-1. Run the smoke in the real preview/alpha environment.
-2. Attach the generated markdown proof note under `docs/alpha-readiness/evidence/hosted-hardening/generated/`.
-3. Update the hosted-hardening checklist from `manual fallback` to `complete` only for the lines actually proven by that smoke.
-4. Reuse the same pattern for onboarding/receipts so more of the trust surface stops depending on cookie/local-runtime state.
+1. Wire preview/alpha env vars using `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`.
+2. Run the smoke in the real preview/alpha environment.
+3. Attach the generated markdown proof note under `docs/alpha-readiness/evidence/hosted-hardening/generated/`.
+4. Attach companion proof notes for onboarding and receipt durability if those lanes are verified outside this smoke run.
+5. Update the hosted-hardening checklist from `manual fallback` to `complete` only for the lines actually proven by those artifacts.

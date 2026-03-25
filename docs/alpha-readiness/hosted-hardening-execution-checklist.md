@@ -34,10 +34,10 @@ For every line marked complete or manual fallback, link the proof note under `do
 ## B2. Alpha environment integrity
 - [ ] Preview and alpha-hosted environments are clearly separated  
   - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`
 - [ ] Required secrets/config are documented  
-  - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
+  - status: manual fallback
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`
 - [x] Feature flags/defaults are explicit  
   - status: complete
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
@@ -119,7 +119,7 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## Current blockers
 1. Trust-critical alpha lanes now have hosted-capable durability paths in the repo, but preview/alpha rollout proof is still missing and local fallbacks remain available outside strict hosted-only wiring.
-2. A direct 2026-03-25 hosted audit of the linked Vercel project found **no environment variables configured at all**, so the blocker is now concrete: hosted-proof work is stalled at missing env wiring, not just missing smoke output. Proof note: `docs/alpha-readiness/evidence/hosted-hardening/preview-env-audit-2026-03-25.md`.
+2. A direct 2026-03-25 hosted audit of the linked Vercel project found **no environment variables configured at all**, so the blocker is now concrete: hosted-proof work is stalled at missing env wiring, not just missing smoke output. The required preview/alpha variable set and exact wiring procedure are now documented in `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`.
 3. Support-only/admin-only roles and broader cross-account intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 

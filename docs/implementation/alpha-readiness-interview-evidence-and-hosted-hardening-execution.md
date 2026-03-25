@@ -254,7 +254,16 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> prove the now-hosted-capable trust lanes in a real preview/alpha environment, then keep filling the human evidence pack behind the still-locked NO-GO.
+> wire the preview/alpha environment contract explicitly, then prove the now-hosted-capable trust lanes in a real preview/alpha environment, then keep filling the human evidence pack behind the still-locked NO-GO.
+
+The repo now includes a dedicated env-wiring manifest for that move:
+- `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`
+
+That manifest makes the deployment blocker operational by defining:
+- the minimum preview + alpha variable contract,
+- the `hosted-only` requirement for audit / ledger / analytics / onboarding / receipts,
+- the exact Vercel wiring pattern,
+- and the proof bar required before any checklist line can honestly move to `complete`.
 
 ---
 
