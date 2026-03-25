@@ -8,10 +8,12 @@ Store role/access and support-readiness proof here.
 - support workflow notes
 - deletion/export fallback notes
 - incident pause/escalation notes
+- operator/admin boundary closure plan and intervention policy
 
 ## Example filenames
 - `role-access-definition.md`
 - `operator-auditability-proof.md`
+- `operator-admin-boundary-closure-plan.md`
 - `support-help-path.md`
 - `export-deletion-fallback.md`
 - `incident-pause-and-escalation.md`

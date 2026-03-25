@@ -25,9 +25,11 @@ Every operator-side action affecting user trust should be actor-scoped and times
 
 ### What is still missing
 - the current audit sink is still local-runtime instead of hosted durable,
-- feature-flag / safety-toggle changes are not actor-logged,
 - cross-account account-access interventions are not implemented,
-- support-only/admin-only boundaries are still not implemented.
+- support-only/admin-only boundaries are still not implemented,
+- there is still no canonical intervention policy separating support-safe actions from admin-only actions.
+
+Boundary closure plan: `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 
 Record evidence for:
 - viewing sensitive artifacts,

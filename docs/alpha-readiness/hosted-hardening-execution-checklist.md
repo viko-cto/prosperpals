@@ -103,13 +103,13 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Account-access interventions are auditable  
   - status: open blocker
-  - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`, `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 - [ ] Feature-flag / safety-toggle changes are auditable  
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Least-privilege support path exists  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`, `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 - [ ] Manual help / export / deletion path exists  
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/export-deletion-fallback.md`
@@ -120,7 +120,7 @@ For every line marked complete or manual fallback, link the proof note under `do
 ## Current blockers
 1. Trust-critical alpha lanes now have hosted-capable durability paths in the repo, and the smoke harness can prove audit + ledger + analytics + onboarding + receipt persistence together, but preview/alpha rollout proof is still missing and local fallbacks remain available outside strict hosted-only wiring.
 2. A direct 2026-03-25 hosted audit of the linked Vercel project found **no environment variables configured at all**, so the blocker is now concrete: hosted-proof work is stalled at missing env wiring, not just missing smoke output. The required preview/alpha variable set and exact wiring procedure are now documented in `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`.
-3. Support-only/admin-only roles and broader cross-account intervention controls are still absent.
+3. Support-only/admin-only roles and broader cross-account intervention controls are still absent, though the exact acceptance bar is now pinned down in `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 
 ## Decision posture

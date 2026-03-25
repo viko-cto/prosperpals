@@ -246,7 +246,7 @@ The hosted preview smoke harness is now wired across the full repo-supported tru
 But the step is still **not complete** because:
 - there is still no external OCR/provider call,
 - the full hosted smoke harness is not yet proven in a real preview/alpha environment note,
-- support-only/admin-only boundaries and broader cross-account intervention controls are still absent,
+- support-only/admin-only boundaries and broader cross-account intervention controls are still absent, even though the acceptance bar is now explicitly defined in `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
 
@@ -263,6 +263,9 @@ The repo now includes a dedicated env-wiring manifest for that move:
 
 The repo also now includes a dedicated interview operating tracker for the parallel blocker:
 - `docs/alpha-readiness/interview-evidence-tracker.md`
+
+And the operator/access blocker is now pinned to an explicit closure artifact instead of a vague TODO:
+- `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 
 That manifest makes the deployment blocker operational by defining:
 - the minimum preview + alpha variable contract,

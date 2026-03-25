@@ -9,7 +9,7 @@ ProsperPals has completed the BMAD planning pipeline, the current implementation
 
 **Decision posture:** `NO-GO remains locked until interview evidence, hosted hardening, receipt realism, and operator readiness are captured in durable artifacts`
 
-**Next recommended step:** keep the NO-GO locked while proving the now-hosted-capable audit, reward/trade ledger, analytics, onboarding, and receipt durability paths in a real preview/alpha environment, then populate the remaining interview evidence in `docs/alpha-readiness/`. Return to a formal GO / CONDITIONAL GO / NO-GO re-decision only after that evidence exists.
+**Next recommended step:** keep the NO-GO locked while proving the now-hosted-capable audit, reward/trade ledger, analytics, onboarding, and receipt durability paths in a real preview/alpha environment, while separately closing the explicit operator/admin boundary plan in `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md` and populating the remaining interview evidence in `docs/alpha-readiness/`. Return to a formal GO / CONDITIONAL GO / NO-GO re-decision only after that evidence exists.
 
 ## What exists now
 - BMAD planning artifacts in `_bmad/_bmad-output/planning-artifacts/`
