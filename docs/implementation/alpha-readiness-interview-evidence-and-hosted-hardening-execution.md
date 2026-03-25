@@ -238,12 +238,12 @@ Founder-visible cohort telemetry now has the same hosted-capable pattern: when t
 
 Onboarding continuity now also has a hosted-capable path: when the same hosted credentials are configured, first-value progress can persist through `demo_onboarding_states`, and `hosted-only` mode can fail closed instead of quietly dropping back to the cookie-backed onboarding state.
 
-The hosted preview smoke harness is now wired to all three lanes together — audit, ledger, and analytics — so preview/alpha can require `hosted-only` on every surfaced trust-reporting path, round-trip them through PostgREST, and fail if any of them silently recreate a local runtime sink.
+The hosted preview smoke harness is now wired to three surfaced trust-reporting lanes together — audit, ledger, and analytics — and the receipt lane itself is now also hosted-capable via dedicated receipt record + artifact tables. That means preview/alpha can require `hosted-only` on the already-smoked surfaces while the remaining receipt/onboarding deployment proof is attached separately instead of still being blocked on missing repo support.
 
 But the step is still **not complete** because:
-- artifact files and metadata still land in local runtime storage,
 - there is still no external OCR/provider call,
 - the hosted audit + ledger + analytics paths are not yet proven in a real preview/alpha environment smoke note,
+- the hosted onboarding and receipt durability paths are not yet proven in a real preview/alpha evidence note,
 - support-only/admin-only boundaries and broader cross-account intervention controls are still absent,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
@@ -254,7 +254,7 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> prove the new hosted audit + ledger + analytics paths in a real preview/alpha environment, then reuse that durability pattern for more trust-critical state while the human evidence pack gets populated behind the still-locked NO-GO.
+> prove the now-hosted-capable trust lanes in a real preview/alpha environment, then keep filling the human evidence pack behind the still-locked NO-GO.
 
 ---
 
@@ -302,12 +302,15 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `src/lib/telemetry/demo-event-store.ts`
 - `supabase/migrations/20260324150500_demo_analytics_events.sql`
 - `test/demo-analytics-durability.test.mjs`
+- `supabase/migrations/20260325061000_demo_receipt_durability.sql`
+- `test/demo-receipt-durability.test.mjs`
+- `docs/alpha-readiness/evidence/hosted-hardening/hosted-receipt-postgrest-durability-path.md`
 - `.env.example`
 - `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
 - `scripts/hosted-durability-smoke.mjs`
 
 ## Outcome
 
-ProsperPals now has a stronger receipt-realism operating pack and a materially better proof trail for asset lineage, operator auditability, and founder-visible cohort telemetry.
+ProsperPals now has a stronger receipt-realism operating pack and a materially better proof trail for asset lineage, operator auditability, founder-visible cohort telemetry, onboarding continuity, and receipt-state durability.
 
-The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus hosted-capable operator-audit, ledger, and analytics durability paths, with one smoke harness wired to prove all three lanes together in preview/alpha. But hosted alpha remains **NO-GO** until that capability is actually rolled out, the rest of the trust-critical state is hardened, and the missing interview evidence lands.
+The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus hosted-capable operator-audit, ledger, analytics, onboarding, and receipt durability paths. But hosted alpha remains **NO-GO** until those capabilities are actually proven in deployment, the remaining role-boundary gaps are closed, and the missing interview evidence lands.

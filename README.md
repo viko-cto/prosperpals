@@ -9,7 +9,7 @@ ProsperPals has completed the BMAD planning pipeline, the current implementation
 
 **Decision posture:** `NO-GO remains locked until interview evidence, hosted hardening, receipt realism, and operator readiness are captured in durable artifacts`
 
-**Next recommended step:** keep the NO-GO locked while proving the new hosted audit + reward/trade ledger + analytics paths in a real preview/alpha environment, then migrate the remaining onboarding/receipt state and populate the remaining interview evidence in `docs/alpha-readiness/`. Return to a formal GO / CONDITIONAL GO / NO-GO re-decision only after that evidence exists.
+**Next recommended step:** keep the NO-GO locked while proving the now-hosted-capable audit, reward/trade ledger, analytics, onboarding, and receipt durability paths in a real preview/alpha environment, then populate the remaining interview evidence in `docs/alpha-readiness/`. Return to a formal GO / CONDITIONAL GO / NO-GO re-decision only after that evidence exists.
 
 ## What exists now
 - BMAD planning artifacts in `_bmad/_bmad-output/planning-artifacts/`
@@ -20,7 +20,7 @@ ProsperPals has completed the BMAD planning pipeline, the current implementation
 - Sprint 3 trust hardening for receipt candidate review, explainability, operator traces, release safety, privacy-safe notifications, bounded upload/artifact receipt lineage, and actor-scoped support-view audit logging
 - Durable demo ledgers for ProsperCoin credits/debits and virtual trade executions
 - Curated launch asset list with honest quote freshness and stale-trade blocking
-- Supabase SQL migrations for canonical trust-critical tables plus hosted-capable PostgREST durability paths for operator audit events and the demo reward/trade ledger
+- Supabase SQL migrations for canonical trust-critical tables plus hosted-capable PostgREST durability paths for operator audit events, the demo reward/trade ledger, onboarding continuity, and receipt review/artifact state
 - Server-evaluated feature flags and request/trace propagation
 - Idempotency tests for both SQL trust tables and the demo reward/trade loop
 - Alpha-readiness gap-close, validation, kickoff, NO-GO decision, and execution-packet artifacts in `docs/implementation/`
@@ -75,4 +75,4 @@ This is the honest smoke gate for the current alpha-readiness blocker: it proves
 17. Alpha readiness → interview evidence and hosted hardening execution operating pack
 
 ## Immediate next step
-Populate the interview/evidence/checklist artifacts in `docs/alpha-readiness/`, prove the hosted audit + ledger + analytics paths in deployment, migrate the remaining receipt state off local-runtime sinks, keep the NO-GO locked, and re-enter decision review only after the required evidence exists.
+Populate the interview/evidence/checklist artifacts in `docs/alpha-readiness/`, prove the now-hosted-capable trust lanes in deployment, keep the NO-GO locked, and re-enter decision review only after the required evidence exists.

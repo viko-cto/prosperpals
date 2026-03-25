@@ -11,6 +11,8 @@ const DEFAULT_RUNTIME_DIR = path.join(process.cwd(), ".prosperpals-runtime");
 const DEFAULT_RECEIPT_PATH = path.join(DEFAULT_RUNTIME_DIR, "demo-receipts.jsonl");
 const DEFAULT_RECEIPT_ARTIFACTS_PATH = path.join(DEFAULT_RUNTIME_DIR, "demo-receipt-artifacts.jsonl");
 const DEFAULT_RECEIPT_UPLOAD_DIR = path.join(DEFAULT_RUNTIME_DIR, "receipt-uploads");
+const DEFAULT_HOSTED_RECORD_TABLE = "demo_receipt_records";
+const DEFAULT_HOSTED_ARTIFACT_TABLE = "demo_receipt_artifacts";
 const REVIEW_THRESHOLD = 0.85;
 
 const receiptArtifactRecordSchema = z.object({
@@ -129,6 +131,19 @@ type ReceiptConfirmationResult = {
   alreadyConfirmed: boolean;
 };
 
+type HostedReceiptConfig = {
+  url: string;
+  serviceKey: string;
+  recordTable: string;
+  artifactTable: string;
+  mode: "prefer-hosted" | "hosted-only";
+};
+
+type HostedReceiptArtifactWriteEntry = {
+  artifact: ReceiptArtifactRecord;
+  payloadBase64: string;
+};
+
 function getReceiptPath() {
   return process.env.PROSPERPALS_DEMO_RECEIPT_PATH ?? DEFAULT_RECEIPT_PATH;
 }
@@ -139,6 +154,50 @@ function getReceiptArtifactsPath() {
 
 function getReceiptUploadDir() {
   return process.env.PROSPERPALS_DEMO_RECEIPT_UPLOAD_DIR ?? DEFAULT_RECEIPT_UPLOAD_DIR;
+}
+
+function getHostedReceiptConfig(): HostedReceiptConfig | null {
+  const url =
+    process.env.PROSPERPALS_SUPABASE_URL
+    ?? process.env.NEXT_PUBLIC_SUPABASE_URL
+    ?? process.env.SUPABASE_URL;
+  const serviceKey =
+    process.env.PROSPERPALS_SUPABASE_SERVICE_ROLE_KEY
+    ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !serviceKey) {
+    return null;
+  }
+
+  return {
+    url: url.replace(/\/$/, ""),
+    serviceKey,
+    recordTable: process.env.PROSPERPALS_RECEIPT_TABLE ?? DEFAULT_HOSTED_RECORD_TABLE,
+    artifactTable:
+      process.env.PROSPERPALS_RECEIPT_ARTIFACT_TABLE ?? DEFAULT_HOSTED_ARTIFACT_TABLE,
+    mode:
+      process.env.PROSPERPALS_RECEIPT_DURABILITY_MODE === "hosted-only"
+        ? "hosted-only"
+        : "prefer-hosted"
+  };
+}
+
+function getHostedReceiptRecordsUrl(config: HostedReceiptConfig, query = "") {
+  return `${config.url}/rest/v1/${config.recordTable}${query}`;
+}
+
+function getHostedReceiptArtifactsUrl(config: HostedReceiptConfig, query = "") {
+  return `${config.url}/rest/v1/${config.artifactTable}${query}`;
+}
+
+function getReceiptLocation() {
+  const hostedConfig = getHostedReceiptConfig();
+  return hostedConfig ? `supabase:${hostedConfig.recordTable}` : getReceiptPath();
+}
+
+function getReceiptArtifactLocation() {
+  const hostedConfig = getHostedReceiptConfig();
+  return hostedConfig ? `supabase:${hostedConfig.artifactTable}` : getReceiptArtifactsPath();
 }
 
 async function ensureReceiptDir() {
@@ -197,9 +256,243 @@ function buildReviewMessage(confidenceScore: number) {
   return "This parse is too fuzzy to fake certainty. Review what Goldie thinks it saw, then correct the merchant, amount, or category before anything is posted.";
 }
 
+function parseHostedReceiptRows(payload: unknown) {
+  if (!Array.isArray(payload)) {
+    throw new Error("Hosted receipt read returned a non-array payload");
+  }
+
+  return payload
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const record = "recordPayload" in entry
+        ? entry.recordPayload
+        : "record" in entry
+          ? entry.record
+          : entry;
+
+      try {
+        return receiptRecordSchema.parse(record);
+      } catch {
+        return null;
+      }
+    })
+    .filter((record): record is ReceiptRecord => Boolean(record));
+}
+
+function parseHostedReceiptArtifactRows(payload: unknown) {
+  if (!Array.isArray(payload)) {
+    throw new Error("Hosted receipt artifact read returned a non-array payload");
+  }
+
+  return payload
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+
+      const artifact = "artifactPayload" in entry
+        ? entry.artifactPayload
+        : "artifact" in entry
+          ? entry.artifact
+          : entry;
+
+      try {
+        return receiptArtifactRecordSchema.parse(artifact);
+      } catch {
+        return null;
+      }
+    })
+    .filter((artifact): artifact is ReceiptArtifactRecord => Boolean(artifact));
+}
+
+async function readHostedReceiptRecords(): Promise<ReceiptRecord[]> {
+  const config = getHostedReceiptConfig();
+
+  if (!config) {
+    return [];
+  }
+
+  const response = await fetch(
+    getHostedReceiptRecordsUrl(config, "?select=recordPayload&order=occurredAt.asc,inserted_at.asc&limit=512"),
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`
+      },
+      cache: "no-store"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Hosted receipt read failed: ${response.status} ${response.statusText}`);
+  }
+
+  return parseHostedReceiptRows(await response.json());
+}
+
+async function readHostedReceiptArtifactRecords(): Promise<ReceiptArtifactRecord[]> {
+  const config = getHostedReceiptConfig();
+
+  if (!config) {
+    return [];
+  }
+
+  const response = await fetch(
+    getHostedReceiptArtifactsUrl(
+      config,
+      "?select=artifactPayload&order=occurredAt.asc,inserted_at.asc&limit=512"
+    ),
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`
+      },
+      cache: "no-store"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Hosted receipt artifact read failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return parseHostedReceiptArtifactRows(await response.json());
+}
+
+async function readLocalReceiptRecords(): Promise<ReceiptRecord[]> {
+  try {
+    const raw = await fs.readFile(getReceiptPath(), "utf8");
+    return raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        try {
+          return receiptRecordSchema.parse(JSON.parse(line));
+        } catch {
+          return null;
+        }
+      })
+      .filter((record): record is ReceiptRecord => Boolean(record));
+  } catch {
+    return [];
+  }
+}
+
+async function readLocalReceiptArtifactRecords(): Promise<ReceiptArtifactRecord[]> {
+  try {
+    const raw = await fs.readFile(getReceiptArtifactsPath(), "utf8");
+    return raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        try {
+          return receiptArtifactRecordSchema.parse(JSON.parse(line));
+        } catch {
+          return null;
+        }
+      })
+      .filter((record): record is ReceiptArtifactRecord => Boolean(record));
+  } catch {
+    return [];
+  }
+}
+
+async function getStoredReceiptRecords(): Promise<ReceiptRecord[]> {
+  const config = getHostedReceiptConfig();
+
+  if (!config) {
+    return readLocalReceiptRecords();
+  }
+
+  try {
+    return await readHostedReceiptRecords();
+  } catch (error) {
+    if (config.mode === "hosted-only") {
+      throw error;
+    }
+
+    return readLocalReceiptRecords();
+  }
+}
+
+async function getStoredReceiptArtifactRecords(): Promise<ReceiptArtifactRecord[]> {
+  const config = getHostedReceiptConfig();
+
+  if (!config) {
+    return readLocalReceiptArtifactRecords();
+  }
+
+  try {
+    return await readHostedReceiptArtifactRecords();
+  } catch (error) {
+    if (config.mode === "hosted-only") {
+      throw error;
+    }
+
+    return readLocalReceiptArtifactRecords();
+  }
+}
+
+async function appendHostedReceiptRecords(records: ReceiptRecord[]) {
+  const config = getHostedReceiptConfig();
+
+  if (!config) {
+    throw new Error("Hosted receipt config is not available");
+  }
+
+  const rows = records.map((record) => ({
+    rowId: crypto.randomUUID(),
+    userId: record.userId,
+    recordKind: record.kind,
+    entityId: record.kind === "receipt_candidate" ? record.candidateId : record.id,
+    candidateId: "candidateId" in record ? record.candidateId : null,
+    artifactId: record.artifactId,
+    occurredAt: record.occurredAt,
+    requestId: record.requestId,
+    traceId: record.traceId,
+    recordPayload: record
+  }));
+
+  const response = await fetch(getHostedReceiptRecordsUrl(config), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      apikey: config.serviceKey,
+      Authorization: `Bearer ${config.serviceKey}`,
+      Prefer: "return=representation"
+    },
+    body: JSON.stringify(rows)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Hosted receipt write failed: ${response.status} ${response.statusText}`);
+  }
+
+  return parseHostedReceiptRows(await response.json());
+}
+
 async function appendReceiptRecords(records: ReceiptRecord[]) {
   if (!records.length) {
     return;
+  }
+
+  const hostedConfig = getHostedReceiptConfig();
+
+  if (hostedConfig) {
+    try {
+      await appendHostedReceiptRecords(records);
+      return;
+    } catch (error) {
+      if (hostedConfig.mode === "hosted-only") {
+        throw error;
+      }
+    }
   }
 
   await ensureReceiptDir();
@@ -210,7 +503,53 @@ async function appendReceiptRecords(records: ReceiptRecord[]) {
   );
 }
 
-async function appendReceiptArtifactRecords(records: ReceiptArtifactRecord[]) {
+async function appendHostedReceiptArtifactRecords(entries: HostedReceiptArtifactWriteEntry[]) {
+  const config = getHostedReceiptConfig();
+
+  if (!config) {
+    throw new Error("Hosted receipt config is not available");
+  }
+
+  const rows = entries.map(({ artifact, payloadBase64 }) => ({
+    artifactId: artifact.artifactId,
+    userId: artifact.userId,
+    occurredAt: artifact.occurredAt,
+    requestId: artifact.requestId,
+    traceId: artifact.traceId,
+    storageMode: artifact.storageMode,
+    storagePath: artifact.storagePath,
+    fileName: artifact.fileName,
+    mimeType: artifact.mimeType,
+    sizeBytes: artifact.sizeBytes,
+    parserProvider: artifact.parserProvider,
+    parserModel: artifact.parserModel,
+    providerReference: artifact.providerReference,
+    sourceHint: artifact.sourceHint,
+    artifactPayload: artifact,
+    artifactPayloadBase64: payloadBase64
+  }));
+
+  const response = await fetch(getHostedReceiptArtifactsUrl(config), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      apikey: config.serviceKey,
+      Authorization: `Bearer ${config.serviceKey}`,
+      Prefer: "return=representation"
+    },
+    body: JSON.stringify(rows)
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Hosted receipt artifact write failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  return parseHostedReceiptArtifactRows(await response.json());
+}
+
+async function appendLocalReceiptArtifactRecords(records: ReceiptArtifactRecord[]) {
   if (!records.length) {
     return;
   }
@@ -295,45 +634,13 @@ function buildReceiptConfirmationResult(input: {
 }
 
 export async function readDemoReceiptRecords(userId?: string): Promise<ReceiptRecord[]> {
-  try {
-    const raw = await fs.readFile(getReceiptPath(), "utf8");
-    return raw
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        try {
-          return receiptRecordSchema.parse(JSON.parse(line));
-        } catch {
-          return null;
-        }
-      })
-      .filter((record): record is ReceiptRecord => Boolean(record && (!userId || record.userId === userId)));
-  } catch {
-    return [];
-  }
+  const records = await getStoredReceiptRecords();
+  return userId ? records.filter((record) => record.userId === userId) : records;
 }
 
 export async function readDemoReceiptArtifactRecords(userId?: string): Promise<ReceiptArtifactRecord[]> {
-  try {
-    const raw = await fs.readFile(getReceiptArtifactsPath(), "utf8");
-    return raw
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        try {
-          return receiptArtifactRecordSchema.parse(JSON.parse(line));
-        } catch {
-          return null;
-        }
-      })
-      .filter(
-        (record): record is ReceiptArtifactRecord => Boolean(record && (!userId || record.userId === userId))
-      );
-  } catch {
-    return [];
-  }
+  const records = await getStoredReceiptArtifactRecords();
+  return userId ? records.filter((record) => record.userId === userId) : records;
 }
 
 function buildReceiptFailure(input: {
@@ -378,21 +685,60 @@ async function persistReceiptArtifact(input: {
     bytes: Buffer;
   };
 }): Promise<ReceiptArtifactRecord> {
-  await ensureReceiptArtifactDir();
-
   const rawExtension = input.upload?.fileName.includes(".")
     ? input.upload.fileName.slice(input.upload.fileName.lastIndexOf("."))
     : ".txt";
   const sanitizedExtension = rawExtension.replace(/[^a-zA-Z0-9.]/g, "") || ".txt";
   const storageMode = input.upload ? "uploaded" : "simulated";
+  const fileBuffer = input.upload?.bytes ?? Buffer.from("simulated receipt payload", "utf8");
+  const hostedConfig = getHostedReceiptConfig();
+
+  if (hostedConfig) {
+    const hostedArtifact = receiptArtifactRecordSchema.parse({
+      kind: "receipt_artifact",
+      artifactId: input.artifactId,
+      userId: input.userId,
+      occurredAt: input.occurredAt,
+      requestId: input.requestId,
+      traceId: input.traceId,
+      storageMode,
+      storagePath: `supabase:${hostedConfig.artifactTable}:${input.artifactId}`,
+      fileName: input.upload?.fileName ?? "simulated-receipt.txt",
+      mimeType: input.upload?.mimeType || "text/plain",
+      sizeBytes: fileBuffer.byteLength,
+      parserProvider: storageMode === "uploaded" ? "demo-ocr-upload-gateway" : "demo-ocr-simulator",
+      parserModel: storageMode === "uploaded" ? "receipt-lineage-v1" : "receipt-simulator-v1",
+      providerReference: `${storageMode}:${input.artifactId}`,
+      sourceHint:
+        storageMode === "uploaded"
+          ? "User uploaded a real receipt asset into the hosted durability lane before parse review"
+          : "No file uploaded; seeded simulated receipt artifact for the hosted prototype review loop"
+    });
+
+    try {
+      await appendHostedReceiptArtifactRecords([
+        {
+          artifact: hostedArtifact,
+          payloadBase64: fileBuffer.toString("base64")
+        }
+      ]);
+      return hostedArtifact;
+    } catch (error) {
+      if (hostedConfig.mode === "hosted-only") {
+        throw error;
+      }
+    }
+  }
+
+  await ensureReceiptArtifactDir();
+
   const storagePath = input.upload
     ? path.join(getReceiptUploadDir(), `${input.artifactId}${sanitizedExtension}`)
     : path.join(getReceiptUploadDir(), `${input.artifactId}-simulated.txt`);
 
-  const fileBuffer = input.upload?.bytes ?? Buffer.from("simulated receipt payload", "utf8");
   await fs.writeFile(storagePath, fileBuffer);
 
-  const artifact = receiptArtifactRecordSchema.parse({
+  const localArtifact = receiptArtifactRecordSchema.parse({
     kind: "receipt_artifact",
     artifactId: input.artifactId,
     userId: input.userId,
@@ -413,8 +759,8 @@ async function persistReceiptArtifact(input: {
         : "No file uploaded; seeded simulated receipt artifact for prototype review loop"
   });
 
-  await appendReceiptArtifactRecords([artifact]);
-  return artifact;
+  await appendLocalReceiptArtifactRecords([localArtifact]);
+  return localArtifact;
 }
 
 function shouldSimulateProviderFailure(merchantLabel: string) {
@@ -555,9 +901,9 @@ export async function confirmReceiptCandidate(input: {
       .reverse()
       .find(
         (record): record is ReceiptCandidateRecord =>
-          record.kind === "receipt_candidate" &&
-          record.candidateId === input.candidateId &&
-          record.reviewStatus === "confirmed"
+          record.kind === "receipt_candidate"
+          && record.candidateId === input.candidateId
+          && record.reviewStatus === "confirmed"
       ) ?? candidate;
 
     return buildReceiptConfirmationResult({
@@ -572,9 +918,9 @@ export async function confirmReceiptCandidate(input: {
   const merchantLabel = input.merchantLabel.trim() || candidate.merchantLabel;
   const categoryId = input.categoryId.trim() || candidate.categoryId;
   const correctionApplied =
-    merchantLabel !== candidate.merchantLabel ||
-    amountMinor !== candidate.amountMinor ||
-    categoryId !== candidate.categoryId;
+    merchantLabel !== candidate.merchantLabel
+    || amountMinor !== candidate.amountMinor
+    || categoryId !== candidate.categoryId;
 
   const moneyEventId = crypto.randomUUID();
   buildReviewedMoneyEvent({
@@ -667,8 +1013,8 @@ export async function getDemoReceiptReviewState(userId: string): Promise<Receipt
     : undefined;
 
   return {
-    sinkPath: getReceiptPath(),
-    artifactSinkPath: getReceiptArtifactsPath(),
+    sinkPath: getReceiptLocation(),
+    artifactSinkPath: getReceiptArtifactLocation(),
     pendingCandidate,
     latestArtifact: artifacts.at(-1),
     latestFailure: failures.at(-1),

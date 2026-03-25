@@ -15,6 +15,7 @@ Store proof notes and check artifacts for the hosted trust-hardening lane here.
 - `feature-flag-defaults-proof.md`
 - `release-safety-and-rollback-proof.md`
 - `cohort-health-reporting-proof.md`
+- `hosted-receipt-postgrest-durability-path.md`
 
 Every note should answer:
 1. what was tested or verified,
