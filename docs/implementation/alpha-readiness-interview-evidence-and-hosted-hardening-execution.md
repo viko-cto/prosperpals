@@ -238,12 +238,11 @@ Founder-visible cohort telemetry now has the same hosted-capable pattern: when t
 
 Onboarding continuity now also has a hosted-capable path: when the same hosted credentials are configured, first-value progress can persist through `demo_onboarding_states`, and `hosted-only` mode can fail closed instead of quietly dropping back to the cookie-backed onboarding state.
 
-The hosted preview smoke harness is now wired to three surfaced trust-reporting lanes together — audit, ledger, and analytics — and the receipt lane itself is now also hosted-capable via dedicated receipt record + artifact tables. That means preview/alpha can require `hosted-only` on the already-smoked surfaces while the remaining receipt/onboarding deployment proof is attached separately instead of still being blocked on missing repo support.
+The hosted preview smoke harness is now wired across the full repo-supported trust set — audit, ledger, analytics, onboarding, and receipt review/artifacts — so preview/alpha can require `hosted-only` across all five lanes in one proof run instead of scattering that evidence across separate partial checks.
 
 But the step is still **not complete** because:
 - there is still no external OCR/provider call,
-- the hosted audit + ledger + analytics paths are not yet proven in a real preview/alpha environment smoke note,
-- the hosted onboarding and receipt durability paths are not yet proven in a real preview/alpha evidence note,
+- the full hosted smoke harness is not yet proven in a real preview/alpha environment note,
 - support-only/admin-only boundaries and broader cross-account intervention controls are still absent,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
@@ -254,7 +253,7 @@ So the outcome stays the same:
 
 What changed is the next exact move:
 
-> wire the preview/alpha environment contract explicitly, then prove the now-hosted-capable trust lanes in a real preview/alpha environment, then keep filling the human evidence pack behind the still-locked NO-GO.
+> wire the preview/alpha environment contract explicitly, then prove the now-hosted-capable trust lanes in a real preview/alpha environment with one bounded smoke note, then keep filling the human evidence pack behind the still-locked NO-GO.
 
 The repo now includes a dedicated env-wiring manifest for that move:
 - `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`
@@ -322,4 +321,4 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 
 ProsperPals now has a stronger receipt-realism operating pack and a materially better proof trail for asset lineage, operator auditability, founder-visible cohort telemetry, onboarding continuity, and receipt-state durability.
 
-The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus hosted-capable operator-audit, ledger, analytics, onboarding, and receipt durability paths. But hosted alpha remains **NO-GO** until those capabilities are actually proven in deployment, the remaining role-boundary gaps are closed, and the missing interview evidence lands.
+The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus a single hosted-proof harness spanning operator-audit, ledger, analytics, onboarding, and receipt durability paths. But hosted alpha remains **NO-GO** until that harness is actually proven in deployment, the remaining role-boundary gaps are closed, and the missing interview evidence lands.

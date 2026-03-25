@@ -14,7 +14,7 @@ For every line marked complete or manual fallback, link the proof note under `do
 ## B1. Durable hosted truth
 - [ ] Onboarding state persists per user  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
 - [ ] Reward ledger is hosted and durable  
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-ledger-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
@@ -23,7 +23,7 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-ledger-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
 - [ ] Receipt candidates survive redeploys  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-receipt-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
+  - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-receipt-postgrest-durability-path.md`, `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`, `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
 - [ ] Support and audit traces survive redeploys  
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/hosted-hardening/hosted-audit-postgrest-durability-path.md`
@@ -118,7 +118,7 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/incident-pause-and-escalation.md`
 
 ## Current blockers
-1. Trust-critical alpha lanes now have hosted-capable durability paths in the repo, but preview/alpha rollout proof is still missing and local fallbacks remain available outside strict hosted-only wiring.
+1. Trust-critical alpha lanes now have hosted-capable durability paths in the repo, and the smoke harness can prove audit + ledger + analytics + onboarding + receipt persistence together, but preview/alpha rollout proof is still missing and local fallbacks remain available outside strict hosted-only wiring.
 2. A direct 2026-03-25 hosted audit of the linked Vercel project found **no environment variables configured at all**, so the blocker is now concrete: hosted-proof work is stalled at missing env wiring, not just missing smoke output. The required preview/alpha variable set and exact wiring procedure are now documented in `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`.
 3. Support-only/admin-only roles and broader cross-account intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
@@ -126,4 +126,4 @@ For every line marked complete or manual fallback, link the proof note under `do
 ## Decision posture
 - Current recommendation if review were held today: NO-GO
 - Why the NO-GO remains locked: the receipt lane is now hosted-capable alongside the operator-audit lane, reward/trade ledger loop, founder-visible cohort analytics, and onboarding continuity, but deployed rollout proof, real support/admin boundaries, and populated interview evidence are still missing.
-- What exact artifacts would change that answer next: real preview/alpha hosted-proof notes for the now-hosted-capable trust lanes, support/admin role boundaries, and populated interview/redecision evidence.
+- What exact artifacts would change that answer next: a real preview/alpha hosted smoke proof note covering audit + ledger + analytics + onboarding + receipt lanes, support/admin role boundaries, and populated interview/redecision evidence.

@@ -66,7 +66,7 @@ That is enough to shrink the blocker from “missing hosted path” to “missin
 
 - The schema/migration layer provides the target hosted shape for money, rewards, trades, onboarding, audit, analytics, and receipts.
 - Local fallbacks still exist for development when strict hosted-only mode is not enabled.
-- The smoke harness currently proves audit + ledger + analytics in repo, while onboarding and receipt durability still need deployed evidence notes.
+- The smoke harness now proves audit + ledger + analytics + onboarding + receipt durability together in repo, but all five lanes still need a real deployed preview/alpha evidence note.
 
 These are valid development aids, not hosted alpha closure.
 

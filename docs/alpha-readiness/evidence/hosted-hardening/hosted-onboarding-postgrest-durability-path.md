@@ -52,14 +52,16 @@ That matters because preview or alpha should not pretend onboarding continuity s
 ### 1. This is capability proof, not deployed preview proof
 The repo can now use hosted durability for onboarding state, but there is still no real preview/alpha smoke artifact proving the deployed environment is wired to `demo_onboarding_states`.
 
-### 2. Receipt review state and receipt artifacts are still local-runtime blockers
-This chunk closes the cookie-backed onboarding gap, but the receipt lane still depends on local runtime storage for:
+### 2. Receipt review state and receipt artifacts are now repo-hosted-capable, but deployed proof is still missing
+This chunk originally closed the cookie-backed onboarding gap. Since then, the receipt lane has also gained hosted-capable persistence for:
 - receipt candidates and confirmations,
 - receipt artifact metadata,
-- and uploaded receipt files.
+- and bounded hosted artifact payload storage.
+
+That removes the old repo-side storage blocker, but it still does **not** count as hosted alpha proof until the real preview/alpha smoke note proves those tables are wired and enforced in deployment.
 
 ### 3. The alpha NO-GO still stays locked
-Hosted onboarding continuity is real progress, but it does not reopen alpha by itself because interview evidence is still missing, preview/alpha proof for the existing hosted paths is still missing, and the receipt durability lane remains incomplete.
+Hosted onboarding continuity is real progress, but it does not reopen alpha by itself because interview evidence is still missing, preview/alpha proof for the hosted trust lanes is still missing, and operator-boundary maturity still remains incomplete.
 
 ## Verdict by checklist line
 
@@ -69,6 +71,6 @@ Hosted onboarding continuity is real progress, but it does not reopen alpha by i
 
 ## Exact next move after this chunk
 
-1. Run honest preview/alpha smoke proof for the already-hosted audit + ledger + analytics paths and attach the generated artifact.
-2. Reuse the same hosted durability pattern for receipt review state and receipt artifact storage so the remaining trust-critical continuity gap is no longer local-runtime bound.
+1. Run honest preview/alpha smoke proof for the hosted audit + ledger + analytics + onboarding + receipt paths and attach the generated artifact.
+2. Update the checklist only for the lanes the real smoke note actually proves in deployment.
 3. Keep the hosted-alpha NO-GO locked until those proof artifacts and the missing interview evidence exist.
