@@ -45,8 +45,23 @@ This is good alpha hygiene because the Denmark-first slice is not relying on imp
 ### 1. Preview versus real alpha-hosted environment separation is not yet proven
 There is no repo-native evidence note or deploy config proving a dedicated alpha-hosted environment distinct from preview/demo use.
 
+A direct hosted audit on 2026-03-25 tightened this from a generic concern into a verified blocker:
+- `.vercel/project.json` is linked to `prosperpals-app`
+- `npx vercel env ls --token "$VERCEL_TOKEN"` returned **`No Environment Variables found`**
+
+See:
+- `docs/alpha-readiness/evidence/hosted-hardening/preview-env-audit-2026-03-25.md`
+
 ### 2. Required secrets/config are not documented as an operator-ready checklist
 The code reads env inputs such as `PROSPERPALS_FEATURE_FLAGS_JSON` and demo sink overrides, but the repo does not yet contain a founder/operator-ready env checklist for alpha.
+
+The same 2026-03-25 hosted audit also proves the linked Vercel project currently lacks the env wiring required for honest hosted-only proof of:
+- Supabase URL + anon key
+- service-role access for the smoke path
+- hosted-only durability modes for audit, ledger, analytics, onboarding, and receipt state
+
+See:
+- `docs/alpha-readiness/evidence/hosted-hardening/preview-env-audit-2026-03-25.md`
 
 ### 3. Release safety exists as code, but not yet as a deploy gate
 The release-safety summary is callable and test-covered, but there is no proof yet that deploys must pass it before alpha rollout.

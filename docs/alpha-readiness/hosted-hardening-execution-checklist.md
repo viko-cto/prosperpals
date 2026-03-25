@@ -119,7 +119,7 @@ For every line marked complete or manual fallback, link the proof note under `do
 
 ## Current blockers
 1. Trust-critical alpha lanes now have hosted-capable durability paths in the repo, but preview/alpha rollout proof is still missing and local fallbacks remain available outside strict hosted-only wiring.
-2. Operator support-view access, the narrow receipt-capture pause/clear intervention, release overrides for receipt capture plus simulator starter, the reward/trade ledger loop, founder-visible cohort analytics, onboarding continuity, and the receipt review/artifact lane now have hosted-capable PostgREST durability paths in the repo, but preview/alpha environment rollout proof is still missing.
+2. A direct 2026-03-25 hosted audit of the linked Vercel project found **no environment variables configured at all**, so the blocker is now concrete: hosted-proof work is stalled at missing env wiring, not just missing smoke output. Proof note: `docs/alpha-readiness/evidence/hosted-hardening/preview-env-audit-2026-03-25.md`.
 3. Support-only/admin-only roles and broader cross-account intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 
