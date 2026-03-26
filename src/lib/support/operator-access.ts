@@ -92,13 +92,14 @@ export function assertSubjectScopedInterventionAllowed(input: {
   viewerUserId: string;
   requestedSubjectUserId?: string | null;
   capability: OperatorCapability;
+  approvalGranted?: boolean;
 }) {
   const resolved = resolveSupportSubject({
     viewerUserId: input.viewerUserId,
     requestedSubjectUserId: input.requestedSubjectUserId
   });
 
-  if (resolved.isCrossAccount) {
+  if (resolved.isCrossAccount && !input.approvalGranted) {
     throw new CrossAccountSubjectInterventionRequiresApprovalError({
       viewerUserId: input.viewerUserId,
       subjectUserId: resolved.subjectUserId,

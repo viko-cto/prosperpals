@@ -2,6 +2,7 @@ import {
   RELEASE_FLAG_OVERRIDE_APPLIED_EVENT,
   RELEASE_FLAG_OVERRIDE_CLEARED_EVENT,
   SUPPORT_APPROVAL_REQUESTED_EVENT,
+  SUPPORT_APPROVAL_RESOLVED_EVENT,
   SUPPORT_BOUNDARY_BLOCKED_EVENT,
   SUPPORT_INTERVENTION_APPLIED_EVENT,
   SUPPORT_INTERVENTION_CLEARED_EVENT,
@@ -10,6 +11,7 @@ import {
   getActiveReleaseFlagOverrides,
   getActiveSupportInterventions,
   getPendingSupportApprovalRequests,
+  getResolvedSupportApprovalRequests,
   readDemoAuditEvents
 } from "../audit/demo-audit.ts";
 import { getReleaseSafetySummary } from "../operations/release-safety.ts";
@@ -53,13 +55,24 @@ export async function getDemoSupportConsole(userId: string, context: {
   countryCode?: string;
   internalUser?: boolean;
 } = {}) {
-  const [analyticsEvents, ledgerRecords, receiptRecords, auditEvents, activeInterventions, pendingApprovalRequests, activeReleaseOverrides, releaseSafety] = await Promise.all([
+  const [
+    analyticsEvents,
+    ledgerRecords,
+    receiptRecords,
+    auditEvents,
+    activeInterventions,
+    pendingApprovalRequests,
+    resolvedApprovalRequests,
+    activeReleaseOverrides,
+    releaseSafety
+  ] = await Promise.all([
     readDemoAnalyticsEvents(userId, 12),
     readDemoLedgerRecords(userId),
     readDemoReceiptRecords(userId),
     readDemoAuditEvents({ limit: 24 }),
     getActiveSupportInterventions(userId),
     getPendingSupportApprovalRequests(userId),
+    getResolvedSupportApprovalRequests(userId),
     getActiveReleaseFlagOverrides(),
     getReleaseSafetySummary(context)
   ]);
@@ -82,7 +95,7 @@ export async function getDemoSupportConsole(userId: string, context: {
   }));
 
   const ledgerTimeline: SupportTimelineItem[] = ledgerRecords.map((record) => ({
-    id: record.kind === "prospercoin_ledger" ? record.id : record.id,
+    id: record.id,
     occurredAt: record.occurredAt,
     type: "ledger",
     title:
@@ -157,6 +170,7 @@ export async function getDemoSupportConsole(userId: string, context: {
         : flagName;
     const supportTraceState = event.payload.supportTraceView === true ? "enabled" : "disabled";
     const roleUsed = typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : "unspecified";
+    const approvalStatus = String(event.payload.status ?? "unknown");
 
     const title =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
@@ -165,15 +179,19 @@ export async function getDemoSupportConsole(userId: string, context: {
           ? "Cross-account subject action blocked"
           : event.eventCode === SUPPORT_APPROVAL_REQUESTED_EVENT
             ? "Cross-account approval requested"
-            : event.eventCode === SUPPORT_INTERVENTION_APPLIED_EVENT && interventionCode === "receipt_capture_paused"
-              ? "Receipt capture paused"
-              : event.eventCode === SUPPORT_INTERVENTION_CLEARED_EVENT && interventionCode === "receipt_capture_paused"
-                ? "Receipt capture pause cleared"
-                : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT
-                  ? `${flagLabel} override applied`
-                  : event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
-                    ? `${flagLabel} override cleared`
-                    : event.eventCode;
+            : event.eventCode === SUPPORT_APPROVAL_RESOLVED_EVENT
+              ? approvalStatus === "approved"
+                ? "Cross-account approval granted"
+                : "Cross-account approval rejected"
+              : event.eventCode === SUPPORT_INTERVENTION_APPLIED_EVENT && interventionCode === "receipt_capture_paused"
+                ? "Receipt capture paused"
+                : event.eventCode === SUPPORT_INTERVENTION_CLEARED_EVENT && interventionCode === "receipt_capture_paused"
+                  ? "Receipt capture pause cleared"
+                  : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT
+                    ? `${flagLabel} override applied`
+                    : event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+                      ? `${flagLabel} override cleared`
+                      : event.eventCode;
 
     const subtitle =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
@@ -188,13 +206,17 @@ export async function getDemoSupportConsole(userId: string, context: {
             ? event.actorUserId && event.subjectUserId
               ? `Actor ${event.actorUserId} requested approval to act on ${event.subjectUserId}`
               : "Cross-account approval request recorded"
-            : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT || event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
-              ? event.actorUserId
-                ? `Actor ${event.actorUserId} changed ${flagName} for ${String(event.payload.scope ?? "alpha-hosted")}`
-                : `Operator changed ${flagName}`
-              : event.actorUserId && event.subjectUserId
-                ? `Actor ${event.actorUserId} changed ${interventionCode} for ${event.subjectUserId}`
-                : `Operator changed ${interventionCode}`;
+            : event.eventCode === SUPPORT_APPROVAL_RESOLVED_EVENT
+              ? event.actorUserId && event.subjectUserId
+                ? `Actor ${event.actorUserId} ${approvalStatus} cross-account action for ${event.subjectUserId}`
+                : `Cross-account approval ${approvalStatus}`
+              : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT || event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+                ? event.actorUserId
+                  ? `Actor ${event.actorUserId} changed ${flagName} for ${String(event.payload.scope ?? "alpha-hosted")}`
+                  : `Operator changed ${flagName}`
+                : event.actorUserId && event.subjectUserId
+                  ? `Actor ${event.actorUserId} changed ${interventionCode} for ${event.subjectUserId}`
+                  : `Operator changed ${interventionCode}`;
 
     const details =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
@@ -213,13 +235,19 @@ export async function getDemoSupportConsole(userId: string, context: {
               `Path: ${String(event.payload.path ?? "unknown")}`,
               `Support trace flag: ${supportTraceState}`
             ]
-          : event.eventCode === SUPPORT_APPROVAL_REQUESTED_EVENT
+          : event.eventCode === SUPPORT_APPROVAL_REQUESTED_EVENT || event.eventCode === SUPPORT_APPROVAL_RESOLVED_EVENT
             ? [
                 `Approval request: ${String(event.payload.approvalRequestCode ?? "unknown")}`,
+                ...(event.eventCode === SUPPORT_APPROVAL_RESOLVED_EVENT
+                  ? [`Approval request id: ${String(event.payload.approvalRequestId ?? "unknown")}`]
+                  : []),
                 `Capability: ${String(event.payload.requestedCapability ?? "unknown")}`,
                 `Requested action: ${String(event.payload.requestedAction ?? "unknown")}`,
                 `Approval owner: ${String(event.payload.approvalOwner ?? "unknown")}`,
-                `Status: ${String(event.payload.status ?? "unknown")}`,
+                `Status: ${approvalStatus}`,
+                ...(event.eventCode === SUPPORT_APPROVAL_RESOLVED_EVENT
+                  ? [`Resolved by: ${String(event.payload.resolvedByUserId ?? "unknown")}`]
+                  : []),
                 `Role used: ${roleUsed}`,
                 `Reason: ${String(event.payload.reason ?? "unspecified")}`,
                 `Path: ${String(event.payload.path ?? "unknown")}`,
@@ -263,6 +291,7 @@ export async function getDemoSupportConsole(userId: string, context: {
     timeline,
     activeInterventions,
     pendingApprovalRequests,
+    resolvedApprovalRequests,
     activeReleaseOverrides,
     releaseSafety,
     redactionPolicy: [

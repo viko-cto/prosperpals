@@ -27,16 +27,17 @@ The support surface now accepts an explicit subject context and makes it visible
 This change does **not** introduce impersonation or hidden admin power.
 
 When the selected subject differs from the signed-in operator:
-- receipt-hold controls stay disabled,
+- receipt-hold controls stay disabled by default,
 - release override controls stay visible but non-mutable from that review context,
 - the server action path now also rejects forged `subjectUserId` mutations and records a boundary-blocked audit event instead of trusting UI state alone,
-- the UI can now create an explicit **pending approval request** for a bounded cross-account receipt-hold action, with actor / subject / role / requested capability / approval owner / reason captured in audit,
-- and the UI explains that cross-account actions remain blocked until the hosted approval/audit model is durable.
+- the UI can create an explicit **pending approval request** for a bounded cross-account receipt-hold action, with actor / subject / role / requested capability / approval owner / reason captured in audit,
+- founder/operator can now resolve that request in-product, producing a durable **approved** audit event with approval request id + resolver identity,
+- and only then does the bounded cross-account receipt-hold rail unlock for that subject context.
 
 That keeps the lane honest:
 
-> the repo now proves explicit actor-vs-subject review context,
-> but it does **not** pretend cross-account intervention is solved.
+> the repo now proves explicit actor-vs-subject review context plus a narrow approval-backed receipt-hold workflow,
+> but it still does **not** pretend broad cross-account intervention or hosted role maturity is solved.
 
 ## Why this is useful now
 
@@ -47,8 +48,8 @@ This preview moves the blocker from vague language to a more testable state:
 
 ## Honest status after this change
 
-- **Improved:** actor-vs-subject review clarity in the running support surface plus server-side enforcement that keeps cross-account receipt mutations read-only even if a subject id is forged
-- **Still blocked:** durable hosted role assignment, approval-backed cross-account intervention, export/deletion maturity, and deployed hosted proof for the operator lane
+- **Improved:** actor-vs-subject review clarity in the running support surface, server-side enforcement that keeps forged cross-account mutations blocked, and a bounded founder-approved cross-account receipt-hold rail with explicit approval resolution audit
+- **Still blocked:** durable hosted role assignment beyond demo cookies, wider approval-backed cross-account intervention, export/deletion maturity, and deployed hosted proof for the operator lane
 - **NO-GO:** still locked
 
 ## Exact next move this points to

@@ -3,8 +3,10 @@
 import { redirect } from "next/navigation";
 import {
   type ReleaseFlagOverrideName,
+  getResolvedSupportApprovalRequests,
   recordReleaseFlagOverrideAudit,
   recordSupportApprovalRequestedAudit,
+  recordSupportApprovalResolvedAudit,
   recordSupportBoundaryBlockedAudit,
   recordSupportInterventionAudit
 } from "@/lib/audit/demo-audit";
@@ -38,6 +40,25 @@ function readReason(formData: FormData, fallback: string) {
   return String(formData.get("reason") ?? "").trim() || fallback;
 }
 
+async function readCrossAccountApprovalStatus(input: {
+  subjectUserId?: string;
+  capability: OperatorCapability;
+}) {
+  if (!input.subjectUserId) {
+    return { approvalGranted: false, approvedRequestId: undefined as string | undefined };
+  }
+
+  const resolved = await getResolvedSupportApprovalRequests(input.subjectUserId);
+  const approved = resolved.find(
+    (entry) => entry.status === "approved" && entry.requestedCapability === input.capability
+  );
+
+  return {
+    approvalGranted: Boolean(approved),
+    approvedRequestId: approved?.approvalRequestId
+  };
+}
+
 async function requireSubjectScopedSupportMutation(
   formData: FormData,
   capability: OperatorCapability
@@ -45,15 +66,26 @@ async function requireSubjectScopedSupportMutation(
   const { session, flags } = await requireInternalSupportViewer(capability);
   const requestContext = await getRequestContext();
   const requestedSubjectUserId = String(formData.get("subjectUserId") ?? "").trim() || undefined;
+  const { approvalGranted, approvedRequestId } = await readCrossAccountApprovalStatus({
+    subjectUserId: requestedSubjectUserId,
+    capability
+  });
 
   try {
     const { subjectUserId } = assertSubjectScopedInterventionAllowed({
       viewerUserId: session.userId,
       requestedSubjectUserId,
-      capability
+      capability,
+      approvalGranted
     });
 
-    return { session, flags, requestContext, subjectUserId };
+    return {
+      session,
+      flags,
+      requestContext,
+      subjectUserId,
+      crossAccountApprovalRequestId: approvedRequestId
+    };
   } catch (error) {
     if (error instanceof CrossAccountSubjectInterventionRequiresApprovalError) {
       await recordSupportBoundaryBlockedAudit({
@@ -87,10 +119,15 @@ function readReleaseFlagName(formData: FormData): ReleaseFlagOverrideName {
 }
 
 export async function applyReceiptCapturePauseAction(formData: FormData) {
-  const { session, flags, requestContext, subjectUserId } = await requireSubjectScopedSupportMutation(
+  const { session, flags, requestContext, subjectUserId, crossAccountApprovalRequestId } = await requireSubjectScopedSupportMutation(
     formData,
     "receipt_capture_intervention"
   );
+
+  const reason = readReason(formData, "receipt lineage review in progress");
+  const auditedReason = crossAccountApprovalRequestId
+    ? `${reason} (cross-account approval ${crossAccountApprovalRequestId})`
+    : reason;
 
   await recordSupportInterventionAudit({
     actorUserId: session.userId,
@@ -98,21 +135,26 @@ export async function applyReceiptCapturePauseAction(formData: FormData) {
     requestId: requestContext.requestId,
     traceId: requestContext.traceId,
     path: "/app/support",
-    reason: readReason(formData, "receipt lineage review in progress"),
+    reason: auditedReason,
     supportTraceView: flags.supportTraceView,
     roleUsed: session.operatorRole,
     interventionCode: "receipt_capture_paused",
     action: "applied"
   });
 
-  redirect("/app/support?intervention=receipt-capture-paused");
+  redirect(`/app/support?subject=${encodeURIComponent(subjectUserId)}&intervention=receipt-capture-paused`);
 }
 
 export async function clearReceiptCapturePauseAction(formData: FormData) {
-  const { session, flags, requestContext, subjectUserId } = await requireSubjectScopedSupportMutation(
+  const { session, flags, requestContext, subjectUserId, crossAccountApprovalRequestId } = await requireSubjectScopedSupportMutation(
     formData,
     "receipt_capture_intervention"
   );
+
+  const reason = readReason(formData, "receipt capture reopened after support review");
+  const auditedReason = crossAccountApprovalRequestId
+    ? `${reason} (cross-account approval ${crossAccountApprovalRequestId})`
+    : reason;
 
   await recordSupportInterventionAudit({
     actorUserId: session.userId,
@@ -120,14 +162,14 @@ export async function clearReceiptCapturePauseAction(formData: FormData) {
     requestId: requestContext.requestId,
     traceId: requestContext.traceId,
     path: "/app/support",
-    reason: readReason(formData, "receipt capture reopened after support review"),
+    reason: auditedReason,
     supportTraceView: flags.supportTraceView,
     roleUsed: session.operatorRole,
     interventionCode: "receipt_capture_paused",
     action: "cleared"
   });
 
-  redirect("/app/support?intervention=receipt-capture-resumed");
+  redirect(`/app/support?subject=${encodeURIComponent(subjectUserId)}&intervention=receipt-capture-resumed`);
 }
 
 export async function requestCrossAccountReceiptInterventionApprovalAction(formData: FormData) {
@@ -160,6 +202,41 @@ export async function requestCrossAccountReceiptInterventionApprovalAction(formD
   });
 
   redirect(`/app/support?subject=${encodeURIComponent(requestedSubjectUserId)}&approval=requested`);
+}
+
+export async function approveCrossAccountReceiptInterventionAction(formData: FormData) {
+  const { session, flags } = await requireInternalSupportViewer("receipt_capture_intervention");
+  const requestContext = await getRequestContext();
+  const requestedSubjectUserId = String(formData.get("subjectUserId") ?? "").trim();
+  const approvalRequestId = String(formData.get("approvalRequestId") ?? "").trim();
+
+  if (session.operatorRole !== "founder-operator") {
+    throw new Error("Only founder-operator can approve cross-account receipt holds in this slice");
+  }
+
+  if (!requestedSubjectUserId || !approvalRequestId) {
+    throw new Error("Missing subject user id or approval request id");
+  }
+
+  await recordSupportApprovalResolvedAudit({
+    actorUserId: session.userId,
+    subjectUserId: requestedSubjectUserId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: "/app/support",
+    reason: readReason(formData, "Founder approved bounded cross-account receipt-hold workflow"),
+    supportTraceView: flags.supportTraceView,
+    roleUsed: session.operatorRole,
+    code: "cross_account_receipt_capture_intervention",
+    approvalRequestId,
+    requestedCapability: "receipt_capture_intervention",
+    approvalOwner: "founder-operator",
+    requestedAction: "apply or clear a receipt capture hold for a reviewed subject outside the operator's own account",
+    status: "approved",
+    resolvedByUserId: session.userId
+  });
+
+  redirect(`/app/support?subject=${encodeURIComponent(requestedSubjectUserId)}&approval=approved`);
 }
 
 export async function applyReleaseFlagOverrideAction(formData: FormData) {

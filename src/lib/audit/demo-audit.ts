@@ -12,6 +12,7 @@ export const SUPPORT_INTERVENTION_APPLIED_EVENT = "support.intervention.applied"
 export const SUPPORT_INTERVENTION_CLEARED_EVENT = "support.intervention.cleared";
 export const SUPPORT_BOUNDARY_BLOCKED_EVENT = "support.boundary.blocked";
 export const SUPPORT_APPROVAL_REQUESTED_EVENT = "support.approval.requested";
+export const SUPPORT_APPROVAL_RESOLVED_EVENT = "support.approval.resolved";
 export const RELEASE_FLAG_OVERRIDE_APPLIED_EVENT = "release.flag.override.applied";
 export const RELEASE_FLAG_OVERRIDE_CLEARED_EVENT = "release.flag.override.cleared";
 
@@ -43,6 +44,14 @@ export type PendingSupportApprovalRequest = {
   approvalOwner: string;
   requestedAction: string;
   status: "pending";
+};
+
+export type ResolvedSupportApprovalRequest = Omit<PendingSupportApprovalRequest, "status"> & {
+  status: "approved" | "rejected";
+  approvalRequestId: string;
+  resolvedAt: string;
+  resolvedByUserId?: string;
+  resolutionReason: string;
 };
 
 export type ActiveReleaseFlagOverride = {
@@ -450,6 +459,115 @@ export async function recordSupportApprovalRequestedAudit(input: {
   });
 }
 
+export async function recordSupportApprovalResolvedAudit(input: {
+  actorUserId: string;
+  subjectUserId: string;
+  requestId: string;
+  traceId: string;
+  occurredAt?: string;
+  path: string;
+  reason: string;
+  supportTraceView: boolean;
+  roleUsed?: string;
+  code: SupportApprovalRequestCode;
+  approvalRequestId: string;
+  requestedCapability: string;
+  approvalOwner: string;
+  requestedAction: string;
+  status: "approved" | "rejected";
+  resolvedByUserId: string;
+}) {
+  return appendDemoAuditEvent({
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    actorUserId: input.actorUserId,
+    subjectUserId: input.subjectUserId,
+    eventCode: SUPPORT_APPROVAL_RESOLVED_EVENT,
+    traceId: input.traceId,
+    requestId: input.requestId,
+    payload: {
+      approvalRequestCode: input.code,
+      approvalRequestId: input.approvalRequestId,
+      requestedCapability: input.requestedCapability,
+      approvalOwner: input.approvalOwner,
+      requestedAction: input.requestedAction,
+      status: input.status,
+      resolvedByUserId: input.resolvedByUserId,
+      path: input.path,
+      reason: input.reason,
+      supportTraceView: input.supportTraceView,
+      roleUsed: input.roleUsed
+    }
+  });
+}
+
+async function getLatestSupportApprovalRecord(
+  subjectUserId: string,
+  code: SupportApprovalRequestCode
+): Promise<PendingSupportApprovalRequest | ResolvedSupportApprovalRequest | null> {
+  const events = await readDemoAuditEvents({
+    subjectUserId,
+    eventCodes: [SUPPORT_APPROVAL_REQUESTED_EVENT, SUPPORT_APPROVAL_RESOLVED_EVENT],
+    limit: 128
+  });
+
+  for (const event of events) {
+    const eventCode = toSupportApprovalRequestCode(event.payload.approvalRequestCode);
+
+    if (!eventCode || eventCode !== code) {
+      continue;
+    }
+
+    const status = String(event.payload.status ?? "pending");
+
+    if (event.eventCode === SUPPORT_APPROVAL_REQUESTED_EVENT && status === "pending") {
+      return {
+        code,
+        actorUserId: event.actorUserId ?? undefined,
+        subjectUserId: event.subjectUserId ?? undefined,
+        occurredAt: event.occurredAt,
+        requestId: event.requestId,
+        traceId: event.traceId,
+        reason: String(event.payload.reason ?? "unspecified"),
+        path: String(event.payload.path ?? "unknown"),
+        supportTraceView: event.payload.supportTraceView === true,
+        roleUsed: typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : undefined,
+        requestedCapability: String(event.payload.requestedCapability ?? "unknown"),
+        approvalOwner: String(event.payload.approvalOwner ?? "founder-operator"),
+        requestedAction: String(event.payload.requestedAction ?? "unknown"),
+        status: "pending"
+      };
+    }
+
+    if (event.eventCode === SUPPORT_APPROVAL_RESOLVED_EVENT && (status === "approved" || status === "rejected")) {
+      return {
+        code,
+        actorUserId: event.actorUserId ?? undefined,
+        subjectUserId: event.subjectUserId ?? undefined,
+        occurredAt: event.occurredAt,
+        requestId: event.requestId,
+        traceId: event.traceId,
+        reason: String(event.payload.reason ?? "unspecified"),
+        path: String(event.payload.path ?? "unknown"),
+        supportTraceView: event.payload.supportTraceView === true,
+        roleUsed: typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : undefined,
+        requestedCapability: String(event.payload.requestedCapability ?? "unknown"),
+        approvalOwner: String(event.payload.approvalOwner ?? "founder-operator"),
+        requestedAction: String(event.payload.requestedAction ?? "unknown"),
+        status,
+        approvalRequestId: String(event.payload.approvalRequestId ?? "unknown"),
+        resolvedAt: event.occurredAt,
+        resolvedByUserId:
+          typeof event.payload.resolvedByUserId === "string"
+            ? event.payload.resolvedByUserId
+            : undefined,
+        resolutionReason: String(event.payload.reason ?? "unspecified")
+      };
+    }
+  }
+
+  return null;
+}
+
 export async function recordReleaseFlagOverrideAudit(input: {
   actorUserId: string;
   requestId: string;
@@ -521,48 +639,15 @@ export async function getActiveSupportInterventions(subjectUserId: string) {
 }
 
 export async function getPendingSupportApprovalRequests(subjectUserId: string) {
-  const events = await readDemoAuditEvents({
-    subjectUserId,
-    eventCodes: [SUPPORT_APPROVAL_REQUESTED_EVENT],
-    limit: 128
-  });
+  const codes: SupportApprovalRequestCode[] = ["cross_account_receipt_capture_intervention"];
+  const results = await Promise.all(codes.map((code) => getLatestSupportApprovalRecord(subjectUserId, code)));
+  return results.filter((entry): entry is PendingSupportApprovalRequest => Boolean(entry && entry.status === "pending"));
+}
 
-  const latestByCode = new Map<SupportApprovalRequestCode, DemoAuditEvent>();
-
-  for (const event of events) {
-    const code = toSupportApprovalRequestCode(event.payload.approvalRequestCode);
-
-    if (!code || latestByCode.has(code)) {
-      continue;
-    }
-
-    latestByCode.set(code, event);
-  }
-
-  return [...latestByCode.entries()].flatMap(([code, event]): PendingSupportApprovalRequest[] => {
-    const status = String(event.payload.status ?? "pending");
-
-    if (status !== "pending") {
-      return [];
-    }
-
-    return [{
-      code,
-      actorUserId: event.actorUserId ?? undefined,
-      subjectUserId: event.subjectUserId ?? undefined,
-      occurredAt: event.occurredAt,
-      requestId: event.requestId,
-      traceId: event.traceId,
-      reason: String(event.payload.reason ?? "unspecified"),
-      path: String(event.payload.path ?? "unknown"),
-      supportTraceView: event.payload.supportTraceView === true,
-      roleUsed: typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : undefined,
-      requestedCapability: String(event.payload.requestedCapability ?? "unknown"),
-      approvalOwner: String(event.payload.approvalOwner ?? "founder-operator"),
-      requestedAction: String(event.payload.requestedAction ?? "unknown"),
-      status: "pending"
-    }];
-  });
+export async function getResolvedSupportApprovalRequests(subjectUserId: string) {
+  const codes: SupportApprovalRequestCode[] = ["cross_account_receipt_capture_intervention"];
+  const results = await Promise.all(codes.map((code) => getLatestSupportApprovalRecord(subjectUserId, code)));
+  return results.filter((entry): entry is ResolvedSupportApprovalRequest => Boolean(entry && entry.status !== "pending"));
 }
 
 export async function getActiveReleaseFlagOverrides() {

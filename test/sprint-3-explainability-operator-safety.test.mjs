@@ -614,13 +614,64 @@ test('cross-account subject mutations stay blocked until an approval-backed work
     assert.equal(pendingApprovals[0].status, 'pending');
     assert.equal(pendingApprovals[0].requestedCapability, 'receipt_capture_intervention');
 
+    await audit.recordSupportApprovalResolvedAudit({
+      actorUserId: userId,
+      subjectUserId,
+      requestId: 'audit-req-approval-002',
+      traceId,
+      path: '/app/support',
+      reason: 'Founder approved bounded cross-account receipt-hold workflow',
+      supportTraceView: true,
+      roleUsed: 'founder-operator',
+      code: 'cross_account_receipt_capture_intervention',
+      approvalRequestId: 'audit-req-approval-001',
+      requestedCapability: 'receipt_capture_intervention',
+      approvalOwner: 'founder-operator',
+      requestedAction: 'apply or clear a receipt capture hold for a reviewed subject outside the operator\'s own account',
+      status: 'approved',
+      resolvedByUserId: userId,
+      occurredAt: new Date().toISOString()
+    });
+
+    const allowed = access.assertSubjectScopedInterventionAllowed({
+      viewerUserId: userId,
+      requestedSubjectUserId: subjectUserId,
+      capability: 'receipt_capture_intervention',
+      approvalGranted: true
+    });
+    assert.equal(allowed.subjectUserId, subjectUserId);
+    assert.equal(allowed.isCrossAccount, true);
+
+    await audit.recordSupportInterventionAudit({
+      actorUserId: userId,
+      subjectUserId,
+      requestId: 'audit-req-intervention-001',
+      traceId,
+      path: '/app/support',
+      reason: 'receipt lineage review in progress (cross-account approval audit-req-approval-001)',
+      supportTraceView: true,
+      roleUsed: 'founder-operator',
+      interventionCode: 'receipt_capture_paused',
+      action: 'applied',
+      occurredAt: new Date().toISOString()
+    });
+
+    const resolvedApprovals = await audit.getResolvedSupportApprovalRequests(subjectUserId);
+    assert.equal(resolvedApprovals.length, 1);
+    assert.equal(resolvedApprovals[0].status, 'approved');
+    assert.equal(resolvedApprovals[0].approvalRequestId, 'audit-req-approval-001');
+
     const consoleState = await support.getDemoSupportConsole(subjectUserId, {
       countryCode: 'DK',
       internalUser: true
     });
-    assert.equal(consoleState.pendingApprovalRequests.length, 1);
+    assert.equal(consoleState.pendingApprovalRequests.length, 0);
+    assert.equal(consoleState.resolvedApprovalRequests.length, 1);
+    assert.equal(consoleState.activeInterventions.length, 1);
     assert.ok(consoleState.timeline.some((item) => item.title === 'Cross-account subject action blocked'));
     assert.ok(consoleState.timeline.some((item) => item.title === 'Cross-account approval requested'));
+    assert.ok(consoleState.timeline.some((item) => item.title === 'Cross-account approval granted'));
+    assert.ok(consoleState.timeline.some((item) => item.title === 'Receipt capture paused'));
     assert.ok(consoleState.timeline.some((item) => item.details.some((detail) => /Approval owner: founder-operator/.test(detail))));
   });
 });

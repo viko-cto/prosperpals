@@ -16,6 +16,7 @@ import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-cont
 import {
   applyReceiptCapturePauseAction,
   applyReleaseFlagOverrideAction,
+  approveCrossAccountReceiptInterventionAction,
   clearReceiptCapturePauseAction,
   clearReleaseFlagOverrideAction,
   requestCrossAccountReceiptInterventionApprovalAction
@@ -103,6 +104,11 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
   const activeReceiptCapturePause = supportConsole.activeInterventions.find(
     (intervention) => intervention.code === "receipt_capture_paused"
   );
+  const approvedCrossAccountHold = supportConsole.resolvedApprovalRequests.find(
+    (request) =>
+      request.code === "cross_account_receipt_capture_intervention"
+      && request.status === "approved"
+  );
   const activeReleaseOverrideByFlag = new Map(
     supportConsole.activeReleaseOverrides.map((override) => [override.flagName, override])
   );
@@ -169,7 +175,17 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
             <h2>Approval request logged</h2>
             <p>
               A pending approval request was recorded for <code>{subjectUserId}</code>. The lane is
-              still non-self-executing: this creates auditable intent, not hidden cross-account power.
+              still non-self-executing until a founder/operator resolves it.
+            </p>
+          </section>
+        ) : null}
+
+        {resolved.approval === "approved" ? (
+          <section className="panel" style={{ marginBottom: 24 }}>
+            <h2>Approval granted</h2>
+            <p>
+              Founder/operator approval was recorded for <code>{subjectUserId}</code>, so the bounded
+              cross-account receipt-hold rail can now execute with an explicit audit trail.
             </p>
           </section>
         ) : null}
@@ -193,7 +209,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               <div><strong>Email</strong>: {session.email}</div>
               <div><strong>Capabilities</strong>: {capabilityLabels.length ? capabilityLabels.join(", ") : "none"}</div>
               <div><strong>Selected subject</strong>: <code>{subjectUserId}</code></div>
-              <div><strong>View mode</strong>: {isCrossAccount ? "Cross-account review (read-only)" : "Self-context review"}</div>
+              <div><strong>View mode</strong>: {isCrossAccount ? (approvedCrossAccountHold ? "Cross-account review (approval-backed hold rail enabled)" : "Cross-account review (read-only)") : "Self-context review"}</div>
               <div className="muted-line">
                 Receipt holds are support-only. Release overrides are admin-only. Founder/operator
                 temporarily carries both hats while hosted role assignment stays unresolved.
@@ -211,8 +227,9 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               explicit and intentionally stays read-only for subject-scoped interventions.
             </p>
             <p className="muted-line" style={{ marginTop: 12 }}>
-              Receipt holds and other subject-level controls stay disabled here until the hosted
-              operator model grows a durable approval path for cross-account actions.
+              {approvedCrossAccountHold
+                ? "Founder/operator approval is on file for the bounded receipt-hold lane below. Everything else in cross-account review stays intentionally constrained."
+                : "Receipt holds and other subject-level controls stay disabled here until the hosted operator model grows a durable approval path for cross-account actions."}
             </p>
             {canManageReceiptHold ? (
               <div className="grid" style={{ gap: 12, marginTop: 16 }}>
@@ -227,6 +244,32 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                       <div><strong>Approval owner</strong>: {supportConsole.pendingApprovalRequests[0].approvalOwner}</div>
                       <div><strong>Requested at</strong>: {supportConsole.pendingApprovalRequests[0].occurredAt}</div>
                       <div><strong>Actor</strong>: {supportConsole.pendingApprovalRequests[0].actorUserId ?? "unknown"}</div>
+                    </div>
+                    {session.operatorRole === "founder-operator" ? (
+                      <form action={approveCrossAccountReceiptInterventionAction} className="grid" style={{ gap: 12, marginTop: 12 }}>
+                        <input type="hidden" name="subjectUserId" value={subjectUserId} />
+                        <input type="hidden" name="approvalRequestId" value={supportConsole.pendingApprovalRequests[0].requestId} />
+                        <label>
+                          <span className="field-label">Approval note</span>
+                          <input
+                            type="text"
+                            name="reason"
+                            defaultValue="Founder approved bounded cross-account receipt-hold workflow."
+                          />
+                        </label>
+                        <button className="primary" type="submit">Approve bounded cross-account hold</button>
+                      </form>
+                    ) : null}
+                  </div>
+                ) : approvedCrossAccountHold ? (
+                  <div className="card compact-card">
+                    <strong>Approved cross-account hold rail</strong>
+                    <span className="muted-line">A bounded approval exists for subject-scoped receipt holds in this review context.</span>
+                    <div className="meta" style={{ marginTop: 8 }}>
+                      <div><strong>Status</strong>: {approvedCrossAccountHold.status}</div>
+                      <div><strong>Resolved at</strong>: {approvedCrossAccountHold.resolvedAt}</div>
+                      <div><strong>Resolved by</strong>: {approvedCrossAccountHold.resolvedByUserId ?? "unknown"}</div>
+                      <div><strong>Approval request id</strong>: {approvedCrossAccountHold.approvalRequestId}</div>
                     </div>
                   </div>
                 ) : (
@@ -281,7 +324,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                   <div><strong>Subject</strong>: {activeReceiptCapturePause.subjectUserId ?? session.userId}</div>
                   <div><strong>Role used</strong>: {activeReceiptCapturePause.roleUsed ?? "unspecified"}</div>
                 </div>
-                {canManageReceiptHold && !isCrossAccount ? (
+                {canManageReceiptHold && (!isCrossAccount || approvedCrossAccountHold) ? (
                   <form action={clearReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
                     <input type="hidden" name="subjectUserId" value={subjectUserId} />
                     <label>
@@ -291,7 +334,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                     <button className="primary" type="submit">Clear receipt capture pause</button>
                   </form>
                 ) : (
-                  <p className="muted-line">{isCrossAccount ? "Cross-account review is intentionally read-only here until the hosted approval path exists." : "This role can inspect the active hold but cannot clear it."}</p>
+                  <p className="muted-line">{isCrossAccount ? "Cross-account review stays read-only here until the bounded approval is resolved." : "This role can inspect the active hold but cannot clear it."}</p>
                 )}
               </div>
             ) : (
@@ -301,7 +344,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                   receipt issue appears, pause the lane here so the product stops accepting new
                   candidates before support review finishes.
                 </p>
-                {canManageReceiptHold && !isCrossAccount ? (
+                {canManageReceiptHold && (!isCrossAccount || approvedCrossAccountHold) ? (
                   <form action={applyReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
                     <input type="hidden" name="subjectUserId" value={subjectUserId} />
                     <label>
@@ -324,7 +367,8 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               <li>Receipt-intake pause and resume actions now write actor/subject/request/trace-scoped audit events.</li>
               <li>The audit trail now records which operator role was used for each action.</li>
               <li>Release overrides are explicitly separated from support-safe receipt holds instead of hiding behind one broad internal gate.</li>
-              <li>The control is still narrow by design: same-subject proof, not hosted multi-account admin power.</li>
+              <li>Cross-account receipt holds now require an explicit founder/operator approval event before the bounded rail unlocks.</li>
+              <li>The control is still narrow by design: approval-backed receipt holds only, not hosted multi-account admin power.</li>
             </ul>
           </article>
         </section>
