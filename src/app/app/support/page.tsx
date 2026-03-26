@@ -8,7 +8,8 @@ import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
 import {
   describeOperatorRole,
   getOperatorCapabilities,
-  hasOperatorCapability
+  hasOperatorCapability,
+  resolveSupportSubject
 } from "@/lib/support/operator-access";
 import { getDemoSupportConsole } from "@/lib/support/demo-support";
 import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-context";
@@ -20,7 +21,7 @@ import {
 } from "./actions";
 
 type SupportPageProps = {
-  searchParams?: Promise<{ intervention?: string; releaseOverride?: string }>;
+  searchParams?: Promise<{ intervention?: string; releaseOverride?: string; subject?: string }>;
 };
 
 const releaseFlagMeta = {
@@ -51,6 +52,11 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
   const canViewSupportTimeline = hasOperatorCapability(session.operatorRole, "support_timeline_view");
   const canManageReceiptHold = hasOperatorCapability(session.operatorRole, "receipt_capture_intervention");
   const canManageReleaseOverrides = hasOperatorCapability(session.operatorRole, "release_flag_override");
+  const resolved = (await searchParams) ?? {};
+  const { subjectUserId, isCrossAccount } = resolveSupportSubject({
+    viewerUserId: session.userId,
+    requestedSubjectUserId: resolved.subject
+  });
 
   if (!flags.supportTraceView || !canViewSupportTimeline) {
     return (
@@ -74,7 +80,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
 
   await recordSupportTimelineViewAudit({
     actorUserId: session.userId,
-    subjectUserId: session.userId,
+    subjectUserId,
     requestId: requestContext.requestId,
     traceId: requestContext.traceId,
     path: requestContext.path,
@@ -83,11 +89,10 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
     roleUsed: session.operatorRole
   });
 
-  const supportConsole = await getDemoSupportConsole(session.userId, {
+  const supportConsole = await getDemoSupportConsole(subjectUserId, {
     countryCode: "DK",
     internalUser
   });
-  const resolved = (await searchParams) ?? {};
   const activeReceiptCapturePause = supportConsole.activeInterventions.find(
     (intervention) => intervention.code === "receipt_capture_paused"
   );
@@ -159,6 +164,8 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               <div><strong>Viewer role</strong>: {roleLabel}</div>
               <div><strong>Email</strong>: {session.email}</div>
               <div><strong>Capabilities</strong>: {capabilityLabels.length ? capabilityLabels.join(", ") : "none"}</div>
+              <div><strong>Selected subject</strong>: <code>{subjectUserId}</code></div>
+              <div><strong>View mode</strong>: {isCrossAccount ? "Cross-account review (read-only)" : "Self-context review"}</div>
               <div className="muted-line">
                 Receipt holds are support-only. Release overrides are admin-only. Founder/operator
                 temporarily carries both hats while hosted role assignment stays unresolved.
@@ -166,6 +173,24 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
             </div>
           </article>
         </section>
+
+        {isCrossAccount ? (
+          <section className="panel" style={{ marginTop: 24 }}>
+            <h2>Cross-account subject review</h2>
+            <p>
+              You are viewing support context for <code>{subjectUserId}</code> while signed in as
+              <code> {session.userId} </code>. This preview keeps actor-vs-subject separation
+              explicit and intentionally stays read-only for subject-scoped interventions.
+            </p>
+            <p className="muted-line" style={{ marginTop: 12 }}>
+              Receipt holds and other subject-level controls stay disabled here until the hosted
+              operator model grows a durable approval path for cross-account actions.
+            </p>
+            <div className="actions" style={{ marginTop: 16 }}>
+              <Link className="button secondary" href="/app/support">Return to your own support context</Link>
+            </div>
+          </section>
+        ) : null}
 
         <section className="panel" style={{ marginTop: 24 }}>
           <h2>Redaction policy</h2>
@@ -197,9 +222,9 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                   <div><strong>Subject</strong>: {activeReceiptCapturePause.subjectUserId ?? session.userId}</div>
                   <div><strong>Role used</strong>: {activeReceiptCapturePause.roleUsed ?? "unspecified"}</div>
                 </div>
-                {canManageReceiptHold ? (
+                {canManageReceiptHold && !isCrossAccount ? (
                   <form action={clearReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
-                    <input type="hidden" name="subjectUserId" value={session.userId} />
+                    <input type="hidden" name="subjectUserId" value={subjectUserId} />
                     <label>
                       <span className="field-label">Clear reason</span>
                       <input type="text" name="reason" defaultValue="receipt capture reopened after support review" />
@@ -207,7 +232,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                     <button className="primary" type="submit">Clear receipt capture pause</button>
                   </form>
                 ) : (
-                  <p className="muted-line">This role can inspect the active hold but cannot clear it.</p>
+                  <p className="muted-line">{isCrossAccount ? "Cross-account review is intentionally read-only here until the hosted approval path exists." : "This role can inspect the active hold but cannot clear it."}</p>
                 )}
               </div>
             ) : (
@@ -217,9 +242,9 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                   receipt issue appears, pause the lane here so the product stops accepting new
                   candidates before support review finishes.
                 </p>
-                {canManageReceiptHold ? (
+                {canManageReceiptHold && !isCrossAccount ? (
                   <form action={applyReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
-                    <input type="hidden" name="subjectUserId" value={session.userId} />
+                    <input type="hidden" name="subjectUserId" value={subjectUserId} />
                     <label>
                       <span className="field-label">Pause reason</span>
                       <input type="text" name="reason" defaultValue="receipt lineage review in progress" />
@@ -227,7 +252,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                     <button className="primary" type="submit">Pause receipt capture</button>
                   </form>
                 ) : (
-                  <p className="muted-line">This role can review the timeline but cannot apply the support-only receipt hold.</p>
+                  <p className="muted-line">{isCrossAccount ? "Cross-account review is intentionally read-only here until subject-level approvals become durable and audited." : "This role can review the timeline but cannot apply the support-only receipt hold."}</p>
                 )}
               </div>
             )}
@@ -279,7 +304,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                       <div><strong>Current source</strong>: audited override not active</div>
                     </div>
                   )}
-                  {canManageReleaseOverrides ? (
+                  {canManageReleaseOverrides && !isCrossAccount ? (
                     activeOverride ? (
                       <form action={clearReleaseFlagOverrideAction} className="grid" style={{ gap: 12 }}>
                         <input type="hidden" name="flagName" value={flagName} />
@@ -300,7 +325,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                       </form>
                     )
                   ) : (
-                    <p className="muted-line">This control is admin-only. Non-admin roles can see the current release state but cannot change it here.</p>
+                    <p className="muted-line">{isCrossAccount ? "Cross-account review is read-only here, so global release overrides stay visible but non-mutable." : "This control is admin-only. Non-admin roles can see the current release state but cannot change it here."}</p>
                   )}
                 </div>
               );

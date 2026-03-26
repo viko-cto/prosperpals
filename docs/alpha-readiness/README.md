@@ -40,6 +40,7 @@ Use this folder to convert the alpha decision packet into durable proof:
 - `evidence/hosted-hardening/`
 - `evidence/receipts/`
 - `evidence/operator-readiness/`
+  - includes the operator/admin boundary plan, intervention matrix, and cross-account subject review preview
 - `evidence/redecision/`
 
 ## Suggested operating rhythm

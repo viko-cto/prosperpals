@@ -516,6 +516,34 @@ test('operator role policy separates support-safe and admin-only rails', async (
   });
 });
 
+test('support subject resolution keeps actor-vs-subject review explicit without impersonation', async () => {
+  await withTempRuntime(async () => {
+    const access = await import('../src/lib/support/operator-access.ts');
+
+    assert.deepEqual(
+      access.resolveSupportSubject({
+        viewerUserId: userId,
+        requestedSubjectUserId: undefined
+      }),
+      {
+        subjectUserId: userId,
+        isCrossAccount: false
+      }
+    );
+
+    assert.deepEqual(
+      access.resolveSupportSubject({
+        viewerUserId: userId,
+        requestedSubjectUserId: '33333333-3333-4333-8333-333333333333'
+      }),
+      {
+        subjectUserId: '33333333-3333-4333-8333-333333333333',
+        isCrossAccount: true
+      }
+    );
+  });
+});
+
 test('audit events can use the hosted PostgREST durability path when configured', async () => {
   await withTempRuntime(async () => {
     const previousUrl = process.env.PROSPERPALS_SUPABASE_URL;

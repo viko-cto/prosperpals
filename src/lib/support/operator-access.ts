@@ -57,6 +57,19 @@ export function describeOperatorRole(role: OperatorRole) {
   return operatorRolePolicy[role].label;
 }
 
+export function resolveSupportSubject(input: {
+  viewerUserId: string;
+  requestedSubjectUserId?: string | null;
+}) {
+  const requested = input.requestedSubjectUserId?.trim();
+  const subjectUserId = requested || input.viewerUserId;
+
+  return {
+    subjectUserId,
+    isCrossAccount: subjectUserId !== input.viewerUserId
+  };
+}
+
 export function assertOperatorCapability(session: ViewerSession, capability: OperatorCapability) {
   if (!hasOperatorCapability(session.operatorRole, capability)) {
     const roleLabel = describeOperatorRole(session.operatorRole);
