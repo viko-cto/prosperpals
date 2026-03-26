@@ -4,13 +4,16 @@ import { redirect } from "next/navigation";
 import {
   type ReleaseFlagOverrideName,
   recordReleaseFlagOverrideAudit,
+  recordSupportBoundaryBlockedAudit,
   recordSupportInterventionAudit
 } from "@/lib/audit/demo-audit";
 import { isInternalOperatorEmail, requireViewerSession } from "@/lib/auth/session";
 import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
 import {
   type OperatorCapability,
-  assertOperatorCapability
+  CrossAccountSubjectInterventionRequiresApprovalError,
+  assertOperatorCapability,
+  assertSubjectScopedInterventionAllowed
 } from "@/lib/support/operator-access";
 import { getRequestContext } from "@/lib/telemetry/request-context";
 
@@ -34,6 +37,44 @@ function readReason(formData: FormData, fallback: string) {
   return String(formData.get("reason") ?? "").trim() || fallback;
 }
 
+async function requireSubjectScopedSupportMutation(
+  formData: FormData,
+  capability: OperatorCapability
+) {
+  const { session, flags } = await requireInternalSupportViewer(capability);
+  const requestContext = await getRequestContext();
+  const requestedSubjectUserId = String(formData.get("subjectUserId") ?? "").trim() || undefined;
+
+  try {
+    const { subjectUserId } = assertSubjectScopedInterventionAllowed({
+      viewerUserId: session.userId,
+      requestedSubjectUserId,
+      capability
+    });
+
+    return { session, flags, requestContext, subjectUserId };
+  } catch (error) {
+    if (error instanceof CrossAccountSubjectInterventionRequiresApprovalError) {
+      await recordSupportBoundaryBlockedAudit({
+        actorUserId: session.userId,
+        subjectUserId: error.subjectUserId,
+        requestId: requestContext.requestId,
+        traceId: requestContext.traceId,
+        path: "/app/support",
+        reason: `Cross-account ${capability} stays read-only until an approval-backed workflow exists`,
+        supportTraceView: flags.supportTraceView,
+        roleUsed: session.operatorRole,
+        capability,
+        boundaryCode: "cross_account_subject_action_requires_approval"
+      });
+
+      redirect(`/app/support?subject=${encodeURIComponent(error.subjectUserId)}&boundary=cross-account-action-blocked`);
+    }
+
+    throw error;
+  }
+}
+
 function readReleaseFlagName(formData: FormData): ReleaseFlagOverrideName {
   const value = String(formData.get("flagName") ?? "").trim();
 
@@ -45,9 +86,10 @@ function readReleaseFlagName(formData: FormData): ReleaseFlagOverrideName {
 }
 
 export async function applyReceiptCapturePauseAction(formData: FormData) {
-  const { session, flags } = await requireInternalSupportViewer("receipt_capture_intervention");
-  const requestContext = await getRequestContext();
-  const subjectUserId = String(formData.get("subjectUserId") ?? "").trim() || session.userId;
+  const { session, flags, requestContext, subjectUserId } = await requireSubjectScopedSupportMutation(
+    formData,
+    "receipt_capture_intervention"
+  );
 
   await recordSupportInterventionAudit({
     actorUserId: session.userId,
@@ -66,9 +108,10 @@ export async function applyReceiptCapturePauseAction(formData: FormData) {
 }
 
 export async function clearReceiptCapturePauseAction(formData: FormData) {
-  const { session, flags } = await requireInternalSupportViewer("receipt_capture_intervention");
-  const requestContext = await getRequestContext();
-  const subjectUserId = String(formData.get("subjectUserId") ?? "").trim() || session.userId;
+  const { session, flags, requestContext, subjectUserId } = await requireSubjectScopedSupportMutation(
+    formData,
+    "receipt_capture_intervention"
+  );
 
   await recordSupportInterventionAudit({
     actorUserId: session.userId,

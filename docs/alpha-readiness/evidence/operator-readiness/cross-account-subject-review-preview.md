@@ -29,6 +29,7 @@ This change does **not** introduce impersonation or hidden admin power.
 When the selected subject differs from the signed-in operator:
 - receipt-hold controls stay disabled,
 - release override controls stay visible but non-mutable from that review context,
+- the server action path now also rejects forged `subjectUserId` mutations and records a boundary-blocked audit event instead of trusting UI state alone,
 - and the UI explains that cross-account actions remain blocked until the hosted approval/audit model is durable.
 
 That keeps the lane honest:
@@ -45,7 +46,7 @@ This preview moves the blocker from vague language to a more testable state:
 
 ## Honest status after this change
 
-- **Improved:** actor-vs-subject review clarity in the running support surface
+- **Improved:** actor-vs-subject review clarity in the running support surface plus server-side enforcement that keeps cross-account receipt mutations read-only even if a subject id is forged
 - **Still blocked:** durable hosted role assignment, approval-backed cross-account intervention, export/deletion maturity, and deployed hosted proof for the operator lane
 - **NO-GO:** still locked
 

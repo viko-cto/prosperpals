@@ -9,6 +9,7 @@ export type ReleaseFlagOverrideName = "receiptCapture" | "simulatorStarter";
 export const SUPPORT_TIMELINE_VIEWED_EVENT = "support.timeline.viewed";
 export const SUPPORT_INTERVENTION_APPLIED_EVENT = "support.intervention.applied";
 export const SUPPORT_INTERVENTION_CLEARED_EVENT = "support.intervention.cleared";
+export const SUPPORT_BOUNDARY_BLOCKED_EVENT = "support.boundary.blocked";
 export const RELEASE_FLAG_OVERRIDE_APPLIED_EVENT = "release.flag.override.applied";
 export const RELEASE_FLAG_OVERRIDE_CLEARED_EVENT = "release.flag.override.cleared";
 
@@ -350,6 +351,37 @@ export async function recordSupportInterventionAudit(input: {
     requestId: input.requestId,
     payload: {
       interventionCode: input.interventionCode,
+      path: input.path,
+      reason: input.reason,
+      supportTraceView: input.supportTraceView,
+      roleUsed: input.roleUsed
+    }
+  });
+}
+
+export async function recordSupportBoundaryBlockedAudit(input: {
+  actorUserId: string;
+  subjectUserId: string;
+  requestId: string;
+  traceId: string;
+  occurredAt?: string;
+  path: string;
+  reason: string;
+  supportTraceView: boolean;
+  roleUsed?: string;
+  capability: string;
+  boundaryCode: "cross_account_subject_action_requires_approval";
+}) {
+  return appendDemoAuditEvent({
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    actorUserId: input.actorUserId,
+    subjectUserId: input.subjectUserId,
+    eventCode: SUPPORT_BOUNDARY_BLOCKED_EVENT,
+    traceId: input.traceId,
+    requestId: input.requestId,
+    payload: {
+      capability: input.capability,
+      boundaryCode: input.boundaryCode,
       path: input.path,
       reason: input.reason,
       supportTraceView: input.supportTraceView,

@@ -1,6 +1,7 @@
 import {
   RELEASE_FLAG_OVERRIDE_APPLIED_EVENT,
   RELEASE_FLAG_OVERRIDE_CLEARED_EVENT,
+  SUPPORT_BOUNDARY_BLOCKED_EVENT,
   SUPPORT_INTERVENTION_APPLIED_EVENT,
   SUPPORT_INTERVENTION_CLEARED_EVENT,
   SUPPORT_TIMELINE_VIEWED_EVENT,
@@ -157,28 +158,34 @@ export async function getDemoSupportConsole(userId: string, context: {
     const title =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
         ? "Operator support timeline viewed"
-        : event.eventCode === SUPPORT_INTERVENTION_APPLIED_EVENT && interventionCode === "receipt_capture_paused"
-          ? "Receipt capture paused"
-          : event.eventCode === SUPPORT_INTERVENTION_CLEARED_EVENT && interventionCode === "receipt_capture_paused"
-            ? "Receipt capture pause cleared"
-            : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT
-              ? `${flagLabel} override applied`
-              : event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
-                ? `${flagLabel} override cleared`
-                : event.eventCode;
+        : event.eventCode === SUPPORT_BOUNDARY_BLOCKED_EVENT
+          ? "Cross-account subject action blocked"
+          : event.eventCode === SUPPORT_INTERVENTION_APPLIED_EVENT && interventionCode === "receipt_capture_paused"
+            ? "Receipt capture paused"
+            : event.eventCode === SUPPORT_INTERVENTION_CLEARED_EVENT && interventionCode === "receipt_capture_paused"
+              ? "Receipt capture pause cleared"
+              : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT
+                ? `${flagLabel} override applied`
+                : event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+                  ? `${flagLabel} override cleared`
+                  : event.eventCode;
 
     const subtitle =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
         ? event.actorUserId && event.subjectUserId
           ? `Actor ${event.actorUserId} accessed support context for ${event.subjectUserId}`
           : "Operator audit event recorded"
-        : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT || event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
-          ? event.actorUserId
-            ? `Actor ${event.actorUserId} changed ${flagName} for ${String(event.payload.scope ?? "alpha-hosted")}`
-            : `Operator changed ${flagName}`
-          : event.actorUserId && event.subjectUserId
-            ? `Actor ${event.actorUserId} changed ${interventionCode} for ${event.subjectUserId}`
-            : `Operator changed ${interventionCode}`;
+        : event.eventCode === SUPPORT_BOUNDARY_BLOCKED_EVENT
+          ? event.actorUserId && event.subjectUserId
+            ? `Actor ${event.actorUserId} was blocked from mutating support context for ${event.subjectUserId}`
+            : "Cross-account subject action was blocked"
+          : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT || event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+            ? event.actorUserId
+              ? `Actor ${event.actorUserId} changed ${flagName} for ${String(event.payload.scope ?? "alpha-hosted")}`
+              : `Operator changed ${flagName}`
+            : event.actorUserId && event.subjectUserId
+              ? `Actor ${event.actorUserId} changed ${interventionCode} for ${event.subjectUserId}`
+              : `Operator changed ${interventionCode}`;
 
     const details =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
@@ -188,23 +195,32 @@ export async function getDemoSupportConsole(userId: string, context: {
             `Path: ${String(event.payload.path ?? "unknown")}`,
             `Support trace flag: ${supportTraceState}`
           ]
-        : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT || event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+        : event.eventCode === SUPPORT_BOUNDARY_BLOCKED_EVENT
           ? [
-              `Flag: ${flagName}`,
-              `Enabled: ${String(event.payload.enabled ?? "n/a")}`,
-              `Scope: ${String(event.payload.scope ?? "alpha-hosted")}`,
+              `Capability: ${String(event.payload.capability ?? "unknown")}`,
+              `Boundary: ${String(event.payload.boundaryCode ?? "unknown")}`,
               `Role used: ${roleUsed}`,
               `Reason: ${String(event.payload.reason ?? "unspecified")}`,
               `Path: ${String(event.payload.path ?? "unknown")}`,
               `Support trace flag: ${supportTraceState}`
             ]
-          : [
-              `Intervention: ${interventionCode}`,
-              `Role used: ${roleUsed}`,
-              `Reason: ${String(event.payload.reason ?? "unspecified")}`,
-              `Path: ${String(event.payload.path ?? "unknown")}`,
-              `Support trace flag: ${supportTraceState}`
-            ];
+          : event.eventCode === RELEASE_FLAG_OVERRIDE_APPLIED_EVENT || event.eventCode === RELEASE_FLAG_OVERRIDE_CLEARED_EVENT
+            ? [
+                `Flag: ${flagName}`,
+                `Enabled: ${String(event.payload.enabled ?? "n/a")}`,
+                `Scope: ${String(event.payload.scope ?? "alpha-hosted")}`,
+                `Role used: ${roleUsed}`,
+                `Reason: ${String(event.payload.reason ?? "unspecified")}`,
+                `Path: ${String(event.payload.path ?? "unknown")}`,
+                `Support trace flag: ${supportTraceState}`
+              ]
+            : [
+                `Intervention: ${interventionCode}`,
+                `Role used: ${roleUsed}`,
+                `Reason: ${String(event.payload.reason ?? "unspecified")}`,
+                `Path: ${String(event.payload.path ?? "unknown")}`,
+                `Support trace flag: ${supportTraceState}`
+              ];
 
     return {
       id: event.id ?? `${event.eventCode}-${event.requestId}`,

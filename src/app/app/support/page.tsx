@@ -21,7 +21,12 @@ import {
 } from "./actions";
 
 type SupportPageProps = {
-  searchParams?: Promise<{ intervention?: string; releaseOverride?: string; subject?: string }>;
+  searchParams?: Promise<{
+    intervention?: string;
+    releaseOverride?: string;
+    subject?: string;
+    boundary?: string;
+  }>;
 };
 
 const releaseFlagMeta = {
@@ -142,6 +147,17 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               {resolved.releaseOverride.endsWith("-disabled")
                 ? `${resolved.releaseOverride.replace(/-disabled$/, "")} is now forced off through an actor-audited release override.`
                 : `${resolved.releaseOverride.replace(/-cleared$/, "")} returned to baseline flag evaluation after the override was cleared.`}
+            </p>
+          </section>
+        ) : null}
+
+        {resolved.boundary === "cross-account-action-blocked" ? (
+          <section className="panel" style={{ marginBottom: 24 }}>
+            <h2>Cross-account action blocked</h2>
+            <p>
+              No subject-level change was applied for <code>{subjectUserId}</code>. Cross-account
+              review stays read-only until ProsperPals has a durable approval-backed workflow for
+              actor-vs-subject interventions.
             </p>
           </section>
         ) : null}

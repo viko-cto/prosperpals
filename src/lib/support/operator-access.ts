@@ -8,6 +8,24 @@ export const operatorCapabilities = [
 
 export type OperatorCapability = (typeof operatorCapabilities)[number];
 
+export class CrossAccountSubjectInterventionRequiresApprovalError extends Error {
+  readonly viewerUserId: string;
+  readonly subjectUserId: string;
+  readonly capability: OperatorCapability;
+
+  constructor(input: {
+    viewerUserId: string;
+    subjectUserId: string;
+    capability: OperatorCapability;
+  }) {
+    super(`Cross-account ${input.capability} requires an approval-backed workflow`);
+    this.name = "CrossAccountSubjectInterventionRequiresApprovalError";
+    this.viewerUserId = input.viewerUserId;
+    this.subjectUserId = input.subjectUserId;
+    this.capability = input.capability;
+  }
+}
+
 type OperatorRolePolicy = {
   label: string;
   summary: string;
@@ -68,6 +86,27 @@ export function resolveSupportSubject(input: {
     subjectUserId,
     isCrossAccount: subjectUserId !== input.viewerUserId
   };
+}
+
+export function assertSubjectScopedInterventionAllowed(input: {
+  viewerUserId: string;
+  requestedSubjectUserId?: string | null;
+  capability: OperatorCapability;
+}) {
+  const resolved = resolveSupportSubject({
+    viewerUserId: input.viewerUserId,
+    requestedSubjectUserId: input.requestedSubjectUserId
+  });
+
+  if (resolved.isCrossAccount) {
+    throw new CrossAccountSubjectInterventionRequiresApprovalError({
+      viewerUserId: input.viewerUserId,
+      subjectUserId: resolved.subjectUserId,
+      capability: input.capability
+    });
+  }
+
+  return resolved;
 }
 
 export function assertOperatorCapability(session: ViewerSession, capability: OperatorCapability) {

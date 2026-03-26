@@ -544,6 +544,66 @@ test('support subject resolution keeps actor-vs-subject review explicit without 
   });
 });
 
+test('cross-account subject mutations stay blocked until an approval-backed workflow exists', async () => {
+  await withTempRuntime(async () => {
+    const access = await import('../src/lib/support/operator-access.ts');
+    const audit = await import('../src/lib/audit/demo-audit.ts');
+    const support = await import('../src/lib/support/demo-support.ts');
+    const subjectUserId = '33333333-3333-4333-8333-333333333333';
+
+    assert.throws(
+      () => access.assertSubjectScopedInterventionAllowed({
+        viewerUserId: userId,
+        requestedSubjectUserId: subjectUserId,
+        capability: 'receipt_capture_intervention'
+      }),
+      (error) => {
+        assert.equal(
+          error instanceof access.CrossAccountSubjectInterventionRequiresApprovalError,
+          true
+        );
+        assert.equal(error.subjectUserId, subjectUserId);
+        assert.equal(error.capability, 'receipt_capture_intervention');
+        return true;
+      }
+    );
+
+    await audit.recordSupportBoundaryBlockedAudit({
+      actorUserId: userId,
+      subjectUserId,
+      requestId: 'audit-req-boundary-001',
+      traceId,
+      path: '/app/support',
+      reason: 'Cross-account receipt_capture_intervention stays read-only until an approval-backed workflow exists',
+      supportTraceView: true,
+      roleUsed: 'founder-operator',
+      capability: 'receipt_capture_intervention',
+      boundaryCode: 'cross_account_subject_action_requires_approval',
+      occurredAt: new Date().toISOString()
+    });
+
+    const events = await audit.readDemoAuditEvents({
+      actorUserId: userId,
+      subjectUserId,
+      eventCodes: [audit.SUPPORT_BOUNDARY_BLOCKED_EVENT],
+      limit: 8
+    });
+    assert.equal(events.length, 1);
+    assert.equal(events[0].payload.capability, 'receipt_capture_intervention');
+    assert.equal(
+      events[0].payload.boundaryCode,
+      'cross_account_subject_action_requires_approval'
+    );
+
+    const consoleState = await support.getDemoSupportConsole(subjectUserId, {
+      countryCode: 'DK',
+      internalUser: true
+    });
+    assert.ok(consoleState.timeline.some((item) => item.title === 'Cross-account subject action blocked'));
+    assert.ok(consoleState.timeline.some((item) => item.details.some((detail) => /Capability: receipt_capture_intervention/.test(detail))));
+  });
+});
+
 test('audit events can use the hosted PostgREST durability path when configured', async () => {
   await withTempRuntime(async () => {
     const previousUrl = process.env.PROSPERPALS_SUPABASE_URL;
