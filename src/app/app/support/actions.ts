@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import {
   type ReleaseFlagOverrideName,
   recordReleaseFlagOverrideAudit,
+  recordSupportApprovalRequestedAudit,
   recordSupportBoundaryBlockedAudit,
   recordSupportInterventionAudit
 } from "@/lib/audit/demo-audit";
@@ -127,6 +128,38 @@ export async function clearReceiptCapturePauseAction(formData: FormData) {
   });
 
   redirect("/app/support?intervention=receipt-capture-resumed");
+}
+
+export async function requestCrossAccountReceiptInterventionApprovalAction(formData: FormData) {
+  const { session, flags } = await requireInternalSupportViewer("receipt_capture_intervention");
+  const requestContext = await getRequestContext();
+  const requestedSubjectUserId = String(formData.get("subjectUserId") ?? "").trim();
+
+  if (!requestedSubjectUserId) {
+    throw new Error("Missing subject user id for approval request");
+  }
+
+  if (requestedSubjectUserId === session.userId) {
+    throw new Error("Approval request is only needed for cross-account subject actions");
+  }
+
+  await recordSupportApprovalRequestedAudit({
+    actorUserId: session.userId,
+    subjectUserId: requestedSubjectUserId,
+    requestId: requestContext.requestId,
+    traceId: requestContext.traceId,
+    path: "/app/support",
+    reason: readReason(formData, "Requesting founder approval for a bounded cross-account receipt hold"),
+    supportTraceView: flags.supportTraceView,
+    roleUsed: session.operatorRole,
+    code: "cross_account_receipt_capture_intervention",
+    requestedCapability: "receipt_capture_intervention",
+    approvalOwner: "founder-operator",
+    requestedAction: "apply or clear a receipt capture hold for a reviewed subject outside the operator's own account",
+    status: "pending"
+  });
+
+  redirect(`/app/support?subject=${encodeURIComponent(requestedSubjectUserId)}&approval=requested`);
 }
 
 export async function applyReleaseFlagOverrideAction(formData: FormData) {

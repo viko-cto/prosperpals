@@ -36,6 +36,7 @@ The running support surface uses that role to separate support-safe actions from
 | Export user data | manual only | high | founder/operator approval only | not product-native | request log + completion evidence outside app | open blocker |
 | Delete user data | manual only | high | founder/operator approval only | not product-native | request log + completion evidence outside app | open blocker |
 | Cross-account session rescue / impersonation | not implemented | critical | none yet | intentionally absent | actor, subject, role used, approval owner, reason, outcome | open blocker |
+| Request approval for cross-account receipt hold | `/app/support` cross-account review | medium | `support` or `founder-operator` | actor can create a pending approval request, but cannot self-execute the hold | actor, subject, role used, request ID, trace ID, approval owner, requested capability, requested action, reason, pending status | manual fallback |
 
 ## What this closes
 

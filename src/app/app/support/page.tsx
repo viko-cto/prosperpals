@@ -17,7 +17,8 @@ import {
   applyReceiptCapturePauseAction,
   applyReleaseFlagOverrideAction,
   clearReceiptCapturePauseAction,
-  clearReleaseFlagOverrideAction
+  clearReleaseFlagOverrideAction,
+  requestCrossAccountReceiptInterventionApprovalAction
 } from "./actions";
 
 type SupportPageProps = {
@@ -26,6 +27,7 @@ type SupportPageProps = {
     releaseOverride?: string;
     subject?: string;
     boundary?: string;
+    approval?: string;
   }>;
 };
 
@@ -162,6 +164,16 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
           </section>
         ) : null}
 
+        {resolved.approval === "requested" ? (
+          <section className="panel" style={{ marginBottom: 24 }}>
+            <h2>Approval request logged</h2>
+            <p>
+              A pending approval request was recorded for <code>{subjectUserId}</code>. The lane is
+              still non-self-executing: this creates auditable intent, not hidden cross-account power.
+            </p>
+          </section>
+        ) : null}
+
         <section className="grid cols-2" style={{ alignItems: "start" }}>
           <article className="hero">
             <div className="grid" style={{ gap: 14 }}>
@@ -202,6 +214,37 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               Receipt holds and other subject-level controls stay disabled here until the hosted
               operator model grows a durable approval path for cross-account actions.
             </p>
+            {canManageReceiptHold ? (
+              <div className="grid" style={{ gap: 12, marginTop: 16 }}>
+                {supportConsole.pendingApprovalRequests.length ? (
+                  <div className="card compact-card">
+                    <strong>Pending approval request</strong>
+                    <span className="muted-line">
+                      {supportConsole.pendingApprovalRequests[0].requestedAction}
+                    </span>
+                    <div className="meta" style={{ marginTop: 8 }}>
+                      <div><strong>Status</strong>: {supportConsole.pendingApprovalRequests[0].status}</div>
+                      <div><strong>Approval owner</strong>: {supportConsole.pendingApprovalRequests[0].approvalOwner}</div>
+                      <div><strong>Requested at</strong>: {supportConsole.pendingApprovalRequests[0].occurredAt}</div>
+                      <div><strong>Actor</strong>: {supportConsole.pendingApprovalRequests[0].actorUserId ?? "unknown"}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <form action={requestCrossAccountReceiptInterventionApprovalAction} className="grid" style={{ gap: 12 }}>
+                    <input type="hidden" name="subjectUserId" value={subjectUserId} />
+                    <label>
+                      <span className="field-label">Approval reason</span>
+                      <input
+                        type="text"
+                        name="reason"
+                        defaultValue="Need founder approval for a bounded cross-account receipt hold while reviewing subject-safe evidence."
+                      />
+                    </label>
+                    <button className="primary" type="submit">Request approval for cross-account receipt hold</button>
+                  </form>
+                )}
+              </div>
+            ) : null}
             <div className="actions" style={{ marginTop: 16 }}>
               <Link className="button secondary" href="/app/support">Return to your own support context</Link>
             </div>

@@ -4,12 +4,14 @@ import { auditEventSchema } from "../../modules/finance/contracts.ts";
 
 export type DemoAuditEvent = ReturnType<typeof auditEventSchema.parse>;
 export type SupportInterventionCode = "receipt_capture_paused";
+export type SupportApprovalRequestCode = "cross_account_receipt_capture_intervention";
 export type ReleaseFlagOverrideName = "receiptCapture" | "simulatorStarter";
 
 export const SUPPORT_TIMELINE_VIEWED_EVENT = "support.timeline.viewed";
 export const SUPPORT_INTERVENTION_APPLIED_EVENT = "support.intervention.applied";
 export const SUPPORT_INTERVENTION_CLEARED_EVENT = "support.intervention.cleared";
 export const SUPPORT_BOUNDARY_BLOCKED_EVENT = "support.boundary.blocked";
+export const SUPPORT_APPROVAL_REQUESTED_EVENT = "support.approval.requested";
 export const RELEASE_FLAG_OVERRIDE_APPLIED_EVENT = "release.flag.override.applied";
 export const RELEASE_FLAG_OVERRIDE_CLEARED_EVENT = "release.flag.override.cleared";
 
@@ -24,6 +26,23 @@ export type ActiveSupportIntervention = {
   reason: string;
   path: string;
   supportTraceView: boolean;
+};
+
+export type PendingSupportApprovalRequest = {
+  code: SupportApprovalRequestCode;
+  actorUserId?: string;
+  subjectUserId?: string;
+  roleUsed?: string;
+  occurredAt: string;
+  requestId: string;
+  traceId?: string;
+  reason: string;
+  path: string;
+  supportTraceView: boolean;
+  requestedCapability: string;
+  approvalOwner: string;
+  requestedAction: string;
+  status: "pending";
 };
 
 export type ActiveReleaseFlagOverride = {
@@ -280,6 +299,10 @@ function toSupportInterventionCode(value: unknown): SupportInterventionCode | nu
   return value === "receipt_capture_paused" ? value : null;
 }
 
+function toSupportApprovalRequestCode(value: unknown): SupportApprovalRequestCode | null {
+  return value === "cross_account_receipt_capture_intervention" ? value : null;
+}
+
 function toReleaseFlagOverrideName(value: unknown): ReleaseFlagOverrideName | null {
   return value === "receiptCapture" || value === "simulatorStarter" ? value : null;
 }
@@ -390,6 +413,43 @@ export async function recordSupportBoundaryBlockedAudit(input: {
   });
 }
 
+export async function recordSupportApprovalRequestedAudit(input: {
+  actorUserId: string;
+  subjectUserId: string;
+  requestId: string;
+  traceId: string;
+  occurredAt?: string;
+  path: string;
+  reason: string;
+  supportTraceView: boolean;
+  roleUsed?: string;
+  code: SupportApprovalRequestCode;
+  requestedCapability: string;
+  approvalOwner: string;
+  requestedAction: string;
+  status?: "pending";
+}) {
+  return appendDemoAuditEvent({
+    occurredAt: input.occurredAt ?? new Date().toISOString(),
+    actorUserId: input.actorUserId,
+    subjectUserId: input.subjectUserId,
+    eventCode: SUPPORT_APPROVAL_REQUESTED_EVENT,
+    traceId: input.traceId,
+    requestId: input.requestId,
+    payload: {
+      approvalRequestCode: input.code,
+      requestedCapability: input.requestedCapability,
+      approvalOwner: input.approvalOwner,
+      requestedAction: input.requestedAction,
+      status: input.status ?? "pending",
+      path: input.path,
+      reason: input.reason,
+      supportTraceView: input.supportTraceView,
+      roleUsed: input.roleUsed
+    }
+  });
+}
+
 export async function recordReleaseFlagOverrideAudit(input: {
   actorUserId: string;
   requestId: string;
@@ -458,6 +518,51 @@ export async function getActiveSupportInterventions(subjectUserId: string) {
       supportTraceView: event.payload.supportTraceView === true,
       roleUsed: typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : undefined
     }));
+}
+
+export async function getPendingSupportApprovalRequests(subjectUserId: string) {
+  const events = await readDemoAuditEvents({
+    subjectUserId,
+    eventCodes: [SUPPORT_APPROVAL_REQUESTED_EVENT],
+    limit: 128
+  });
+
+  const latestByCode = new Map<SupportApprovalRequestCode, DemoAuditEvent>();
+
+  for (const event of events) {
+    const code = toSupportApprovalRequestCode(event.payload.approvalRequestCode);
+
+    if (!code || latestByCode.has(code)) {
+      continue;
+    }
+
+    latestByCode.set(code, event);
+  }
+
+  return [...latestByCode.entries()].flatMap(([code, event]): PendingSupportApprovalRequest[] => {
+    const status = String(event.payload.status ?? "pending");
+
+    if (status !== "pending") {
+      return [];
+    }
+
+    return [{
+      code,
+      actorUserId: event.actorUserId ?? undefined,
+      subjectUserId: event.subjectUserId ?? undefined,
+      occurredAt: event.occurredAt,
+      requestId: event.requestId,
+      traceId: event.traceId,
+      reason: String(event.payload.reason ?? "unspecified"),
+      path: String(event.payload.path ?? "unknown"),
+      supportTraceView: event.payload.supportTraceView === true,
+      roleUsed: typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : undefined,
+      requestedCapability: String(event.payload.requestedCapability ?? "unknown"),
+      approvalOwner: String(event.payload.approvalOwner ?? "founder-operator"),
+      requestedAction: String(event.payload.requestedAction ?? "unknown"),
+      status: "pending"
+    }];
+  });
 }
 
 export async function getActiveReleaseFlagOverrides() {

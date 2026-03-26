@@ -30,6 +30,7 @@ When the selected subject differs from the signed-in operator:
 - receipt-hold controls stay disabled,
 - release override controls stay visible but non-mutable from that review context,
 - the server action path now also rejects forged `subjectUserId` mutations and records a boundary-blocked audit event instead of trusting UI state alone,
+- the UI can now create an explicit **pending approval request** for a bounded cross-account receipt-hold action, with actor / subject / role / requested capability / approval owner / reason captured in audit,
 - and the UI explains that cross-account actions remain blocked until the hosted approval/audit model is durable.
 
 That keeps the lane honest:
