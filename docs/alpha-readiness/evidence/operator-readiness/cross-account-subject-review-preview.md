@@ -32,7 +32,8 @@ When the selected subject differs from the signed-in operator:
 - the server action path now also rejects forged `subjectUserId` mutations and records a boundary-blocked audit event instead of trusting UI state alone,
 - the UI can create an explicit **pending approval request** for a bounded cross-account receipt-hold action, with actor / subject / role / requested capability / approval owner / reason captured in audit,
 - founder/operator can now resolve that request in-product, producing a durable **approved** audit event with approval request id + resolver identity,
-- and only then does the bounded cross-account receipt-hold rail unlock for that subject context.
+- the subsequent cross-account receipt-hold mutation now writes that approval request id as structured audit payload instead of burying it only in free-text reason fields,
+- and the approval is now intentionally **single-use**: one approved ticket unlocks one bounded cross-account mutation, then it is consumed and the next mutation must request a fresh approval.
 
 That keeps the lane honest:
 

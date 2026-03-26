@@ -50,7 +50,10 @@ async function readCrossAccountApprovalStatus(input: {
 
   const resolved = await getResolvedSupportApprovalRequests(input.subjectUserId);
   const approved = resolved.find(
-    (entry) => entry.status === "approved" && entry.requestedCapability === input.capability
+    (entry) =>
+      entry.status === "approved"
+      && entry.requestedCapability === input.capability
+      && !entry.consumedAt
   );
 
   return {
@@ -139,6 +142,7 @@ export async function applyReceiptCapturePauseAction(formData: FormData) {
     supportTraceView: flags.supportTraceView,
     roleUsed: session.operatorRole,
     interventionCode: "receipt_capture_paused",
+    approvalRequestId: crossAccountApprovalRequestId,
     action: "applied"
   });
 
@@ -166,6 +170,7 @@ export async function clearReceiptCapturePauseAction(formData: FormData) {
     supportTraceView: flags.supportTraceView,
     roleUsed: session.operatorRole,
     interventionCode: "receipt_capture_paused",
+    approvalRequestId: crossAccountApprovalRequestId,
     action: "cleared"
   });
 
@@ -185,6 +190,9 @@ export async function requestCrossAccountReceiptInterventionApprovalAction(formD
     throw new Error("Approval request is only needed for cross-account subject actions");
   }
 
+  const requestedAction = String(formData.get("requestedAction") ?? "").trim()
+    || "apply or clear a receipt capture hold for a reviewed subject outside the operator's own account";
+
   await recordSupportApprovalRequestedAudit({
     actorUserId: session.userId,
     subjectUserId: requestedSubjectUserId,
@@ -197,7 +205,7 @@ export async function requestCrossAccountReceiptInterventionApprovalAction(formD
     code: "cross_account_receipt_capture_intervention",
     requestedCapability: "receipt_capture_intervention",
     approvalOwner: "founder-operator",
-    requestedAction: "apply or clear a receipt capture hold for a reviewed subject outside the operator's own account",
+    requestedAction,
     status: "pending"
   });
 
@@ -218,6 +226,9 @@ export async function approveCrossAccountReceiptInterventionAction(formData: For
     throw new Error("Missing subject user id or approval request id");
   }
 
+  const requestedAction = String(formData.get("requestedAction") ?? "").trim()
+    || "apply or clear a receipt capture hold for a reviewed subject outside the operator's own account";
+
   await recordSupportApprovalResolvedAudit({
     actorUserId: session.userId,
     subjectUserId: requestedSubjectUserId,
@@ -231,7 +242,7 @@ export async function approveCrossAccountReceiptInterventionAction(formData: For
     approvalRequestId,
     requestedCapability: "receipt_capture_intervention",
     approvalOwner: "founder-operator",
-    requestedAction: "apply or clear a receipt capture hold for a reviewed subject outside the operator's own account",
+    requestedAction,
     status: "approved",
     resolvedByUserId: session.userId
   });

@@ -265,6 +265,9 @@ export async function getDemoSupportConsole(userId: string, context: {
                 ]
               : [
                   `Intervention: ${interventionCode}`,
+                  ...(typeof event.payload.approvalRequestId === "string"
+                    ? [`Approval request: ${event.payload.approvalRequestId}`]
+                    : []),
                   `Role used: ${roleUsed}`,
                   `Reason: ${String(event.payload.reason ?? "unspecified")}`,
                   `Path: ${String(event.payload.path ?? "unknown")}`,

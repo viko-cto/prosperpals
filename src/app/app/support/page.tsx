@@ -108,6 +108,13 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
     (request) =>
       request.code === "cross_account_receipt_capture_intervention"
       && request.status === "approved"
+      && !request.consumedAt
+  );
+  const consumedCrossAccountHold = supportConsole.resolvedApprovalRequests.find(
+    (request) =>
+      request.code === "cross_account_receipt_capture_intervention"
+      && request.status === "approved"
+      && request.consumedAt
   );
   const activeReleaseOverrideByFlag = new Map(
     supportConsole.activeReleaseOverrides.map((override) => [override.flagName, override])
@@ -228,8 +235,10 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
             </p>
             <p className="muted-line" style={{ marginTop: 12 }}>
               {approvedCrossAccountHold
-                ? "Founder/operator approval is on file for the bounded receipt-hold lane below. Everything else in cross-account review stays intentionally constrained."
-                : "Receipt holds and other subject-level controls stay disabled here until the hosted operator model grows a durable approval path for cross-account actions."}
+                ? "A one-time founder/operator approval is on file for the bounded receipt-hold lane below. After one cross-account mutation, that approval is consumed and the next action must request a fresh one. Everything else in cross-account review stays intentionally constrained."
+                : consumedCrossAccountHold
+                  ? "The last bounded cross-account approval was already consumed by a prior subject mutation. Request a fresh approval for the next change."
+                  : "Receipt holds and other subject-level controls stay disabled here until the hosted operator model grows a durable approval path for cross-account actions."}
             </p>
             {canManageReceiptHold ? (
               <div className="grid" style={{ gap: 12, marginTop: 16 }}>
@@ -249,6 +258,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                       <form action={approveCrossAccountReceiptInterventionAction} className="grid" style={{ gap: 12, marginTop: 12 }}>
                         <input type="hidden" name="subjectUserId" value={subjectUserId} />
                         <input type="hidden" name="approvalRequestId" value={supportConsole.pendingApprovalRequests[0].requestId} />
+                        <input type="hidden" name="requestedAction" value={supportConsole.pendingApprovalRequests[0].requestedAction} />
                         <label>
                           <span className="field-label">Approval note</span>
                           <input
@@ -264,7 +274,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                 ) : approvedCrossAccountHold ? (
                   <div className="card compact-card">
                     <strong>Approved cross-account hold rail</strong>
-                    <span className="muted-line">A bounded approval exists for subject-scoped receipt holds in this review context.</span>
+                    <span className="muted-line">A bounded one-time approval exists for the next subject-scoped receipt-hold mutation in this review context.</span>
                     <div className="meta" style={{ marginTop: 8 }}>
                       <div><strong>Status</strong>: {approvedCrossAccountHold.status}</div>
                       <div><strong>Resolved at</strong>: {approvedCrossAccountHold.resolvedAt}</div>
@@ -273,18 +283,44 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                     </div>
                   </div>
                 ) : (
-                  <form action={requestCrossAccountReceiptInterventionApprovalAction} className="grid" style={{ gap: 12 }}>
-                    <input type="hidden" name="subjectUserId" value={subjectUserId} />
-                    <label>
-                      <span className="field-label">Approval reason</span>
+                  <div className="grid" style={{ gap: 12 }}>
+                    {consumedCrossAccountHold ? (
+                      <div className="card compact-card">
+                        <strong>Previous approval already used</strong>
+                        <span className="muted-line">The last bounded approval unlocked one cross-account mutation and is no longer reusable.</span>
+                        <div className="meta" style={{ marginTop: 8 }}>
+                          <div><strong>Approval request id</strong>: {consumedCrossAccountHold.approvalRequestId}</div>
+                          <div><strong>Consumed at</strong>: {consumedCrossAccountHold.consumedAt}</div>
+                          <div><strong>Consumed by request</strong>: {consumedCrossAccountHold.consumedByRequestId ?? "unknown"}</div>
+                        </div>
+                      </div>
+                    ) : null}
+                    <form action={requestCrossAccountReceiptInterventionApprovalAction} className="grid" style={{ gap: 12 }}>
+                      <input type="hidden" name="subjectUserId" value={subjectUserId} />
                       <input
-                        type="text"
-                        name="reason"
-                        defaultValue="Need founder approval for a bounded cross-account receipt hold while reviewing subject-safe evidence."
+                        type="hidden"
+                        name="requestedAction"
+                        value={activeReceiptCapturePause
+                          ? "clear a receipt capture hold for a reviewed subject outside the operator's own account"
+                          : "apply a receipt capture hold for a reviewed subject outside the operator's own account"}
                       />
-                    </label>
-                    <button className="primary" type="submit">Request approval for cross-account receipt hold</button>
-                  </form>
+                      <label>
+                        <span className="field-label">Approval reason</span>
+                        <input
+                          type="text"
+                          name="reason"
+                          defaultValue={activeReceiptCapturePause
+                            ? "Need founder approval to clear a bounded cross-account receipt hold while reviewing subject-safe evidence."
+                            : "Need founder approval to apply a bounded cross-account receipt hold while reviewing subject-safe evidence."}
+                        />
+                      </label>
+                      <button className="primary" type="submit">
+                        {activeReceiptCapturePause
+                          ? "Request approval to clear cross-account receipt hold"
+                          : "Request approval to apply cross-account receipt hold"}
+                      </button>
+                    </form>
+                  </div>
                 )}
               </div>
             ) : null}
@@ -323,6 +359,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                   <div><strong>Actor</strong>: {activeReceiptCapturePause.actorUserId ?? "unknown"}</div>
                   <div><strong>Subject</strong>: {activeReceiptCapturePause.subjectUserId ?? session.userId}</div>
                   <div><strong>Role used</strong>: {activeReceiptCapturePause.roleUsed ?? "unspecified"}</div>
+                  {activeReceiptCapturePause.approvalRequestId ? <div><strong>Approval request</strong>: {activeReceiptCapturePause.approvalRequestId}</div> : null}
                 </div>
                 {canManageReceiptHold && (!isCrossAccount || approvedCrossAccountHold) ? (
                   <form action={clearReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
@@ -334,7 +371,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                     <button className="primary" type="submit">Clear receipt capture pause</button>
                   </form>
                 ) : (
-                  <p className="muted-line">{isCrossAccount ? "Cross-account review stays read-only here until the bounded approval is resolved." : "This role can inspect the active hold but cannot clear it."}</p>
+                  <p className="muted-line">{isCrossAccount ? "Cross-account review needs a fresh bounded approval before the next subject mutation can clear this hold." : "This role can inspect the active hold but cannot clear it."}</p>
                 )}
               </div>
             ) : (
@@ -367,7 +404,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
               <li>Receipt-intake pause and resume actions now write actor/subject/request/trace-scoped audit events.</li>
               <li>The audit trail now records which operator role was used for each action.</li>
               <li>Release overrides are explicitly separated from support-safe receipt holds instead of hiding behind one broad internal gate.</li>
-              <li>Cross-account receipt holds now require an explicit founder/operator approval event before the bounded rail unlocks.</li>
+              <li>Cross-account receipt holds now require an explicit founder/operator approval event before the bounded rail unlocks, and each approval is consumed after one subject mutation.</li>
               <li>The control is still narrow by design: approval-backed receipt holds only, not hosted multi-account admin power.</li>
             </ul>
           </article>

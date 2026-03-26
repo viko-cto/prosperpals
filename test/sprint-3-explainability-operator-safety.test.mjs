@@ -652,6 +652,7 @@ test('cross-account subject mutations stay blocked until an approval-backed work
       supportTraceView: true,
       roleUsed: 'founder-operator',
       interventionCode: 'receipt_capture_paused',
+      approvalRequestId: 'audit-req-approval-001',
       action: 'applied',
       occurredAt: new Date().toISOString()
     });
@@ -660,6 +661,9 @@ test('cross-account subject mutations stay blocked until an approval-backed work
     assert.equal(resolvedApprovals.length, 1);
     assert.equal(resolvedApprovals[0].status, 'approved');
     assert.equal(resolvedApprovals[0].approvalRequestId, 'audit-req-approval-001');
+    assert.equal(Boolean(resolvedApprovals[0].consumedAt), true);
+    assert.equal(resolvedApprovals[0].consumedByRequestId, 'audit-req-intervention-001');
+    assert.equal(resolvedApprovals[0].consumedEventCode, audit.SUPPORT_INTERVENTION_APPLIED_EVENT);
 
     const consoleState = await support.getDemoSupportConsole(subjectUserId, {
       countryCode: 'DK',
@@ -667,11 +671,14 @@ test('cross-account subject mutations stay blocked until an approval-backed work
     });
     assert.equal(consoleState.pendingApprovalRequests.length, 0);
     assert.equal(consoleState.resolvedApprovalRequests.length, 1);
+    assert.equal(Boolean(consoleState.resolvedApprovalRequests[0].consumedAt), true);
     assert.equal(consoleState.activeInterventions.length, 1);
+    assert.equal(consoleState.activeInterventions[0].approvalRequestId, 'audit-req-approval-001');
     assert.ok(consoleState.timeline.some((item) => item.title === 'Cross-account subject action blocked'));
     assert.ok(consoleState.timeline.some((item) => item.title === 'Cross-account approval requested'));
     assert.ok(consoleState.timeline.some((item) => item.title === 'Cross-account approval granted'));
     assert.ok(consoleState.timeline.some((item) => item.title === 'Receipt capture paused'));
+    assert.ok(consoleState.timeline.some((item) => item.details.some((detail) => /Approval request: audit-req-approval-001/.test(detail))));
     assert.ok(consoleState.timeline.some((item) => item.details.some((detail) => /Approval owner: founder-operator/.test(detail))));
   });
 });

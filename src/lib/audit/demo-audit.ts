@@ -21,6 +21,7 @@ export type ActiveSupportIntervention = {
   actorUserId?: string;
   subjectUserId?: string;
   roleUsed?: string;
+  approvalRequestId?: string;
   occurredAt: string;
   requestId: string;
   traceId?: string;
@@ -52,6 +53,9 @@ export type ResolvedSupportApprovalRequest = Omit<PendingSupportApprovalRequest,
   resolvedAt: string;
   resolvedByUserId?: string;
   resolutionReason: string;
+  consumedAt?: string;
+  consumedByRequestId?: string;
+  consumedEventCode?: string;
 };
 
 export type ActiveReleaseFlagOverride = {
@@ -369,6 +373,7 @@ export async function recordSupportInterventionAudit(input: {
   supportTraceView: boolean;
   roleUsed?: string;
   interventionCode: SupportInterventionCode;
+  approvalRequestId?: string;
   action: "applied" | "cleared";
 }) {
   return appendDemoAuditEvent({
@@ -383,6 +388,7 @@ export async function recordSupportInterventionAudit(input: {
     requestId: input.requestId,
     payload: {
       interventionCode: input.interventionCode,
+      approvalRequestId: input.approvalRequestId,
       path: input.path,
       reason: input.reason,
       supportTraceView: input.supportTraceView,
@@ -628,6 +634,10 @@ export async function getActiveSupportInterventions(subjectUserId: string) {
       code,
       actorUserId: event.actorUserId ?? undefined,
       subjectUserId: event.subjectUserId ?? undefined,
+      approvalRequestId:
+        typeof event.payload.approvalRequestId === "string"
+          ? event.payload.approvalRequestId
+          : undefined,
       occurredAt: event.occurredAt,
       requestId: event.requestId,
       traceId: event.traceId,
@@ -647,7 +657,38 @@ export async function getPendingSupportApprovalRequests(subjectUserId: string) {
 export async function getResolvedSupportApprovalRequests(subjectUserId: string) {
   const codes: SupportApprovalRequestCode[] = ["cross_account_receipt_capture_intervention"];
   const results = await Promise.all(codes.map((code) => getLatestSupportApprovalRecord(subjectUserId, code)));
-  return results.filter((entry): entry is ResolvedSupportApprovalRequest => Boolean(entry && entry.status !== "pending"));
+  const resolved = results.filter((entry): entry is ResolvedSupportApprovalRequest => Boolean(entry && entry.status !== "pending"));
+
+  if (!resolved.length) {
+    return resolved;
+  }
+
+  const interventionEvents = await readDemoAuditEvents({
+    subjectUserId,
+    eventCodes: [SUPPORT_INTERVENTION_APPLIED_EVENT, SUPPORT_INTERVENTION_CLEARED_EVENT],
+    limit: 256
+  });
+
+  return resolved.map((entry) => {
+    if (entry.status !== "approved") {
+      return entry;
+    }
+
+    const consumption = interventionEvents.find(
+      (event) => String(event.payload.approvalRequestId ?? "") === entry.approvalRequestId
+    );
+
+    if (!consumption) {
+      return entry;
+    }
+
+    return {
+      ...entry,
+      consumedAt: consumption.occurredAt,
+      consumedByRequestId: consumption.requestId,
+      consumedEventCode: consumption.eventCode
+    };
+  });
 }
 
 export async function getActiveReleaseFlagOverrides() {

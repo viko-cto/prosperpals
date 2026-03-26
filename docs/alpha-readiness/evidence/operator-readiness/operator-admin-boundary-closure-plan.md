@@ -26,7 +26,7 @@ What does **not** exist today:
 - a least-privilege support-only role,
 - an admin-only role separate from support,
 - a durable actor-vs-subject model for cross-account intervention,
-- a product-native approval path for high-risk account actions,
+- a product-native approval path for high-risk account actions beyond the now-bounded single-use cross-account receipt-hold rail,
 - a decision-grade audit trail for cross-account access or session rescue.
 
 ## Closure objective
@@ -150,7 +150,8 @@ Need:
 Need:
 - product-enforced least-privilege boundaries,
 - durable hosted audit trail for those actions,
-- bounded tested flows for the approved intervention set.
+- bounded tested flows for the approved intervention set,
+- and approvals that do not linger as open-ended grants after the intended mutation executes.
 
 ## Honest verdict
 
