@@ -17,9 +17,10 @@ This note turns that blocker into a closure plan with explicit acceptance bars, 
 What exists today:
 - external alpha users can use the normal app surfaces,
 - founder/operator access to `/app/support` is gated behind `@prosperpals.local` plus `supportTraceView`,
+- the demo session now carries an explicit operator-role preview (`support`, `admin`, `founder-operator`) for internal users,
 - support timeline access is actor-audited,
-- narrow receipt-intake pause/clear interventions are actor-audited,
-- release overrides for `receiptCapture` and `simulatorStarter` are actor-audited.
+- narrow receipt-intake pause/clear interventions are actor-audited and support-role-gated,
+- release overrides for `receiptCapture` and `simulatorStarter` are actor-audited and admin-role-gated.
 
 What does **not** exist today:
 - a least-privilege support-only role,
@@ -92,6 +93,7 @@ The blocker should not move from **open blocker** to **manual fallback** until a
 - support-only and admin-only permissions are documented in repo truth
 - route-level and action-level guards exist for both roles
 - `/app/support` behavior reflects the intended permission split instead of one broad internal gate
+- canonical policy source: `docs/alpha-readiness/evidence/operator-readiness/intervention-policy-matrix.md`
 
 ### B. Actor and subject are separated
 - every cross-account action records both the acting operator and the affected user
@@ -160,4 +162,4 @@ So the correct posture is still:
 
 ## Exact next move this points to
 
-Create one canonical intervention inventory plus policy matrix, then wire route/action guards and actor/subject audit rules against that inventory before any hosted-alpha softening is considered.
+Keep the canonical intervention inventory and policy matrix as repo truth, then replace the demo role path with durable hosted identity and cross-account audit rules before any hosted-alpha softening is considered.

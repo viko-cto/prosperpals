@@ -92,9 +92,9 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note: `docs/alpha-readiness/evidence/receipts/receipt-lineage-ambiguous-path.md`
 
 ## D. Operator/access readiness
-- [ ] User / founder-operator / support-only / admin-only visibility is defined  
-  - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`
+- [x] User / founder-operator / support-only / admin-only visibility is defined  
+  - status: complete
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`, `docs/alpha-readiness/evidence/operator-readiness/intervention-policy-matrix.md`
 - [ ] Support views of sensitive artifacts are auditable  
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
@@ -109,7 +109,7 @@ For every line marked complete or manual fallback, link the proof note under `do
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
 - [ ] Least-privilege support path exists  
   - status: manual fallback
-  - proof note: `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`, `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
+  - proof note: `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`, `docs/alpha-readiness/evidence/operator-readiness/intervention-policy-matrix.md`, `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 - [ ] Manual help / export / deletion path exists  
   - status: manual fallback
   - proof note: `docs/alpha-readiness/evidence/operator-readiness/export-deletion-fallback.md`
@@ -120,7 +120,7 @@ For every line marked complete or manual fallback, link the proof note under `do
 ## Current blockers
 1. Trust-critical alpha lanes now have hosted-capable durability paths in the repo, and the smoke harness can prove audit + ledger + analytics + onboarding + receipt persistence together, but preview/alpha rollout proof is still missing and local fallbacks remain available outside strict hosted-only wiring.
 2. A direct 2026-03-25 hosted audit of the linked Vercel project found **no environment variables configured at all**, so the blocker is now concrete: hosted-proof work is stalled at missing env wiring, not just missing smoke output. The required preview/alpha variable set and exact wiring procedure are now documented in `docs/alpha-readiness/evidence/hosted-hardening/preview-alpha-env-wiring-manifest.md`, and the repo now includes `scripts/vercel-env-contract.mjs` / `npm run vercel:env-contract` to check or sync that contract repeatably instead of hand-applying each key. The helper now also auto-resolves preview/production app URLs from linked Vercel target metadata, which narrows the remaining manual source requirement to the real Supabase URL plus anon/service credentials unless an operator intentionally overrides the target URL.
-3. Support-only/admin-only roles and broader cross-account intervention controls are still absent, though the exact acceptance bar is now pinned down in `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`.
+3. The repo now has an explicit support-only/admin-only demo role split and intervention policy, but durable hosted role assignment plus broader cross-account intervention controls are still absent. The exact acceptance bar remains pinned down in `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`.
 4. Interview evidence and founder-visible cohort-health rollups are still largely unpopulated.
 
 ## Decision posture

@@ -31,6 +31,7 @@ Each `support.timeline.viewed` event captures:
 - `path`
 - `reason`
 - `supportTraceView`
+- `roleUsed`
 
 ### 2. Receipt-intake interventions are now actor-audited too
 The support surface now supports a narrow but real intervention: pausing and clearing new receipt capture for the current subject.
@@ -45,6 +46,7 @@ Each intervention write captures:
 - `path`
 - `reason`
 - `supportTraceView`
+- `roleUsed`
 
 Event codes now include:
 - `support.intervention.applied`
@@ -98,6 +100,7 @@ Each override write captures:
 - `path`
 - `reason`
 - `supportTraceView`
+- `roleUsed`
 
 Event codes now include:
 - `release.flag.override.applied`
@@ -108,14 +111,15 @@ The running product path now folds those overrides into effective flag evaluatio
 - `/app/simulator` blocks new starter trades when `simulatorStarter` is forced off,
 - and `/app/support` surfaces both the override state and the matching audit history.
 
-### 3. Cross-account intervention and role separation are still absent
+### 3. Cross-account intervention is still absent even though role separation is now explicit
 The new intervention rail is intentionally narrow and bound to the current support subject.
 
+The repo now has an explicit support-only vs admin-only split for current actions, and the audit trail records which role was used.
+
 There is still no product-native path for:
-- least-privilege support-only access,
-- admin-only control boundaries,
 - impersonation,
 - session rescue,
+- export/deletion completion audit,
 - or founder-approved cross-account intervention.
 
 That is safer than inventing hidden backdoors, but it means hosted multi-user alpha readiness remains unproven.
@@ -141,13 +145,13 @@ This step materially improves the operator-readiness lane because the repo now h
 - and release-override changes for receipt capture plus the simulator starter rail.
 
 But hosted alpha remains **NO-GO** because:
-- audit durability is still local-runtime,
-- support-only/admin-only role separation is still absent,
+- audit durability is still local-runtime unless the hosted path is actually wired and proven,
+- the current role split is still demo/session-based instead of durable hosted auth,
 - cross-account intervention is still unproven,
 - and interview evidence is still unpopulated.
 
 ## Exact next hardening move this points to
 
 1. Move the audit sink onto authoritative hosted durability.
-2. Add explicit support/admin boundaries before any cross-account intervention exists.
+2. Keep the intervention-policy matrix and action guards as the canonical support/admin contract while replacing the demo role path with durable hosted identity.
 3. Keep the alpha **NO-GO** locked while the interview evidence pack is populated.

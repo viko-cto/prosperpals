@@ -152,6 +152,7 @@ export async function getDemoSupportConsole(userId: string, context: {
         ? describeReleaseFlagOverride(flagName)
         : flagName;
     const supportTraceState = event.payload.supportTraceView === true ? "enabled" : "disabled";
+    const roleUsed = typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : "unspecified";
 
     const title =
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
@@ -183,6 +184,7 @@ export async function getDemoSupportConsole(userId: string, context: {
       event.eventCode === SUPPORT_TIMELINE_VIEWED_EVENT
         ? [
             `Reason: ${String(event.payload.reason ?? "unspecified")}`,
+            `Role used: ${roleUsed}`,
             `Path: ${String(event.payload.path ?? "unknown")}`,
             `Support trace flag: ${supportTraceState}`
           ]
@@ -191,12 +193,14 @@ export async function getDemoSupportConsole(userId: string, context: {
               `Flag: ${flagName}`,
               `Enabled: ${String(event.payload.enabled ?? "n/a")}`,
               `Scope: ${String(event.payload.scope ?? "alpha-hosted")}`,
+              `Role used: ${roleUsed}`,
               `Reason: ${String(event.payload.reason ?? "unspecified")}`,
               `Path: ${String(event.payload.path ?? "unknown")}`,
               `Support trace flag: ${supportTraceState}`
             ]
           : [
               `Intervention: ${interventionCode}`,
+              `Role used: ${roleUsed}`,
               `Reason: ${String(event.payload.reason ?? "unspecified")}`,
               `Path: ${String(event.payload.path ?? "unknown")}`,
               `Support trace flag: ${supportTraceState}`

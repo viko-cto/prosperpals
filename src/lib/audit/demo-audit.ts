@@ -16,6 +16,7 @@ export type ActiveSupportIntervention = {
   code: SupportInterventionCode;
   actorUserId?: string;
   subjectUserId?: string;
+  roleUsed?: string;
   occurredAt: string;
   requestId: string;
   traceId?: string;
@@ -28,6 +29,7 @@ export type ActiveReleaseFlagOverride = {
   flagName: ReleaseFlagOverrideName;
   enabled: boolean;
   actorUserId?: string;
+  roleUsed?: string;
   occurredAt: string;
   requestId: string;
   traceId?: string;
@@ -305,6 +307,7 @@ export async function recordSupportTimelineViewAudit(input: {
   path: string;
   reason: string;
   supportTraceView: boolean;
+  roleUsed?: string;
 }) {
   return appendDemoAuditEvent({
     occurredAt: input.occurredAt ?? new Date().toISOString(),
@@ -316,7 +319,8 @@ export async function recordSupportTimelineViewAudit(input: {
     payload: {
       path: input.path,
       reason: input.reason,
-      supportTraceView: input.supportTraceView
+      supportTraceView: input.supportTraceView,
+      roleUsed: input.roleUsed
     }
   });
 }
@@ -330,6 +334,7 @@ export async function recordSupportInterventionAudit(input: {
   path: string;
   reason: string;
   supportTraceView: boolean;
+  roleUsed?: string;
   interventionCode: SupportInterventionCode;
   action: "applied" | "cleared";
 }) {
@@ -347,7 +352,8 @@ export async function recordSupportInterventionAudit(input: {
       interventionCode: input.interventionCode,
       path: input.path,
       reason: input.reason,
-      supportTraceView: input.supportTraceView
+      supportTraceView: input.supportTraceView,
+      roleUsed: input.roleUsed
     }
   });
 }
@@ -361,6 +367,7 @@ export async function recordReleaseFlagOverrideAudit(input: {
   reason: string;
   scope: string;
   supportTraceView: boolean;
+  roleUsed?: string;
   flagName: ReleaseFlagOverrideName;
   enabled: boolean;
   action: "applied" | "cleared";
@@ -380,7 +387,8 @@ export async function recordReleaseFlagOverrideAudit(input: {
       path: input.path,
       reason: input.reason,
       scope: input.scope,
-      supportTraceView: input.supportTraceView
+      supportTraceView: input.supportTraceView,
+      roleUsed: input.roleUsed
     }
   });
 }
@@ -415,7 +423,8 @@ export async function getActiveSupportInterventions(subjectUserId: string) {
       traceId: event.traceId,
       reason: String(event.payload.reason ?? "unspecified"),
       path: String(event.payload.path ?? "unknown"),
-      supportTraceView: event.payload.supportTraceView === true
+      supportTraceView: event.payload.supportTraceView === true,
+      roleUsed: typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : undefined
     }));
 }
 
@@ -456,7 +465,8 @@ export async function getActiveReleaseFlagOverrides() {
         reason: String(event.payload.reason ?? "unspecified"),
         path: String(event.payload.path ?? "unknown"),
         scope: String(event.payload.scope ?? "alpha-hosted"),
-        supportTraceView: event.payload.supportTraceView === true
+        supportTraceView: event.payload.supportTraceView === true,
+        roleUsed: typeof event.payload.roleUsed === "string" ? event.payload.roleUsed : undefined
       }];
     });
 }

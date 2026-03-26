@@ -7,9 +7,9 @@ This runbook is the minimum credible support and incident shell for a small host
 | Role | What they can see | What they can do | What they cannot do | Current status | Evidence |
 |---|---|---|---|---|---|
 | User | Own onboarding, money logs, receipt candidates, simulator history, explainability surfaces tied to the current demo session | Review/correct own receipt inputs, use onboarding/simulator flows, request help manually outside the app | View `/app/support`, change feature flags, perform admin actions | manual fallback | `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md` |
-| Founder/operator | Same user-facing surfaces plus `/app/support` when the viewer is internal (`@prosperpals.local`) and `supportTraceView` remains enabled | Inspect support timeline, request IDs, trace IDs, receipt failures, and release-safety checks for the current demo session | Impersonate other users, perform real account intervention, export/delete from the UI, manage dedicated support/admin roles | manual fallback | `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md` |
-| Support-only | Not implemented | None beyond founder/operator access | No least-privilege support persona exists | open blocker | `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md` |
-| Admin-only | Not implemented | None beyond code/env access outside the app | No app-native admin controls for flag changes, deletions, or overrides exist | open blocker | `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md` |
+| Founder/operator | Same user-facing surfaces plus `/app/support` when the viewer is internal (`@prosperpals.local`) and `supportTraceView` remains enabled | Inspect support timeline, use support-safe receipt holds, and apply admin-only release overrides while the audit trail records the role used | Impersonate other users, perform real account intervention, export/delete from the UI, or treat the demo role cookie as hosted auth | manual fallback | `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`, `docs/alpha-readiness/evidence/operator-readiness/intervention-policy-matrix.md` |
+| Support-only | `/app/support` for the current subject | Inspect timeline context and apply/clear the narrow receipt-capture hold | Apply global release overrides, export/delete from the UI, or perform account-level interventions | manual fallback | `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`, `docs/alpha-readiness/evidence/operator-readiness/intervention-policy-matrix.md` |
+| Admin-only | `/app/support` for the current subject | Inspect timeline context and apply/clear audited release overrides | Use the support-only receipt hold by default, export/delete from the UI, or perform account-level interventions | manual fallback | `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`, `docs/alpha-readiness/evidence/operator-readiness/intervention-policy-matrix.md` |
 
 ## 2. Auditable actions
 
@@ -26,10 +26,11 @@ Every operator-side action affecting user trust should be actor-scoped and times
 ### What is still missing
 - the current audit sink is still local-runtime instead of hosted durable,
 - cross-account account-access interventions are not implemented,
-- support-only/admin-only boundaries are still not implemented,
-- there is still no canonical intervention policy separating support-safe actions from admin-only actions.
+- durable hosted role assignment is still not implemented,
+- export/deletion completion still lacks product-native audit closure.
 
 Boundary closure plan: `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
+Canonical intervention matrix: `docs/alpha-readiness/evidence/operator-readiness/intervention-policy-matrix.md`
 
 Record evidence for:
 - viewing sensitive artifacts,

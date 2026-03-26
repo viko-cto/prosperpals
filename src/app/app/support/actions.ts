@@ -6,13 +6,17 @@ import {
   recordReleaseFlagOverrideAudit,
   recordSupportInterventionAudit
 } from "@/lib/audit/demo-audit";
-import { requireViewerSession } from "@/lib/auth/session";
+import { isInternalOperatorEmail, requireViewerSession } from "@/lib/auth/session";
 import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
+import {
+  type OperatorCapability,
+  assertOperatorCapability
+} from "@/lib/support/operator-access";
 import { getRequestContext } from "@/lib/telemetry/request-context";
 
-async function requireInternalSupportViewer() {
+async function requireInternalSupportViewer(capability: OperatorCapability) {
   const session = await requireViewerSession();
-  const internalUser = session.email.endsWith("@prosperpals.local");
+  const internalUser = isInternalOperatorEmail(session.email);
   const flags = await getEffectiveFeatureFlags({
     countryCode: "DK",
     internalUser
@@ -22,6 +26,7 @@ async function requireInternalSupportViewer() {
     throw new Error("Support trace view is disabled for this viewer.");
   }
 
+  assertOperatorCapability(session, capability);
   return { session, flags };
 }
 
@@ -40,7 +45,7 @@ function readReleaseFlagName(formData: FormData): ReleaseFlagOverrideName {
 }
 
 export async function applyReceiptCapturePauseAction(formData: FormData) {
-  const { session, flags } = await requireInternalSupportViewer();
+  const { session, flags } = await requireInternalSupportViewer("receipt_capture_intervention");
   const requestContext = await getRequestContext();
   const subjectUserId = String(formData.get("subjectUserId") ?? "").trim() || session.userId;
 
@@ -52,6 +57,7 @@ export async function applyReceiptCapturePauseAction(formData: FormData) {
     path: "/app/support",
     reason: readReason(formData, "receipt lineage review in progress"),
     supportTraceView: flags.supportTraceView,
+    roleUsed: session.operatorRole,
     interventionCode: "receipt_capture_paused",
     action: "applied"
   });
@@ -60,7 +66,7 @@ export async function applyReceiptCapturePauseAction(formData: FormData) {
 }
 
 export async function clearReceiptCapturePauseAction(formData: FormData) {
-  const { session, flags } = await requireInternalSupportViewer();
+  const { session, flags } = await requireInternalSupportViewer("receipt_capture_intervention");
   const requestContext = await getRequestContext();
   const subjectUserId = String(formData.get("subjectUserId") ?? "").trim() || session.userId;
 
@@ -72,6 +78,7 @@ export async function clearReceiptCapturePauseAction(formData: FormData) {
     path: "/app/support",
     reason: readReason(formData, "receipt capture reopened after support review"),
     supportTraceView: flags.supportTraceView,
+    roleUsed: session.operatorRole,
     interventionCode: "receipt_capture_paused",
     action: "cleared"
   });
@@ -80,7 +87,7 @@ export async function clearReceiptCapturePauseAction(formData: FormData) {
 }
 
 export async function applyReleaseFlagOverrideAction(formData: FormData) {
-  const { session, flags } = await requireInternalSupportViewer();
+  const { session, flags } = await requireInternalSupportViewer("release_flag_override");
   const requestContext = await getRequestContext();
   const flagName = readReleaseFlagName(formData);
 
@@ -92,6 +99,7 @@ export async function applyReleaseFlagOverrideAction(formData: FormData) {
     reason: readReason(formData, `${flagName} kill switch engaged during hosted-alpha hardening review`),
     scope: "denmark-alpha-hosted",
     supportTraceView: flags.supportTraceView,
+    roleUsed: session.operatorRole,
     flagName,
     enabled: false,
     action: "applied"
@@ -101,7 +109,7 @@ export async function applyReleaseFlagOverrideAction(formData: FormData) {
 }
 
 export async function clearReleaseFlagOverrideAction(formData: FormData) {
-  const { session, flags } = await requireInternalSupportViewer();
+  const { session, flags } = await requireInternalSupportViewer("release_flag_override");
   const requestContext = await getRequestContext();
   const flagName = readReleaseFlagName(formData);
 
@@ -113,6 +121,7 @@ export async function clearReleaseFlagOverrideAction(formData: FormData) {
     reason: readReason(formData, `${flagName} audited override cleared after hosted-alpha review`),
     scope: "denmark-alpha-hosted",
     supportTraceView: flags.supportTraceView,
+    roleUsed: session.operatorRole,
     flagName,
     enabled: false,
     action: "cleared"

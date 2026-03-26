@@ -50,12 +50,13 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
   - `docs/alpha-readiness/evidence/hosted-hardening/hosted-receipt-postgrest-durability-path.md`
 
 ## 4. Operator/access readiness snapshot
-- **Role/access table complete:** no — current roles are explicitly documented, but support-only/admin-only boundaries are still not implemented
-- **Auditable actions confirmed:** partial — support-surface access, receipt interventions, and release overrides are actor-scoped in repo, but deployed proof and broader boundary coverage are still missing
+- **Role/access table complete:** yes in repo scope — current roles plus the support-only/admin-only action split are explicitly documented and surfaced in the demo support path, but the role assignment is still demo/session-based rather than durable hosted auth
+- **Auditable actions confirmed:** partial — support-surface access, receipt interventions, and release overrides are actor-scoped in repo and now record the role used, but deployed proof and broader cross-account coverage are still missing
 - **Help / export / deletion path ready:** no — manual fallback exists, but there is no product-native request path or durable completion audit
 - **Incident pause criteria documented:** yes
 - **Canonical evidence links:**
   - `docs/alpha-readiness/evidence/operator-readiness/role-access-definition.md`
+  - `docs/alpha-readiness/evidence/operator-readiness/intervention-policy-matrix.md`
   - `docs/alpha-readiness/evidence/operator-readiness/operator-auditability-proof.md`
   - `docs/alpha-readiness/evidence/operator-readiness/support-help-path.md`
   - `docs/alpha-readiness/evidence/operator-readiness/export-deletion-fallback.md`
@@ -64,7 +65,7 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 ## 5. Open blockers
 1. Hosted-capable durability now exists across the trust-critical alpha lanes, but real preview/alpha rollout proof is still missing.
 2. Support-surface access is actor-audited in repo, but broader operator-boundary closure and deployed proof are still missing.
-3. Support-only/admin-only roles and account-intervention controls are still absent.
+3. The repo role split now exists, but durable hosted role assignment and account-intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health reporting are still unpopulated.
 
 ## 6. Decision summary

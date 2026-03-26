@@ -246,7 +246,7 @@ The hosted preview smoke harness is now wired across the full repo-supported tru
 But the step is still **not complete** because:
 - there is still no external OCR/provider call,
 - the full hosted smoke harness is not yet proven in a real preview/alpha environment note,
-- support-only/admin-only boundaries and broader cross-account intervention controls are still absent, even though the acceptance bar is now explicitly defined in `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`,
+- the repo now has an explicit support-only/admin-only demo role split and intervention policy, but durable hosted role assignment and broader cross-account intervention controls are still absent, even though the acceptance bar is now explicitly defined in `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`,
 - interview evidence is still unpopulated,
 - and the re-decision roll-up is still not backed by real cohort evidence.
 
@@ -331,4 +331,4 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 
 ProsperPals now has a stronger receipt-realism operating pack and a materially better proof trail for asset lineage, operator auditability, founder-visible cohort telemetry, onboarding continuity, and receipt-state durability.
 
-The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus a single hosted-proof harness spanning operator-audit, ledger, analytics, onboarding, and receipt durability paths. But hosted alpha remains **NO-GO** until that harness is actually proven in deployment, the remaining role-boundary gaps are closed, and the missing interview evidence lands.
+The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus a single hosted-proof harness spanning operator-audit, ledger, analytics, onboarding, and receipt durability paths. It also now has an explicit repo-native operator policy split: support-only receipt holds, admin-only release overrides, role-used audit fields, and a bounded demo role session path that makes the remaining hosted-role blocker more honest instead of fuzzier. But hosted alpha remains **NO-GO** until that harness is actually proven in deployment, the remaining role-boundary gaps are closed, and the missing interview evidence lands.

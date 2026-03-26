@@ -388,6 +388,7 @@ test('actor-audited release overrides can force off receipt capture and simulato
       reason: 'receipt trust hardening review still open',
       scope: 'denmark-alpha-hosted',
       supportTraceView: true,
+      roleUsed: 'admin',
       flagName: 'receiptCapture',
       enabled: false,
       action: 'applied',
@@ -402,6 +403,7 @@ test('actor-audited release overrides can force off receipt capture and simulato
       reason: 'simulator trust review still open',
       scope: 'denmark-alpha-hosted',
       supportTraceView: true,
+      roleUsed: 'admin',
       flagName: 'simulatorStarter',
       enabled: false,
       action: 'applied',
@@ -411,6 +413,7 @@ test('actor-audited release overrides can force off receipt capture and simulato
     const activeOverrides = await audit.getActiveReleaseFlagOverrides();
     assert.equal(activeOverrides.length, 2);
     assert.equal(activeOverrides.every((override) => override.enabled === false), true);
+    assert.equal(activeOverrides.every((override) => override.roleUsed === 'admin'), true);
 
     const forcedOffFlags = await flags.getEffectiveFeatureFlags({
       countryCode: 'DK',
@@ -438,6 +441,7 @@ test('actor-audited release overrides can force off receipt capture and simulato
       reason: 'receipt review closed',
       scope: 'denmark-alpha-hosted',
       supportTraceView: true,
+      roleUsed: 'admin',
       flagName: 'receiptCapture',
       enabled: false,
       action: 'cleared',
@@ -450,6 +454,65 @@ test('actor-audited release overrides can force off receipt capture and simulato
     });
     assert.equal(partiallyClearedFlags.receiptCapture, true);
     assert.equal(partiallyClearedFlags.simulatorStarter, false);
+  });
+});
+
+test('operator role policy separates support-safe and admin-only rails', async () => {
+  await withTempRuntime(async () => {
+    const access = await import('../src/lib/support/operator-access.ts');
+    const audit = await import('../src/lib/audit/demo-audit.ts');
+    const support = await import('../src/lib/support/demo-support.ts');
+
+    assert.equal(access.hasOperatorCapability('support', 'support_timeline_view'), true);
+    assert.equal(access.hasOperatorCapability('support', 'receipt_capture_intervention'), true);
+    assert.equal(access.hasOperatorCapability('support', 'release_flag_override'), false);
+    assert.equal(access.hasOperatorCapability('admin', 'support_timeline_view'), true);
+    assert.equal(access.hasOperatorCapability('admin', 'receipt_capture_intervention'), false);
+    assert.equal(access.hasOperatorCapability('admin', 'release_flag_override'), true);
+    assert.equal(access.hasOperatorCapability('founder-operator', 'receipt_capture_intervention'), true);
+    assert.equal(access.hasOperatorCapability('founder-operator', 'release_flag_override'), true);
+
+    await audit.recordSupportInterventionAudit({
+      actorUserId: '22222222-2222-4222-8222-222222222222',
+      subjectUserId: userId,
+      requestId: 'audit-req-role-001',
+      traceId,
+      path: '/app/support',
+      reason: 'support role paused receipt capture',
+      supportTraceView: true,
+      roleUsed: 'support',
+      interventionCode: 'receipt_capture_paused',
+      action: 'applied',
+      occurredAt: new Date().toISOString()
+    });
+
+    await audit.recordReleaseFlagOverrideAudit({
+      actorUserId: '22222222-2222-4222-8222-222222222222',
+      requestId: 'audit-req-role-002',
+      traceId,
+      path: '/app/support',
+      reason: 'admin role forced off receipt capture',
+      scope: 'denmark-alpha-hosted',
+      supportTraceView: true,
+      roleUsed: 'admin',
+      flagName: 'receiptCapture',
+      enabled: false,
+      action: 'applied',
+      occurredAt: new Date().toISOString()
+    });
+
+    const activeInterventions = await audit.getActiveSupportInterventions(userId);
+    assert.equal(activeInterventions[0]?.roleUsed, 'support');
+
+    const activeOverrides = await audit.getActiveReleaseFlagOverrides();
+    assert.equal(activeOverrides[0]?.roleUsed, 'admin');
+
+    const consoleState = await support.getDemoSupportConsole(userId, {
+      countryCode: 'DK',
+      internalUser: true
+    });
+    assert.ok(consoleState.timeline.some((item) => item.details.some((detail) => /Role used: support/.test(detail))));
+    assert.ok(consoleState.timeline.some((item) => item.details.some((detail) => /Role used: admin/.test(detail))));
   });
 });
 

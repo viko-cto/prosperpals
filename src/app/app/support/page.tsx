@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { requireViewerSession } from "@/lib/auth/session";
 import { recordSupportTimelineViewAudit } from "@/lib/audit/demo-audit";
+import {
+  isInternalOperatorEmail,
+  requireViewerSession
+} from "@/lib/auth/session";
 import { getEffectiveFeatureFlags } from "@/lib/feature-flags/config";
+import {
+  describeOperatorRole,
+  getOperatorCapabilities,
+  hasOperatorCapability
+} from "@/lib/support/operator-access";
 import { getDemoSupportConsole } from "@/lib/support/demo-support";
 import { getRequestContext, toStructuredLog } from "@/lib/telemetry/request-context";
 import {
@@ -33,21 +41,27 @@ const releaseFlagMeta = {
 export default async function SupportPage({ searchParams }: SupportPageProps) {
   const session = await requireViewerSession();
   const requestContext = await getRequestContext();
-  const internalUser = session.email.endsWith("@prosperpals.local");
+  const internalUser = isInternalOperatorEmail(session.email);
   const flags = await getEffectiveFeatureFlags({
     countryCode: "DK",
     internalUser
   });
+  const roleLabel = describeOperatorRole(session.operatorRole);
+  const capabilityLabels = getOperatorCapabilities(session.operatorRole).map((capability) => capability.replaceAll("_", " "));
+  const canViewSupportTimeline = hasOperatorCapability(session.operatorRole, "support_timeline_view");
+  const canManageReceiptHold = hasOperatorCapability(session.operatorRole, "receipt_capture_intervention");
+  const canManageReleaseOverrides = hasOperatorCapability(session.operatorRole, "release_flag_override");
 
-  if (!flags.supportTraceView) {
+  if (!flags.supportTraceView || !canViewSupportTimeline) {
     return (
       <main>
         <div className="shell">
           <div className="panel">
-            <h1>Support trace view is disabled</h1>
+            <h1>Support trace view is unavailable</h1>
             <p>
-              This route is intentionally internal-only. Turn on the support trace flag for an
-              internal user before exposing the operator timeline.
+              This route is intentionally internal-only and also requires a role with
+              <code> support_timeline_view </code> capability. Turn on the support trace flag for
+              an internal user before exposing the operator timeline.
             </p>
             <div className="actions" style={{ marginTop: 16 }}>
               <Link className="button secondary" href="/app">Back to app home</Link>
@@ -65,7 +79,8 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
     traceId: requestContext.traceId,
     path: requestContext.path,
     reason: "internal support timeline review",
-    supportTraceView: flags.supportTraceView
+    supportTraceView: flags.supportTraceView,
+    roleUsed: session.operatorRole
   });
 
   const supportConsole = await getDemoSupportConsole(session.userId, {
@@ -82,6 +97,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
 
   const logPreview = toStructuredLog("support.timeline.rendered", requestContext, {
     support_trace_view: flags.supportTraceView,
+    operator_role: session.operatorRole,
     timeline_count: supportConsole.timeline.length,
     active_intervention_count: supportConsole.activeInterventions.length,
     active_release_override_count: supportConsole.activeReleaseOverrides.length,
@@ -138,13 +154,26 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
           </article>
 
           <article className="panel">
-            <h2>Redaction policy</h2>
-            <ul className="list">
-              {supportConsole.redactionPolicy.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
+            <h2>Current role boundary</h2>
+            <div className="grid" style={{ gap: 10, marginTop: 16 }}>
+              <div><strong>Viewer role</strong>: {roleLabel}</div>
+              <div><strong>Email</strong>: {session.email}</div>
+              <div><strong>Capabilities</strong>: {capabilityLabels.length ? capabilityLabels.join(", ") : "none"}</div>
+              <div className="muted-line">
+                Receipt holds are support-only. Release overrides are admin-only. Founder/operator
+                temporarily carries both hats while hosted role assignment stays unresolved.
+              </div>
+            </div>
           </article>
+        </section>
+
+        <section className="panel" style={{ marginTop: 24 }}>
+          <h2>Redaction policy</h2>
+          <ul className="list" style={{ marginTop: 16 }}>
+            {supportConsole.redactionPolicy.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
         </section>
 
         <section className="grid cols-2" style={{ marginTop: 24, alignItems: "start" }}>
@@ -166,15 +195,20 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                   <div><strong>Applied at</strong>: {activeReceiptCapturePause.occurredAt}</div>
                   <div><strong>Actor</strong>: {activeReceiptCapturePause.actorUserId ?? "unknown"}</div>
                   <div><strong>Subject</strong>: {activeReceiptCapturePause.subjectUserId ?? session.userId}</div>
+                  <div><strong>Role used</strong>: {activeReceiptCapturePause.roleUsed ?? "unspecified"}</div>
                 </div>
-                <form action={clearReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
-                  <input type="hidden" name="subjectUserId" value={session.userId} />
-                  <label>
-                    <span className="field-label">Clear reason</span>
-                    <input type="text" name="reason" defaultValue="receipt capture reopened after support review" />
-                  </label>
-                  <button className="primary" type="submit">Clear receipt capture pause</button>
-                </form>
+                {canManageReceiptHold ? (
+                  <form action={clearReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
+                    <input type="hidden" name="subjectUserId" value={session.userId} />
+                    <label>
+                      <span className="field-label">Clear reason</span>
+                      <input type="text" name="reason" defaultValue="receipt capture reopened after support review" />
+                    </label>
+                    <button className="primary" type="submit">Clear receipt capture pause</button>
+                  </form>
+                ) : (
+                  <p className="muted-line">This role can inspect the active hold but cannot clear it.</p>
+                )}
               </div>
             ) : (
               <div className="grid" style={{ gap: 12, marginTop: 16 }}>
@@ -183,14 +217,18 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                   receipt issue appears, pause the lane here so the product stops accepting new
                   candidates before support review finishes.
                 </p>
-                <form action={applyReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
-                  <input type="hidden" name="subjectUserId" value={session.userId} />
-                  <label>
-                    <span className="field-label">Pause reason</span>
-                    <input type="text" name="reason" defaultValue="receipt lineage review in progress" />
-                  </label>
-                  <button className="primary" type="submit">Pause receipt capture</button>
-                </form>
+                {canManageReceiptHold ? (
+                  <form action={applyReceiptCapturePauseAction} className="grid" style={{ gap: 12 }}>
+                    <input type="hidden" name="subjectUserId" value={session.userId} />
+                    <label>
+                      <span className="field-label">Pause reason</span>
+                      <input type="text" name="reason" defaultValue="receipt lineage review in progress" />
+                    </label>
+                    <button className="primary" type="submit">Pause receipt capture</button>
+                  </form>
+                ) : (
+                  <p className="muted-line">This role can review the timeline but cannot apply the support-only receipt hold.</p>
+                )}
               </div>
             )}
           </article>
@@ -200,7 +238,8 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
             <ul className="list" style={{ marginTop: 16 }}>
               <li>Support actions are no longer limited to a passive page-view audit.</li>
               <li>Receipt-intake pause and resume actions now write actor/subject/request/trace-scoped audit events.</li>
-              <li>The audit trail also drives live receipt-capture blocking instead of acting like a decorative log.</li>
+              <li>The audit trail now records which operator role was used for each action.</li>
+              <li>Release overrides are explicitly separated from support-safe receipt holds instead of hiding behind one broad internal gate.</li>
               <li>The control is still narrow by design: same-subject proof, not hosted multi-account admin power.</li>
             </ul>
           </article>
@@ -231,6 +270,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                       <div><strong>Reason</strong>: {activeOverride.reason}</div>
                       <div><strong>Applied at</strong>: {activeOverride.occurredAt}</div>
                       <div><strong>Actor</strong>: {activeOverride.actorUserId ?? "unknown"}</div>
+                      <div><strong>Role used</strong>: {activeOverride.roleUsed ?? "unspecified"}</div>
                       <div><strong>Scope</strong>: {activeOverride.scope}</div>
                     </div>
                   ) : (
@@ -239,24 +279,28 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
                       <div><strong>Current source</strong>: audited override not active</div>
                     </div>
                   )}
-                  {activeOverride ? (
-                    <form action={clearReleaseFlagOverrideAction} className="grid" style={{ gap: 12 }}>
-                      <input type="hidden" name="flagName" value={flagName} />
-                      <label>
-                        <span className="field-label">Clear reason</span>
-                        <input type="text" name="reason" defaultValue={meta.fallbackClearReason} />
-                      </label>
-                      <button className="primary" type="submit">Clear audited override</button>
-                    </form>
+                  {canManageReleaseOverrides ? (
+                    activeOverride ? (
+                      <form action={clearReleaseFlagOverrideAction} className="grid" style={{ gap: 12 }}>
+                        <input type="hidden" name="flagName" value={flagName} />
+                        <label>
+                          <span className="field-label">Clear reason</span>
+                          <input type="text" name="reason" defaultValue={meta.fallbackClearReason} />
+                        </label>
+                        <button className="primary" type="submit">Clear audited override</button>
+                      </form>
+                    ) : (
+                      <form action={applyReleaseFlagOverrideAction} className="grid" style={{ gap: 12 }}>
+                        <input type="hidden" name="flagName" value={flagName} />
+                        <label>
+                          <span className="field-label">Disable reason</span>
+                          <input type="text" name="reason" defaultValue={meta.fallbackDisableReason} />
+                        </label>
+                        <button className="primary" type="submit">Force off with audit trail</button>
+                      </form>
+                    )
                   ) : (
-                    <form action={applyReleaseFlagOverrideAction} className="grid" style={{ gap: 12 }}>
-                      <input type="hidden" name="flagName" value={flagName} />
-                      <label>
-                        <span className="field-label">Disable reason</span>
-                        <input type="text" name="reason" defaultValue={meta.fallbackDisableReason} />
-                      </label>
-                      <button className="primary" type="submit">Force off with audit trail</button>
-                    </form>
+                    <p className="muted-line">This control is admin-only. Non-admin roles can see the current release state but cannot change it here.</p>
                   )}
                 </div>
               );
