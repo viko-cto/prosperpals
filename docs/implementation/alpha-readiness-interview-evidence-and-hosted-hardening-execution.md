@@ -79,6 +79,7 @@ The operating pack exists to test readiness for alpha, not to restart product st
 - `docs/alpha-readiness/interview-evidence-tracker.md`
 - `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
 - `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`
+- `docs/alpha-readiness/interview-batch-01-assignment-board.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
 - `docs/alpha-readiness/redecision-dashboard-inputs.md`
@@ -272,6 +273,9 @@ That tracker is now paired with a concrete cohort-design and screener artifact:
 The interview lane now also has a recruiting/scheduling runbook that bridges the last obvious execution gap between "good slot design" and "real, balanced sessions on the calendar":
 - `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`
 
+The next interview move is now tighter too: Batch 01 has a dedicated assignment board that forces slot-by-slot candidate fit, source-mix discipline, and note-file prep before anyone can honestly call the first batch "ready":
+- `docs/alpha-readiness/interview-batch-01-assignment-board.md`
+
 And the operator/access blocker is now pinned to an explicit closure artifact instead of a vague TODO:
 - `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 
@@ -313,6 +317,7 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/interview-evidence-tracker.md`
 - `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
 - `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`
+- `docs/alpha-readiness/interview-batch-01-assignment-board.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
 - `docs/alpha-readiness/redecision-dashboard-inputs.md`
