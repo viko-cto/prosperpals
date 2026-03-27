@@ -11,7 +11,7 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 - **Sessions completed:** 0/12
 - **Batch syntheses completed:** 0/4
 - **Final synthesis complete:** no
-- **Canonical interview tracker current:** partial — `docs/alpha-readiness/interview-evidence-tracker.md` exists and the slot design/screener is now fixed in `docs/alpha-readiness/interview-cohort-plan-and-screener.md`, but real participants, session logs, and threshold math are still unpopulated
+- **Canonical interview tracker current:** partial — `docs/alpha-readiness/interview-evidence-tracker.md` exists, the slot design/screener is fixed in `docs/alpha-readiness/interview-cohort-plan-and-screener.md`, and recruiting/scheduling discipline is now fixed in `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`, but real participants, session logs, and threshold math are still unpopulated
 - **Goldie vs Fin threshold result:** not yet evidenced
 - **Daily Spending Power threshold result:** not yet evidenced
 - **Fin learning threshold result:** not yet evidenced

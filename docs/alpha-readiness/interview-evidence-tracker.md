@@ -121,9 +121,11 @@ When a participant is excluded, document why in the tracker table and do **not**
 1. No real interview sessions are logged yet.
 2. The cohort is not yet populated with actual participants, even though the slot design is now fixed in `docs/alpha-readiness/interview-cohort-plan-and-screener.md`.
 3. The re-decision dashboard still has zero evidence behind its interview section.
+4. Recruiting and scheduling discipline must now follow `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md` so the first batch does not drift into convenience sampling.
 
 ### Next actions
 - [ ] assign real participants into slots `PP-B01` through `PP-M04` using `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
+- [ ] use `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md` to keep source mix, scheduling SLAs, and batch shape honest before marking any slot `scheduled`
 - [ ] record screener outcomes in this tracker before marking any slot `scheduled`
 - [ ] complete sessions 01-03 and publish the first batch synthesis
 - [ ] keep the threshold scoreboard sourced only from linked notes
