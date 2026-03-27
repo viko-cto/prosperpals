@@ -9,6 +9,7 @@
     "start": "next start",
     "test": "node --test test/*.test.mjs",
     "smoke:hosted-durability": "node scripts/hosted-durability-smoke.mjs",
+    "smoke:hosted-env-contract-audit": "node scripts/hosted-env-contract-audit.mjs",
     "vercel:env-contract": "node scripts/vercel-env-contract.mjs"
   },
   "dependencies": {

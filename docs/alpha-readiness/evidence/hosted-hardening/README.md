@@ -16,6 +16,15 @@ Store proof notes and check artifacts for the hosted trust-hardening lane here.
 - `release-safety-and-rollback-proof.md`
 - `cohort-health-reporting-proof.md`
 - `hosted-receipt-postgrest-durability-path.md`
+- `generated/vercel-env-contract-audit-YYYY-MM-DD.md`
+
+## Repeatable env-contract audit
+
+Use `npm run smoke:hosted-env-contract-audit` to capture a dated markdown snapshot of the linked Vercel preview + production env-contract state under `generated/`.
+
+This is intentionally different from `npm run vercel:env-contract`:
+- `vercel:env-contract` checks or syncs one target at a time,
+- `smoke:hosted-env-contract-audit` saves the current blocker state as durable evidence for the checklist and re-decision packet.
 
 Every note should answer:
 1. what was tested or verified,

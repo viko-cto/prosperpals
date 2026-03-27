@@ -216,7 +216,7 @@ These are not polishing issues. They are re-decision blockers.
 
 ---
 
-## Current execution readout (updated 2026-03-24 08:55 UTC)
+## Current execution readout (updated 2026-03-27 08:55 UTC)
 
 The lane has now moved beyond a purely typed receipt simulation **and** beyond a placeholder operator runbook.
 
@@ -273,6 +273,8 @@ That manifest now works together with a repo-native checker/sync helper at `scri
 - a repeatable Vercel check/sync flow instead of one-off manual CLI copy-paste,
 - and the proof bar required before any checklist line can honestly move to `complete`.
 
+The repo now also has a dated snapshot wrapper at `scripts/hosted-env-contract-audit.mjs` (`npm run smoke:hosted-env-contract-audit`), which checks both linked Vercel targets and saves the exact contract state under `docs/alpha-readiness/evidence/hosted-hardening/generated/`. The first snapshot keeps the NO-GO honest by proving the blocker is still live right now rather than merely inherited from the older preview-only audit: both linked targets are still missing the same 18-key hosted contract, so there is still no honest path to a hosted-only smoke proof until real Supabase credentials are loaded.
+
 ---
 
 ## Elicitation methods applied
@@ -325,7 +327,9 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/evidence/hosted-hardening/hosted-receipt-postgrest-durability-path.md`
 - `.env.example`
 - `docs/alpha-readiness/evidence/hosted-hardening/preview-hosted-durability-smoke-runbook.md`
+- `docs/alpha-readiness/evidence/hosted-hardening/generated/vercel-env-contract-audit-2026-03-27.md`
 - `scripts/hosted-durability-smoke.mjs`
+- `scripts/hosted-env-contract-audit.mjs`
 
 ## Outcome
 
