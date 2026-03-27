@@ -31,6 +31,7 @@ Use this folder to convert the alpha decision packet into durable proof:
 - `interview-batch-synthesis-template.md`
 - `interview-final-synthesis-template.md`
 - `interview-evidence-tracker.md`
+- `interview-cohort-plan-and-screener.md`
 - `hosted-hardening-execution-checklist.md`
 - `operator-readiness-runbook.md`
 - `redecision-dashboard-inputs.md`

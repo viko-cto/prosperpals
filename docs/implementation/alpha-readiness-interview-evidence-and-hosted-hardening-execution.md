@@ -77,6 +77,7 @@ The operating pack exists to test readiness for alpha, not to restart product st
 - `docs/alpha-readiness/interview-batch-synthesis-template.md`
 - `docs/alpha-readiness/interview-final-synthesis-template.md`
 - `docs/alpha-readiness/interview-evidence-tracker.md`
+- `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
 - `docs/alpha-readiness/redecision-dashboard-inputs.md`
@@ -264,6 +265,9 @@ The repo now includes a dedicated env-wiring manifest for that move:
 The repo also now includes a dedicated interview operating tracker for the parallel blocker:
 - `docs/alpha-readiness/interview-evidence-tracker.md`
 
+That tracker is now paired with a concrete cohort-design and screener artifact:
+- `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
+
 And the operator/access blocker is now pinned to an explicit closure artifact instead of a vague TODO:
 - `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 
@@ -297,6 +301,7 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/interview-batch-synthesis-template.md`
 - `docs/alpha-readiness/interview-final-synthesis-template.md`
 - `docs/alpha-readiness/interview-evidence-tracker.md`
+- `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
 - `docs/alpha-readiness/redecision-dashboard-inputs.md`

@@ -119,11 +119,12 @@ When a participant is excluded, document why in the tracker table and do **not**
 
 ### Current blockers
 1. No real interview sessions are logged yet.
-2. The cohort is not yet balanced across budget-first and invest-first archetypes.
+2. The cohort is not yet populated with actual participants, even though the slot design is now fixed in `docs/alpha-readiness/interview-cohort-plan-and-screener.md`.
 3. The re-decision dashboard still has zero evidence behind its interview section.
 
 ### Next actions
-- [ ] assign participant IDs and fill the tracker table before more recruiting drift happens
+- [ ] assign real participants into slots `PP-B01` through `PP-M04` using `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
+- [ ] record screener outcomes in this tracker before marking any slot `scheduled`
 - [ ] complete sessions 01-03 and publish the first batch synthesis
 - [ ] keep the threshold scoreboard sourced only from linked notes
 - [ ] use the same tracker in every re-decision prep so the interview blocker cannot be softened by narrative
