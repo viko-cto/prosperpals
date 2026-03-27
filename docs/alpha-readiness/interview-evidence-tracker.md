@@ -105,7 +105,7 @@ Update this section after every logged session.
 - **Batch 01 non-founder-network slots locked:** 0 / minimum 1 required before scheduling is considered healthy
 
 ### Batch coverage
-- **Batch 01 (PP-B01, PP-I01, PP-M01):** intake sheet ready, participants unassigned
+- **Batch 01 (PP-B01, PP-I01, PP-M01):** intake sheet ready, deterministic note files prepared, participants unassigned
 - **Batch 02 (PP-B02, PP-I02, PP-M02):** not started
 - **Batch 03 (PP-B03, PP-I03, PP-M03):** not started
 - **Batch 04 (PP-B04, PP-I04, PP-M04):** not started

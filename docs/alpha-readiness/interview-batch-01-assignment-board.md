@@ -84,7 +84,7 @@ Do **not** move Batch 01 into scheduling until every statement below is true:
 - [ ] at least one slot is **not** founder-network sourced
 - [ ] the batch still covers budget-first + invest-first + mixed without collapsing into one archetype in practice
 - [ ] the likely strongest hosted-alpha-fit participant is visible before the first call happens
-- [ ] deterministic note files are prepared for all three sessions
+- [x] deterministic note files are prepared for all three sessions (`session-01-pp-b01.md`, `session-02-pp-i01.md`, `session-03-pp-m01.md`, and `batch-01-sessions-01-03.md` now exist)
 
 If any box is false, the next move is board hygiene — not calendar locking.
 
@@ -159,7 +159,7 @@ The tracker remains the canonical countable evidence surface.
 
 - [ ] assign one real candidate alias to each of `PP-B01`, `PP-I01`, and `PP-M01`
 - [ ] confirm Batch 01 contains at least one non-founder-network recruit
-- [ ] pre-create the three deterministic session note files plus the Batch 01 synthesis file
+- [x] pre-create the three deterministic session note files plus the Batch 01 synthesis file
 - [ ] copy the approved slot decisions into `docs/alpha-readiness/interview-evidence-tracker.md`
 - [ ] do not treat Batch 01 as progress until notes land same day
 

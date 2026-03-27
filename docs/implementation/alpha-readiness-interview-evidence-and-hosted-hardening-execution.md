@@ -276,6 +276,14 @@ The interview lane now also has a recruiting/scheduling runbook that bridges the
 The next interview move is now tighter too: Batch 01 has a dedicated assignment board that forces slot-by-slot candidate fit, source-mix discipline, and note-file prep before anyone can honestly call the first batch "ready":
 - `docs/alpha-readiness/interview-batch-01-assignment-board.md`
 
+That prep work is now partially executed in-repo rather than merely described: the deterministic Batch 01 evidence files already exist at
+- `docs/alpha-readiness/evidence/interviews/session-01-pp-b01.md`
+- `docs/alpha-readiness/evidence/interviews/session-02-pp-i01.md`
+- `docs/alpha-readiness/evidence/interviews/session-03-pp-m01.md`
+- `docs/alpha-readiness/evidence/interviews/batch-01-sessions-01-03.md`
+
+So the interview lane no longer needs another documentation pass before the first three sessions. The next honest move is narrower: assign real aliases into `PP-B01`, `PP-I01`, and `PP-M01`, then fill these prepared files same day as each call lands.
+
 And the operator/access blocker is now pinned to an explicit closure artifact instead of a vague TODO:
 - `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 
