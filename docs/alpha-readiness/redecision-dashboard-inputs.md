@@ -3,7 +3,7 @@
 Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-GO review.
 
 ## Review metadata
-- **Review date:** 2026-03-28 15:15 UTC (dated re-decision memo + blocker refresh)
+- **Review date:** 2026-03-28 19:40 UTC (dual-target env-contract blocker recheck)
 - **Prepared by:** BMAD catch-up worker
 - **Decision currently under consideration:** NO-GO
 - **Current recommendation memo:** `docs/alpha-readiness/evidence/redecision/alpha-redecision-memo-2026-03-28.md`
@@ -27,13 +27,14 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 
 ## 2. Hosted hardening snapshot
 - **Durable truth status:** manual fallback — onboarding, analytics, reward/trade ledger, audit, and receipt state now have hosted-capable PostgREST paths in repo, but preview/alpha rollout proof is still missing and local fallbacks remain available outside strict hosted-only wiring
-- **Environment/release integrity status:** partial / manual fallback — explicit feature flags and release-safety helper exist, but preview-vs-alpha separation, config checklist, and rollback ownership are not yet proven
+- **Environment/release integrity status:** open blocker — explicit feature flags and release-safety helper exist, but the refreshed 2026-03-28 dual-target env audit still shows both linked Vercel targets blocked with all 18 required hosted keys missing, so preview-vs-alpha separation and real hosted-only proof remain unproven
 - **Observability status:** manual fallback — per-user timelines and cohort telemetry are repo-wired, but deployed founder-visible proof is not yet attached
 - **Current manual fallbacks still in force:** founder-managed support handling, local fallback durability outside strict hosted-only mode, manual export/delete handling
 - **Canonical evidence links:**
   - `docs/alpha-readiness/evidence/hosted-hardening/durable-truth-and-local-runtime-gap-proof.md`
   - `docs/alpha-readiness/evidence/hosted-hardening/alpha-env-and-release-safety-baseline.md`
   - `docs/alpha-readiness/evidence/hosted-hardening/hosted-receipt-postgrest-durability-path.md`
+  - `docs/alpha-readiness/evidence/hosted-hardening/generated/vercel-env-contract-audit-2026-03-28.md`
   - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 
 ## 3. Receipt realism snapshot
@@ -64,7 +65,7 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
   - `docs/alpha-readiness/evidence/operator-readiness/incident-pause-and-escalation.md`
 
 ## 5. Open blockers
-1. Hosted-capable durability now exists across the trust-critical alpha lanes, but real preview/alpha rollout proof is still missing.
+1. Hosted-capable durability now exists across the trust-critical alpha lanes, but the refreshed 2026-03-28 dual-target env audit still shows both linked Vercel targets blocked with all 18 required hosted keys missing, so real preview/alpha rollout proof is still missing.
 2. Support-surface access is actor-audited in repo, but broader operator-boundary closure and deployed proof are still missing.
 3. The repo role split now exists, but durable hosted role assignment and account-intervention controls are still absent.
 4. Interview evidence and founder-visible cohort-health reporting are still unpopulated.
@@ -73,4 +74,4 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 - **Recommended decision:** NO-GO
 - **Why:** the receipt lane and other trust-critical surfaces are now hosted-capable in repo, but deployed proof, broader operator boundary closure, real support/admin boundaries, and interview evidence are still not at alpha-trust level.
 - **If CONDITIONAL GO, max cohort size and manual controls:** not justified yet
-- **If NO-GO, exact blockers keeping the decision locked:** missing deployed hosted-proof artifacts, missing support/admin boundaries, missing broader operator-boundary closure, and missing interview evidence.
+- **If NO-GO, exact blockers keeping the decision locked:** missing deployed hosted-proof artifacts, still-unwired preview/production env contract keys, missing support/admin boundaries, missing broader operator-boundary closure, and missing interview evidence.
