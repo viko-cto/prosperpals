@@ -3,9 +3,10 @@
 Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-GO review.
 
 ## Review metadata
-- **Review date:** 2026-03-25 06:30 UTC (repo-state hosted receipt durability update)
+- **Review date:** 2026-03-28 15:15 UTC (dated re-decision memo + blocker refresh)
 - **Prepared by:** BMAD catch-up worker
 - **Decision currently under consideration:** NO-GO
+- **Current recommendation memo:** `docs/alpha-readiness/evidence/redecision/alpha-redecision-memo-2026-03-28.md`
 
 ## 1. Interview evidence snapshot
 - **Sessions completed:** 0/12
