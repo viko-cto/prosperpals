@@ -308,6 +308,11 @@ This matters because the interview blocker is now split cleanly into two separat
 
 So the next interview move is no longer "figure out how to recruit" — it is simply to assign real participants into Batch 01 without breaking the source-balance and evidence-hygiene rules.
 
+The execution lane is now tighter at the call-level too: the repo includes a dedicated session facilitation + closeout checklist that forces same-day quote capture, threshold scoring, and tracker handoff discipline instead of letting the first real interviews degrade into vague notes:
+- `docs/alpha-readiness/interview-session-facilitation-and-closeout-checklist.md`
+
+That checklist is now wired directly into the session-log template plus the three pre-created Batch 01 session files, so the first real calls should be harder to "complete" without producing threshold-grade evidence.
+
 That manifest now works together with a repo-native checker/sync helper at `scripts/vercel-env-contract.mjs`, which makes the deployment blocker operational by defining and enforcing:
 - the minimum preview + alpha variable contract,
 - the `hosted-only` requirement for audit / ledger / analytics / onboarding / receipts,
@@ -344,6 +349,7 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/interview-private-candidate-registry-template.md`
 - `docs/alpha-readiness/interview-batch-01-assignment-board.md`
 - `docs/alpha-readiness/interview-evidence-coding-rubric.md`
+- `docs/alpha-readiness/interview-session-facilitation-and-closeout-checklist.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
 - `docs/alpha-readiness/redecision-dashboard-inputs.md`

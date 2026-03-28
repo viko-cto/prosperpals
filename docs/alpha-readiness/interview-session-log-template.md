@@ -1,6 +1,9 @@
 # ProsperPals Interview Session Log Template
 
 ## Session metadata
+
+> Run this with `docs/alpha-readiness/interview-session-facilitation-and-closeout-checklist.md` open.
+> A session is not decision-grade until the note, threshold scoring, and tracker handoff are completed same day.
 - **Session number:**
 - **Date / time:**
 - **Facilitator:**
@@ -94,6 +97,14 @@ Do **not** score from memory or general vibe.
 1.
 2.
 3.
+
+## Closeout checklist
+- [ ] minimum note quality gate passed
+- [ ] threshold rows scored with evidence snippets and confidence
+- [ ] strongest support signal captured
+- [ ] strongest caution signal captured
+- [ ] tracker updated from note, not memory
+- [ ] batch synthesis updated or queued same day
 
 ## Facilitator judgement
 - **Archetype confidence:** high / medium / low

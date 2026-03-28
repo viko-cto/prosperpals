@@ -9,6 +9,9 @@ Do **not** backfill invented evidence.
 Only replace placeholders after the real session happens.
 
 ## Session metadata
+
+> Run this with `docs/alpha-readiness/interview-session-facilitation-and-closeout-checklist.md` open.
+> This session should only move to `logged` after same-day scoring + tracker handoff.
 - **Session number:** 02
 - **Date / time:** TBC
 - **Facilitator:** TBC
@@ -102,6 +105,14 @@ Do **not** score from memory or general vibe.
 1. TBC
 2. TBC
 3. TBC
+
+## Closeout checklist
+- [ ] minimum note quality gate passed
+- [ ] threshold rows scored with evidence snippets and confidence
+- [ ] strongest support signal captured
+- [ ] strongest caution signal captured
+- [ ] tracker updated from note, not memory
+- [ ] batch synthesis updated or queued same day
 
 ## Facilitator judgement
 - **Archetype confidence:** TBC
