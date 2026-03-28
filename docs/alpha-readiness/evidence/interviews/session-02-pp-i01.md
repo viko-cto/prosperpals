@@ -80,12 +80,17 @@ Only replace placeholders after the real session happens.
 - **Primary reason to return, in their words:** TBC
 
 ## Threshold scoring for this session
-- Goldie vs Fin understood without coaching: TBC
-- Daily Spending Power seen as useful or promising: TBC
-- Fin interpreted as learning-oriented: TBC
-- ProsperCoins positive or neutral: TBC
-- Childish / scammy / too game-like reaction: TBC
-- Severe unresolved trust issue present: TBC
+Use `docs/alpha-readiness/interview-evidence-coding-rubric.md`.
+Do **not** score from memory or general vibe.
+
+| Threshold | Result | Evidence quote / behavior | Confidence |
+| --- | --- | --- | --- |
+| Goldie vs Fin understood without heavy prompting | TBC | TBC | TBC |
+| Daily Spending Power seen as useful or promising | TBC | TBC | TBC |
+| Fin interpreted as learning-oriented | TBC | TBC | TBC |
+| ProsperCoins positive or neutral | TBC | TBC | TBC |
+| Childish / scammy / too game-like reaction | TBC | TBC | TBC |
+| Severe unresolved trust issue present | TBC | TBC | TBC |
 
 ## Synthesis tags
 - **Keep:** TBC

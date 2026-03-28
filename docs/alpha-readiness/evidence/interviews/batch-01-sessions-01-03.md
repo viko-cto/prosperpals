@@ -49,12 +49,21 @@ Do **not** write conclusions here until sessions `PP-B01`, `PP-I01`, and `PP-M01
 - What they distorted: TBC
 
 ## Threshold snapshot for this batch
+Use scored session notes plus `docs/alpha-readiness/interview-evidence-coding-rubric.md` only.
+Cite the session ids that drove each count.
+
 - Users who explained Goldie vs Fin without heavy prompting: TBC
+- Evidence source session ids: TBC
 - Users who found Daily Spending Power useful/promising: TBC
+- Evidence source session ids: TBC
 - Users who saw Fin as learning-oriented: TBC
+- Evidence source session ids: TBC
 - Users positive or neutral on ProsperCoins: TBC
+- Evidence source session ids: TBC
 - Users calling the product childish/scammy/too game-like: TBC
+- Evidence source session ids: TBC
 - Severe unresolved trust reactions: TBC
+- Evidence source session ids: TBC
 
 ## Ranked findings
 ### Keep

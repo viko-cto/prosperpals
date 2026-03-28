@@ -72,12 +72,17 @@
 - **Primary reason to return, in their words:**
 
 ## Threshold scoring for this session
-- Goldie vs Fin understood without coaching: pass / fail
-- Daily Spending Power seen as useful or promising: pass / fail
-- Fin interpreted as learning-oriented: pass / fail
-- ProsperCoins positive or neutral: pass / fail
-- Childish / scammy / too game-like reaction: yes / no
-- Severe unresolved trust issue present: yes / no
+Use `docs/alpha-readiness/interview-evidence-coding-rubric.md`.
+Do **not** score from memory or general vibe.
+
+| Threshold | Result | Evidence quote / behavior | Confidence |
+| --- | --- | --- | --- |
+| Goldie vs Fin understood without heavy prompting | pass / fail / borderline |  | high / medium / low |
+| Daily Spending Power seen as useful or promising | pass / fail / borderline |  | high / medium / low |
+| Fin interpreted as learning-oriented | pass / fail / borderline |  | high / medium / low |
+| ProsperCoins positive or neutral | pass / fail / borderline |  | high / medium / low |
+| Childish / scammy / too game-like reaction | yes / no / borderline |  | high / medium / low |
+| Severe unresolved trust issue present | yes / no / borderline |  | high / medium / low |
 
 ## Synthesis tags
 - **Keep:**

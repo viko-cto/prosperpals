@@ -42,12 +42,21 @@
 - What they distorted:
 
 ## Threshold snapshot for this batch
+Use scored session notes plus `docs/alpha-readiness/interview-evidence-coding-rubric.md` only.
+Cite the session ids that drove each count.
+
 - Users who explained Goldie vs Fin without heavy prompting:
+- Evidence source session ids:
 - Users who found Daily Spending Power useful/promising:
+- Evidence source session ids:
 - Users who saw Fin as learning-oriented:
+- Evidence source session ids:
 - Users positive or neutral on ProsperCoins:
+- Evidence source session ids:
 - Users calling the product childish/scammy/too game-like:
+- Evidence source session ids:
 - Severe unresolved trust reactions:
+- Evidence source session ids:
 
 ## Ranked findings
 ### Keep

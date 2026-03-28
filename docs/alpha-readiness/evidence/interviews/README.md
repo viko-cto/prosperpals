@@ -36,4 +36,7 @@ Store durable participant-level and batch-level interview artifacts here.
 - first trust-drop moment
 - willingness-to-return score
 - strongest quote
+- scored threshold table with evidence snippets and confidence
 - keep / change / cut / unresolved
+
+Use `docs/alpha-readiness/interview-evidence-coding-rubric.md` before turning any session into tracker math or batch counts.

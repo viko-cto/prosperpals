@@ -14,6 +14,8 @@
 - Recommended decision direction: GO / CONDITIONAL GO / NO-GO
 
 ## Threshold scorecard
+Use `docs/alpha-readiness/interview-evidence-coding-rubric.md` and cite concrete session ids / batch files in the evidence column.
+
 | Threshold | Result | Pass / Fail | Evidence |
 |---|---:|---|---|
 | >= 8/12 users explain Goldie vs Fin without heavy prompting |  |  |  |

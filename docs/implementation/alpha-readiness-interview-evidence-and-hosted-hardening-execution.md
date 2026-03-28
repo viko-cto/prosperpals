@@ -304,7 +304,7 @@ And the operator/access blocker is now pinned to an explicit closure artifact in
 
 This matters because the interview blocker is now split cleanly into two separate truths instead of one fuzzy "we still need interviews" status:
 - the **evidence design** is fixed (slots, tracker, screener, thresholds),
-- and the **execution discipline** is now fixed too (source caps, scheduling SLAs, batch-shaping rules, same-day note expectations).
+- and the **execution discipline** is now fixed too (source caps, scheduling SLAs, same-day note expectations, and an explicit coding rubric that ties threshold math back to quoted session evidence instead of facilitator vibe).
 
 So the next interview move is no longer "figure out how to recruit" — it is simply to assign real participants into Batch 01 without breaking the source-balance and evidence-hygiene rules.
 
@@ -343,6 +343,7 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/interview-recruiting-outreach-pack.md`
 - `docs/alpha-readiness/interview-private-candidate-registry-template.md`
 - `docs/alpha-readiness/interview-batch-01-assignment-board.md`
+- `docs/alpha-readiness/interview-evidence-coding-rubric.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
 - `docs/alpha-readiness/redecision-dashboard-inputs.md`

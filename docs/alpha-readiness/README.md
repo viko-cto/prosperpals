@@ -36,6 +36,7 @@ Use this folder to convert the alpha decision packet into durable proof:
 - `interview-recruiting-outreach-pack.md`
 - `interview-private-candidate-registry-template.md`
 - `interview-batch-01-assignment-board.md`
+- `interview-evidence-coding-rubric.md`
 - `hosted-hardening-execution-checklist.md`
 - `operator-readiness-runbook.md`
 - `redecision-dashboard-inputs.md`
@@ -55,6 +56,7 @@ Use this folder to convert the alpha decision packet into durable proof:
 - update `interview-evidence-tracker.md`
 - copy the session template into `evidence/interviews/`
 - fill it the same day
+- score the session with `interview-evidence-coding-rubric.md`
 - capture strongest quote and trust-drop moment
 
 ### Per batch of 3 interviews

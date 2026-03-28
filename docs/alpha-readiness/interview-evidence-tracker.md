@@ -128,6 +128,9 @@ Only update a row when the underlying session note exists.
 ### Threshold math rule
 When a participant is excluded, document why in the tracker table and do **not** include them in the numerator.
 
+Use `docs/alpha-readiness/interview-evidence-coding-rubric.md` before changing any running result.
+If a result cannot be tied back to a scored session note, leave the number unchanged.
+
 ---
 
 ## 6. Current blockers and next actions
@@ -146,5 +149,6 @@ When a participant is excluded, document why in the tracker table and do **not**
 - [ ] ensure Batch 01 contains at least one non-founder-network recruit before locking times
 - [ ] pre-create the three Batch 01 session note files from the deterministic filenames above before the calls happen
 - [ ] complete sessions 01-03 and publish the first batch synthesis
+- [ ] use `docs/alpha-readiness/interview-evidence-coding-rubric.md` before updating any threshold count
 - [ ] keep the threshold scoreboard sourced only from linked notes
 - [ ] use the same tracker in every re-decision prep so the interview blocker cannot be softened by narrative
