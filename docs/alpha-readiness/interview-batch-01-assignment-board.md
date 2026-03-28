@@ -157,6 +157,7 @@ The tracker remains the canonical countable evidence surface.
 
 ## 10. Immediate next actions
 
+- [ ] source and screen candidates offline with `docs/alpha-readiness/interview-recruiting-outreach-pack.md`
 - [ ] assign one real candidate alias to each of `PP-B01`, `PP-I01`, and `PP-M01`
 - [ ] confirm Batch 01 contains at least one non-founder-network recruit
 - [x] pre-create the three deterministic session note files plus the Batch 01 synthesis file

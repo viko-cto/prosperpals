@@ -136,9 +136,10 @@ When a participant is excluded, document why in the tracker table and do **not**
 1. No real interview sessions are logged yet.
 2. The cohort is still unassigned at the participant level, even though the slot design, batch structure, and note filenames are now locked.
 3. The re-decision dashboard still has zero evidence behind its interview section.
-4. Recruiting and scheduling discipline must follow `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md` so the first batch does not drift into convenience sampling.
+4. Recruiting and scheduling discipline must follow `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md` and `docs/alpha-readiness/interview-recruiting-outreach-pack.md` so the first batch does not drift into convenience sampling or sloppy alias handling.
 
 ### Next actions
+- [ ] source and screen Batch 01 candidates offline using `docs/alpha-readiness/interview-recruiting-outreach-pack.md`
 - [ ] assign real participants into Batch 01 slots `PP-B01`, `PP-I01`, and `PP-M01` using `docs/alpha-readiness/interview-batch-01-assignment-board.md`
 - [ ] record source + screener rationale in the tracker before marking any Batch 01 row `scheduled`
 - [ ] ensure Batch 01 contains at least one non-founder-network recruit before locking times
