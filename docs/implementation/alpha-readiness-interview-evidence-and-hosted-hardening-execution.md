@@ -80,6 +80,7 @@ The operating pack exists to test readiness for alpha, not to restart product st
 - `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
 - `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`
 - `docs/alpha-readiness/interview-recruiting-outreach-pack.md`
+- `docs/alpha-readiness/interview-private-candidate-registry-template.md`
 - `docs/alpha-readiness/interview-batch-01-assignment-board.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`
@@ -288,6 +289,16 @@ That prep work is now partially executed in-repo rather than merely described: t
 
 So the interview lane no longer needs another documentation pass before the first three sessions. The next honest move is narrower: assign real aliases into `PP-B01`, `PP-I01`, and `PP-M01`, then fill these prepared files same day as each call lands.
 
+That move is now safer too: the repo has an explicit private-registry contract for the offline layer where real identity, outreach ownership, dedupe control, and slot-handoff state must live before any alias enters repo-visible artifacts:
+- `docs/alpha-readiness/interview-private-candidate-registry-template.md`
+
+So the next interview step is no longer “just start assigning people.” It is: stand up the private registry, assign owned real candidates into Batch 01, then mirror only the approved aliases into the board and tracker.
+
+That move is now safer too: the repo has an explicit private-registry contract for the offline layer where real identity, outreach ownership, dedupe control, and slot-handoff state must live before any alias enters repo-visible artifacts:
+- `docs/alpha-readiness/interview-private-candidate-registry-template.md`
+
+So the next interview step is no longer “just start assigning people.” It is: stand up the private registry, assign owned real candidates into Batch 01, then mirror only the approved aliases into the board and tracker.
+
 And the operator/access blocker is now pinned to an explicit closure artifact instead of a vague TODO:
 - `docs/alpha-readiness/evidence/operator-readiness/operator-admin-boundary-closure-plan.md`
 
@@ -330,6 +341,7 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
 - `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`
 - `docs/alpha-readiness/interview-recruiting-outreach-pack.md`
+- `docs/alpha-readiness/interview-private-candidate-registry-template.md`
 - `docs/alpha-readiness/interview-batch-01-assignment-board.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
 - `docs/alpha-readiness/operator-readiness-runbook.md`

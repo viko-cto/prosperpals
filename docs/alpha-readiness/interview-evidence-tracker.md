@@ -8,7 +8,7 @@ This tracker exists to prevent four common failure modes:
 1. recruiting a lopsided cohort and calling it insight,
 2. letting session notes drift without synthesis,
 3. hand-waving threshold progress without real numerator/denominator math,
-4. and pretending Batch 01 is ready when no slot-level intake sheet exists.
+4. and pretending Batch 01 is ready when no slot-level intake sheet exists or the private identity-to-alias handoff is still informal.
 
 The rule is simple:
 
@@ -136,9 +136,10 @@ When a participant is excluded, document why in the tracker table and do **not**
 1. No real interview sessions are logged yet.
 2. The cohort is still unassigned at the participant level, even though the slot design, batch structure, and note filenames are now locked.
 3. The re-decision dashboard still has zero evidence behind its interview section.
-4. Recruiting and scheduling discipline must follow `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md` and `docs/alpha-readiness/interview-recruiting-outreach-pack.md` so the first batch does not drift into convenience sampling or sloppy alias handling.
+4. Recruiting and scheduling discipline must follow `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`, `docs/alpha-readiness/interview-recruiting-outreach-pack.md`, and `docs/alpha-readiness/interview-private-candidate-registry-template.md` so the first batch does not drift into convenience sampling or sloppy alias handling.
 
 ### Next actions
+- [ ] stand up the offline/private candidate registry using `docs/alpha-readiness/interview-private-candidate-registry-template.md`
 - [ ] source and screen Batch 01 candidates offline using `docs/alpha-readiness/interview-recruiting-outreach-pack.md`
 - [ ] assign real participants into Batch 01 slots `PP-B01`, `PP-I01`, and `PP-M01` using `docs/alpha-readiness/interview-batch-01-assignment-board.md`
 - [ ] record source + screener rationale in the tracker before marking any Batch 01 row `scheduled`

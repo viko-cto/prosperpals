@@ -92,7 +92,7 @@ If any box is false, the next move is board hygiene — not calendar locking.
 
 ## 6. Candidate intake mini-template
 
-Use this mini-template for each candidate before copying the final decision into the board above.
+Use this mini-template for each candidate before copying the final decision into the board above. The full offline/private registry should follow `docs/alpha-readiness/interview-private-candidate-registry-template.md`; this mini-template is only the board-facing compression of that record.
 
 ### Candidate intake
 - **Candidate alias:**
@@ -157,7 +157,7 @@ The tracker remains the canonical countable evidence surface.
 
 ## 10. Immediate next actions
 
-- [ ] source and screen candidates offline with `docs/alpha-readiness/interview-recruiting-outreach-pack.md`
+- [ ] source and screen candidates offline with `docs/alpha-readiness/interview-recruiting-outreach-pack.md` and the private registry contract in `docs/alpha-readiness/interview-private-candidate-registry-template.md`
 - [ ] assign one real candidate alias to each of `PP-B01`, `PP-I01`, and `PP-M01`
 - [ ] confirm Batch 01 contains at least one non-founder-network recruit
 - [x] pre-create the three deterministic session note files plus the Batch 01 synthesis file

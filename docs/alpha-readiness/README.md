@@ -34,6 +34,7 @@ Use this folder to convert the alpha decision packet into durable proof:
 - `interview-cohort-plan-and-screener.md`
 - `interview-recruitment-and-scheduling-runbook.md`
 - `interview-recruiting-outreach-pack.md`
+- `interview-private-candidate-registry-template.md`
 - `interview-batch-01-assignment-board.md`
 - `hosted-hardening-execution-checklist.md`
 - `operator-readiness-runbook.md`
@@ -50,6 +51,7 @@ Use this folder to convert the alpha decision packet into durable proof:
 ## Suggested operating rhythm
 
 ### Per interview
+- keep the private/offline candidate registry current using `interview-private-candidate-registry-template.md`
 - update `interview-evidence-tracker.md`
 - copy the session template into `evidence/interviews/`
 - fill it the same day

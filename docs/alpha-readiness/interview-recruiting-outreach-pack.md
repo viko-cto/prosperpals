@@ -17,6 +17,8 @@ It exists because the repo already had:
 
 but it still lacked one practical bridge between “the slots are well defined” and “real people have been contacted, screened, aliased, and booked.”
 
+That bridge now includes an explicit private-registry contract in `docs/alpha-readiness/interview-private-candidate-registry-template.md`, so the team has one offline place to hold real identity, ownership, dedupe, and slot-handoff state without leaking it into the repo.
+
 Without that bridge, the most likely failure mode was obvious:
 - founder network replies arrive first,
 - the team fills the calendar,
@@ -145,7 +147,7 @@ Use these cues while sourcing candidates so outreach is not generic.
 
 ## 6. Offline candidate capture template
 
-Use this template in an offline/private note or sheet.
+Use this template in an offline/private note or sheet. For the full required column set and alias handoff rules, use `docs/alpha-readiness/interview-private-candidate-registry-template.md` as the canonical private-registry contract.
 
 ### Candidate capture
 - **Private contact owner:**
