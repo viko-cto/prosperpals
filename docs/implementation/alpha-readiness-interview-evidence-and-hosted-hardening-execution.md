@@ -319,7 +319,7 @@ That manifest now works together with a repo-native checker/sync helper at `scri
 - a repeatable Vercel check/sync flow instead of one-off manual CLI copy-paste,
 - and the proof bar required before any checklist line can honestly move to `complete`.
 
-The repo now also has a dated snapshot wrapper at `scripts/hosted-env-contract-audit.mjs` (`npm run smoke:hosted-env-contract-audit`), which checks both linked Vercel targets and saves the exact contract state under `docs/alpha-readiness/evidence/hosted-hardening/generated/`. The refreshed 2026-03-28 snapshot keeps the NO-GO honest by proving the blocker is still live right now rather than merely inherited from the older preview-only audit: both linked targets are still missing the same 18-key hosted contract, so there is still no honest path to a hosted-only smoke proof until real Supabase credentials are loaded.
+The repo now also has a dated snapshot wrapper at `scripts/hosted-env-contract-audit.mjs` (`npm run smoke:hosted-env-contract-audit`), which checks both linked Vercel targets and saves the exact contract state under `docs/alpha-readiness/evidence/hosted-hardening/generated/`. The refreshed 2026-03-29 snapshot keeps the NO-GO honest by proving the blocker is still live right now rather than merely inherited from the older preview-only audit: both linked targets are still missing the same 18-key hosted contract, so there is still no honest path to a hosted-only smoke proof until real Supabase credentials are loaded.
 
 ---
 
