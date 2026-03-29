@@ -12,7 +12,7 @@ Use this file as the roll-up input for the next formal GO / CONDITIONAL GO / NO-
 - **Sessions completed:** 0/12
 - **Batch syntheses completed:** 0/4
 - **Final synthesis complete:** no
-- **Canonical interview tracker current:** partial — `docs/alpha-readiness/interview-evidence-tracker.md` exists, the slot design/screener is fixed in `docs/alpha-readiness/interview-cohort-plan-and-screener.md`, recruiting/scheduling discipline is fixed in `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`, and pre-tracker outreach/alias hygiene is now explicit in `docs/alpha-readiness/interview-recruiting-outreach-pack.md`, but real participants, session logs, and threshold math are still unpopulated
+- **Canonical interview tracker current:** partial — `docs/alpha-readiness/interview-evidence-tracker.md` exists, the slot design/screener is fixed in `docs/alpha-readiness/interview-cohort-plan-and-screener.md`, recruiting/scheduling discipline is fixed in `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`, pre-tracker outreach/alias hygiene is explicit in `docs/alpha-readiness/interview-recruiting-outreach-pack.md`, and same-day note-to-threshold closeout discipline is now explicit in `docs/alpha-readiness/interview-evidence-closeout-and-threshold-update-runbook.md`, but real participants, session logs, and threshold math are still unpopulated
 - **Goldie vs Fin threshold result:** not yet evidenced
 - **Daily Spending Power threshold result:** not yet evidenced
 - **Fin learning threshold result:** not yet evidenced

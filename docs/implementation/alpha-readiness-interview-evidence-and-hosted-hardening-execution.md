@@ -77,6 +77,7 @@ The operating pack exists to test readiness for alpha, not to restart product st
 - `docs/alpha-readiness/interview-batch-synthesis-template.md`
 - `docs/alpha-readiness/interview-final-synthesis-template.md`
 - `docs/alpha-readiness/interview-evidence-tracker.md`
+- `docs/alpha-readiness/interview-evidence-closeout-and-threshold-update-runbook.md`
 - `docs/alpha-readiness/interview-cohort-plan-and-screener.md`
 - `docs/alpha-readiness/interview-recruitment-and-scheduling-runbook.md`
 - `docs/alpha-readiness/interview-recruiting-outreach-pack.md`

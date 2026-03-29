@@ -2,8 +2,8 @@
 
 ## Session metadata
 
-> Run this with `docs/alpha-readiness/interview-session-facilitation-and-closeout-checklist.md` open.
-> A session is not decision-grade until the note, threshold scoring, and tracker handoff are completed same day.
+> Run this with `docs/alpha-readiness/interview-session-facilitation-and-closeout-checklist.md` and `docs/alpha-readiness/interview-evidence-closeout-and-threshold-update-runbook.md` open.
+> A session is not decision-grade until the note, threshold scoring, tracker handoff, and any required batch/re-decision delta capture are completed same day.
 - **Session number:**
 - **Date / time:**
 - **Facilitator:**

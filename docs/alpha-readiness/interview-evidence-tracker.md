@@ -129,6 +129,7 @@ Only update a row when the underlying session note exists.
 When a participant is excluded, document why in the tracker table and do **not** include them in the numerator.
 
 Use `docs/alpha-readiness/interview-evidence-coding-rubric.md` before changing any running result.
+Use `docs/alpha-readiness/interview-evidence-closeout-and-threshold-update-runbook.md` to move a completed call into scoreable tracker math.
 If a result cannot be tied back to a scored session note, leave the number unchanged.
 
 ---
