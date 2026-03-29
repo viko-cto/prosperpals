@@ -348,6 +348,7 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 - `docs/alpha-readiness/interview-recruiting-outreach-pack.md`
 - `docs/alpha-readiness/interview-private-candidate-registry-template.md`
 - `docs/alpha-readiness/interview-batch-01-assignment-board.md`
+- `docs/alpha-readiness/interview-batch-01-command-center.md`
 - `docs/alpha-readiness/interview-evidence-coding-rubric.md`
 - `docs/alpha-readiness/interview-session-facilitation-and-closeout-checklist.md`
 - `docs/alpha-readiness/hosted-hardening-execution-checklist.md`
@@ -389,3 +390,4 @@ Used to cut speculative expansion and keep the current step anchored on evidence
 ProsperPals now has a stronger receipt-realism operating pack and a materially better proof trail for asset lineage, operator auditability, founder-visible cohort telemetry, onboarding continuity, and receipt-state durability.
 
 The lane is no longer just “typed receipt candidate demo” — it now includes a bounded real upload/artifact chain plus a single hosted-proof harness spanning operator-audit, ledger, analytics, onboarding, and receipt durability paths. It also now has an explicit repo-native operator policy split: support-only receipt holds, admin-only release overrides, role-used audit fields, a bounded demo role session path, and a cross-account subject review preview that keeps actor-vs-subject context explicit. That preview is still intentionally narrow, but it now supports an auditable pending approval request plus a **single-use** approval-backed receipt-hold mutation: the approval request id is preserved as structured intervention audit payload, the first approved cross-account mutation consumes that approval, and the next mutation must request a fresh ticket instead of inheriting lingering founder power. Hosted alpha still remains **NO-GO** until that harness is actually proven in deployment, durable hosted role assignment replaces the demo path, the remaining role-boundary gaps are closed, and the missing interview evidence lands.
+next mutation must request a fresh ticket instead of inheriting lingering founder power. Hosted alpha still remains **NO-GO** until that harness is actually proven in deployment, durable hosted role assignment replaces the demo path, the remaining role-boundary gaps are closed, and the missing interview evidence lands.

@@ -36,6 +36,7 @@ Use this folder to convert the alpha decision packet into durable proof:
 - `interview-recruiting-outreach-pack.md`
 - `interview-private-candidate-registry-template.md`
 - `interview-batch-01-assignment-board.md`
+- `interview-batch-01-command-center.md`
 - `interview-evidence-coding-rubric.md`
 - `hosted-hardening-execution-checklist.md`
 - `operator-readiness-runbook.md`
